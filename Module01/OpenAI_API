@@ -17,7 +17,13 @@ print("Client initialized successfully")
 
 # test_response = client.responses.create(
 #     model=MODEL,
-#     input="Say Hello"
+#     input="Say Hello",
+#    input=[
+#        {
+#            "role": "user",
+#            "content": "Say Hello"
+#        }
+#    ]
 # )
 # print(test_response.output_text)
 
