@@ -1,0 +1,63 @@
+system_prompt = """
+Given the following text, your task is to extract the ATC classification code and the drug name in the json format {'ATC code': '', "Drug name": ''}
+"""
+
+user_message = "The patient was prescribed 10mg of atorvastatin which is a statin used to lower cholesterol levels. It is ATC class C10AA05"
+
+messages = [{"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}]
+
+response = client.chat.completions.create(
+                    model = "gemini-flash-lite-latest",
+                    messages= messages,
+                    temperature=0.0,
+                    max_tokens=150,
+                    response_format = { "type": "json_object" }
+                    )
+
+response.choices[0].message.content
+
+### Parsing the JSON Response We can parse the JSON response to extract specific fields.
+
+import json 
+
+response_json = json.loads(response.choices[0].message.content)
+
+response_json['Drug name']
+response_json['ATC code']
+
+### two-level structure
+
+#Your prompt here
+system_prompt = "You're a cricket expert, who knows everything about 2023 cricket world cup"
+
+#Your user message here
+user_message = "provide the 2023 CWC cricket captain names and their respective country name in this JSON format {'country': 'captain'}"
+
+#Create the messages list
+messages = [{"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}]
+
+#Get the response from the model
+response = client.chat.completions.create(
+                    model = "gemini-flash-lite-latest",
+                    messages= messages,
+                    temperature=0.0,
+                    max_tokens=1500,
+                    response_format = { "type": "json_object" }
+                    ) 
+#Display the response
+response.choices[0].message.content
+
+# Parse the JSON response and create a table
+import json
+import pandas as pd
+
+# Parse the JSON string from the response
+json_data = json.loads(response.choices[0].message.content)
+
+# Create a pandas DataFrame from the parsed JSON
+df = pd.DataFrame(json_data)
+
+# Display the table
+display(df)
