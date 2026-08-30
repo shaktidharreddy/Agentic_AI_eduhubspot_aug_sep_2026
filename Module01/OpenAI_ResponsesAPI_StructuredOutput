@@ -1,0 +1,158 @@
+from openai import OpenAI
+client = OpenAI()
+
+# Passing a list of message dicts directly into 'input'
+response = client.responses.create(
+    model="gpt-4o",
+    input=[
+        {"role": "developer", "content": "You are a concise assistant."},
+        {"role": "user", "content": "What is the capital of France?"},
+        {"role": "assistant", "content": "The capital of France is Paris."},
+        {"role": "user", "content": "And what is its population?"}
+    ],
+    text={
+        "format": {
+            "type": "json_object" # Enforces JSON Mode on the conversation tail
+        }
+    }
+)
+
+print(response.output_text)
+
+# second example
+
+import json
+from openai import OpenAI
+
+# Initializes client using the OPENAI_API_KEY environment variable
+client = OpenAI()
+
+try:
+    response = client.responses.create(
+        model="gpt-4o",
+        # Use input instead of messages for standalone text generation prompts
+        input="Give me a list of 3 fruits and their colors. Respond with a JSON object.",
+        # The Responses API uses text.format instead of response_format
+        text={
+            "format": {
+                "type": "json_object"
+            }
+        }
+    )
+
+    # Use the output_text helper to grab the raw string content directly
+    raw_json = response.output_text
+    print("Raw Output:\n", raw_json)
+
+    # Parse and work with your data
+    data = json.loads(raw_json)
+    print("\nParsed Python Dict:", data)
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+# third example
+
+# This is the shared raw JSON Schema map we will pass to both APIs
+event_schema = {
+    "name": "calendar_event",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "date": {"type": "string"},
+            "location": {"type": "string"}
+        },
+        "required": ["name", "date", "location"],
+        "additionalProperties": False
+    }
+}
+
+from openai import OpenAI
+client = OpenAI()
+
+response = client.responses.create(
+    model="gpt-4o",
+    input="Alice is attending a tech conference in Seattle on Friday.",
+    # Configuration container maps nested inside the text block
+    text={
+        "format": {
+            "type": "json_schema",
+            "json_schema": event_schema
+        }
+    }
+)
+
+# Accessible instantly via the flat output helper property
+print(response.output_text)
+
+
+# fourth example using pydantic
+
+from openai import OpenAI
+from pydantic import BaseModel
+
+client = OpenAI()
+
+# 1. Define your blueprint
+class ProductDetails(BaseModel):
+    item: str
+    price: int
+
+# 2. Use the dedicated .parse() method
+response = client.responses.parse(
+    model="gpt-4o",
+    input="I bought a vintage leather jacket for 150 dollars.",
+    # Passes the class directly using text_format
+    text_format=ProductDetails
+)
+
+# 3. Access your fully validated and parsed Pydantic object
+parsed_data = response.output_parsed
+
+print(parsed_data.item)   # Output: vintage leather jacket
+print(parsed_data.price)  # Output: 150
+print(type(parsed_data))  # Output: <class '__main__.ProductDetails'>
+
+
+# fifth exampple
+
+import json
+from openai import OpenAI
+from pydantic import BaseModel
+
+client = OpenAI()
+
+class ProductDetails(BaseModel):
+    item: str
+    price: int
+
+# Build the structured output configuration payload manually
+response_format_dict = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "product_schema",
+        "strict": True, # Required for OpenAI Structured Outputs
+        "schema": ProductDetails.model_json_schema() # Automatically generates the dictionary layout
+    }
+}
+
+response = client.responses.create(
+    model="gpt-4o",
+    input="I bought a vintage leather jacket for 150 dollars.",
+    text={
+        "format": response_format_dict
+    }
+)
+
+# Extract the raw JSON string text
+raw_json = response.output_text
+
+# Parse into a standard dict, then unpack into your Pydantic model for validation
+data_dict = json.loads(raw_json)
+parsed_data = ProductDetails(**data_dict)
+
+print(parsed_data.item)  # Output: vintage leather jacket
+
+
