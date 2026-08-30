@@ -1,0 +1,26 @@
+#authendicate with Azure OpenAI Proxy for local development
+from openai import AzureOpenAI
+import os
+from dotenv import load_dotenv
+
+# load env variables from .env if any
+load_dotenv()
+
+client = AzureOpenAI(
+    azure_endpoint=os.getenv("ENDPOINT_URL", ),
+    api_key=os.getenv("AZURE_OPENAI_API_KEY", ),
+    api_version="2024-02-15-preview",
+)
+response = client.chat.completions.create(
+    # model="gpt-4o",
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello"}],
+    max_tokens=100
+)
+# response = client.responses.create(   
+#   model="gpt-4o-mini", # Replace with your model deployment name 
+#   input="This is a test.",
+# )
+
+print(response.choices[0].message.content)
+# print(response.model_dump_json(indent=2)) 
