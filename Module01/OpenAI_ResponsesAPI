@@ -1,0 +1,20 @@
+#using openai responses api
+
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# load env variables from .env if any
+load_dotenv()
+
+client = OpenAI()
+
+response = client.responses.create(
+    model="gpt-5",
+#   input="Write a one-sentence bedtime story about a unicorn.",
+    input=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hi, how are you?"}
+    ],
+)
+
+print(response.output_text)
