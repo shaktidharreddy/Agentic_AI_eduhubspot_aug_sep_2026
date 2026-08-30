@@ -17,6 +17,7 @@ my_tools = [
 ]
 
 
+# first example
 
 from openai import OpenAI
 client = OpenAI()
@@ -56,3 +57,52 @@ final_response = client.chat.completions.create(
     messages=messages
 )
 print(final_response.choices[0].message.content)
+
+
+# second example
+
+from openai import OpenAI
+client = OpenAI()
+
+# 1. Initialize conversation history
+messages = [
+    {"role": "user", "content": "What's the weather like in Paris?"}
+]
+
+# Step 1: Request tool evaluation from model
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=my_tools
+)
+
+message = response.choices.message
+
+# Step 2: If the model decided to call tools, handle them as a batch
+if message.tool_calls:
+    # Append the assistant message containing the tool calls EXACTLY ONCE
+    messages.append(message)
+    
+    # Step 3: Loop through all parallel tool calls requested by the model
+    for tool_call in message.tool_calls:
+        print(f"Model wants to call: {tool_call.function.name}")
+        print(f"Arguments: {tool_call.function.arguments}")
+        
+        # Run local function code execution
+        tool_result = "{\"status\": \"Sunny\", \"temp\": \"22C\"}"
+        
+        # Step 4: Append each tool output to the message history block
+        messages.append({
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": tool_result
+        })
+
+    # Step 5: Make a SINGLE final API call outside the loop
+    final_response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages
+    )
+    print(final_response.choices.message.content)
+
+
