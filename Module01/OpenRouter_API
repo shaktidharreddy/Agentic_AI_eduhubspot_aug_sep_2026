@@ -1,0 +1,27 @@
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from the .env file
+load_dotenv()
+
+# Initialize the OpenAI client pointing to OpenRouter
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+)
+
+# Request a completion using an OpenRouter model slug
+# Example uses a free model; you can change this to any slug from openrouter.ai/models
+response = client.chat.completions.create(
+    model="nvidia/nemotron-3-ultra-550b-a55b:free",
+    messages=[
+        {
+            "role": "user",
+            "content": "Give me a quick 2-sentence explanation of quantum computing."
+        }
+    ]
+)
+
+# Print the response text
+print(response.choices[0].message.content)
