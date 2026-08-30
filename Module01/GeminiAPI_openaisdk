@@ -1,0 +1,21 @@
+# using gemini api key, making llm api key
+
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# load env variables from .env if any
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("GEMINI_API_KEY"), 
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+                )
+
+response = client.chat.completions.create(
+    model="gemini-flash-lite-latest",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hello, say something"}],
+    max_tokens=100
+)
+print(response.choices[0].message.content)
