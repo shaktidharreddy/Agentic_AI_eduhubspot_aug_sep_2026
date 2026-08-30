@@ -15,18 +15,6 @@ MODEL = "gpt-4.1-mini"
 
 print("Client initialized successfully")
 
-# test_response = client.responses.create(
-#     model=MODEL,
-#     input="Say Hello",
-#    input=[
-#        {
-#            "role": "user",
-#            "content": "Say Hello"
-#        }
-#    ]
-# )
-# print(test_response.output_text)
-
 test_response = client.chat.completions.create(
     model=MODEL,
     messages=[
