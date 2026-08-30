@@ -1,0 +1,58 @@
+# Shared tool specification array
+my_tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get current weather conditions for a location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"}
+                },
+                "required": ["location"]
+            }
+        }
+    }
+]
+
+
+
+from openai import OpenAI
+client = OpenAI()
+
+messages = [
+    {"role": "user", "content": "What's the weather like in Paris?"}
+]
+
+# Step 1: Request tool evaluation from model
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=my_tools
+)
+
+# Step 2: Extract tool requests from nested choices structure
+message = response.choices[0].message
+if message.tool_calls:
+    for tool_call in message.tool_calls:
+        print(f"Model wants to call: {tool_call.function.name}")
+        print(f"Arguments: {tool_call.function.arguments}")
+        
+        # Step 3: Run local code and save output
+        tool_result = "{\"status\": \"Sunny\", \"temp\": \"22C\"}"
+        
+        # Step 4: Append conversation state array to continue the cycle
+        messages.append(message) # Append assistant's intent call object
+        messages.append({
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": tool_result
+        })
+
+# Step 5: Final run call back to model using modified history array
+final_response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages
+)
+print(final_response.choices[0].message.content)
