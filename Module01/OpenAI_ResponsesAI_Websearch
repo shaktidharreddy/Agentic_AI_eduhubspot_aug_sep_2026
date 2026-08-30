@@ -1,0 +1,10 @@
+from openai import OpenAI
+client = OpenAI()
+
+answer = client.responses.create(
+    model="gpt-5.4-nano",
+    input="Who is the current president of France?",
+    tools=[{"type": "web_search_preview"}]
+)
+
+print(answer.output_text)
