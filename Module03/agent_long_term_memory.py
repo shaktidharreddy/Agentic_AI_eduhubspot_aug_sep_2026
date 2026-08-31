@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
