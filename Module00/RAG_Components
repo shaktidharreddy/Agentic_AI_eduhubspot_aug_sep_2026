@@ -5,7 +5,7 @@ VectorDB (with all CRUD operation APIs)
 embedding model
 Data Loaders (PDF - pymupdf, docling, pdfminerU,... , DOC-python-docx,.... PPTX-python-pptx, .... PNG-OCR...., .txt, .html, webloaders-beautifulsoup, selenium, etc, websearch)
 
-
+Indexing technique (while ingesting into vectorDB)
 Chunking Algo (rules or semantic aware algo, chunk overlap strategy)
 Search Algo - text search (BM25), vector search, hybrid search
 Retrieval Algo - Cosine Similarity, euclidean distance, max marginal relevance (rules: threshold>0.7, # of chunks to retrieve:3)
