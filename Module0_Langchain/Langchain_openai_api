@@ -1,1 +1,23 @@
 
+# pip install langchain==1.0.1 dotenv
+
+from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
+# from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+load_dotenv()
+
+
+# model = init_chat_model("gpt-4o-mini", model_provider="openai")
+
+# model = init_chat_model("gemini-3.5-flash", model_provider="google_genai")
+
+# model = ChatOpenAI(model = "gpt-4o-mini", temperature = 0.7)
+
+model = ChatGoogleGenerativeAI(model = "gemini-3.5-flash", temperature = 0.7)
+
+
+response = model.invoke("Why do parrots talk?")
+
+print(response)
