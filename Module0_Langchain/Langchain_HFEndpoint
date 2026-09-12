@@ -1,0 +1,19 @@
+from dotenv import load_dotenv
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+
+load_dotenv()
+
+# Hugging Face Inference Providers no longer serve Phi-3-mini.
+# See: https://docs.langchain.com/oss/python/integrations/chat/huggingface
+llm = HuggingFaceEndpoint(
+    repo_id="microsoft/phi-4",
+    task="text-generation",
+    temperature=0.7,
+    max_new_tokens=512,
+    server_kwargs={"provider": "auto"},
+)
+model = ChatHuggingFace(llm=llm)
+
+response = model.invoke("Why do parrots talk?")
+
+print(response.content)
