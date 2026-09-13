@@ -61,8 +61,8 @@ para = input("Give your clinical paragraph: ")
 final_prompt = prompt.invoke({"input_text": para})
 response = model.invoke(final_prompt)
 
-# chain = extraction_prompt | llm
-# response = chain.invoke({"input_text": "Patient Maria Garcia, a 62-year-old female..."})
+# chain = prompt | llm
+# response = chain.invoke({"input_text": para})
 
 
 print(response.content)
