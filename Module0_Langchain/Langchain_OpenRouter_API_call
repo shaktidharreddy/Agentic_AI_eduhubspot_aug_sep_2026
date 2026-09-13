@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 # Set your OpenRouter API key and base URL
 llm = ChatOpenAI(
     model="openai/gpt-4o",  # Replace with any OpenRouter model identifier
-    api_key=os.environ["OPENORUTER_API_KEY"],  # Or set OPENAI_API_KEY / environment variable
+    api_key=os.environ["OPENROUTER_API_KEY"],  # Or set OPENAI_API_KEY / environment variable
     base_url="https://openrouter.ai/api/v1",
 )
 
