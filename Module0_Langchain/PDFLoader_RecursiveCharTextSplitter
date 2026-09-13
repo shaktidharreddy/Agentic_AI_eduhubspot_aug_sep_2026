@@ -1,0 +1,58 @@
+from langchain_community.document_loaders import PyPDFLoader
+from dotenv import load_dotenv
+import os
+from langchain_text_splitters import TokenTextSplitter, RecursiveCharacterTextSplitter
+from langchain_core.prompts import ChatPromptTemplate
+
+load_dotenv()
+
+loader = PyPDFLoader("FDA/NSCLC_Abraxane_1.0_Historical.pdf")
+docs = loader.load()
+# print("Document 0: ", docs[0].page_content)
+
+# print("Number of documents: ", len(docs))
+
+
+# text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=200)
+
+# chunks = text_splitter.split_documents(docs)
+
+# print("Number of chunks: ", len(chunks))
+
+# print("Chunk 0: ", chunks[0].page_content)
+
+# print("Chunk 1: ", chunks[1].page_content)
+
+# print("Chunk 2: ", chunks[2].page_content)
+
+# print("Chunk 3: ", chunks[3].page_content)
+
+# print("Chunk 4: ", chunks[4].page_content)
+
+# print("Chunk 5: ", chunks[5].page_content)
+
+
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=100, chunk_overlap=20, separators=["\n\n", "\n", ".", " ", ""])
+chunks = text_splitter.split_documents(docs)
+
+print("Number of chunks: ", len(chunks))
+
+print("Chunk 0: ", chunks[0].page_content)
+
+print("Chunk 1: ", chunks[1].page_content)
+
+print("Chunk 2: ", chunks[2].page_content)
+
+print("Chunk 3: ", chunks[3].page_content)
+
+print("Chunk 4: ", chunks[4].page_content)
+
+print("Chunk 5: ", chunks[5].page_content)
+
+
+template = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant that can answer questions about the following text: {text}"),
+    ("user", "{input}")
+])
+
+prompt = template.format_messages(text=chunks[0].page_content, input="What is the main topic of the text?")
