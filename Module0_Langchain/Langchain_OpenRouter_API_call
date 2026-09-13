@@ -1,6 +1,10 @@
 import os
 from langchain_openai import ChatOpenAI
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Set your OpenRouter API key and base URL
 llm = ChatOpenAI(
     model="openai/gpt-4o",  # Replace with any OpenRouter model identifier
