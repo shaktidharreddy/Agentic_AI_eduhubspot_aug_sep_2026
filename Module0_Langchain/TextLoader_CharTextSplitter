@@ -1,0 +1,28 @@
+from langchain_community.document_loaders import TextLoader
+
+from langchain_text_splitters import CharacterTextSplitter
+
+loader = TextLoader("./notes.txt")
+
+docs = loader.load()
+
+print("Document 0: ", docs[0].page_content)
+
+print("Number of documents: ", len(docs))
+
+text_splitter = CharacterTextSplitter(
+    chunk_size=10, 
+    chunk_overlap=2,
+    separator="\n\n"
+    )
+
+
+chunks = text_splitter.split_documents(docs)
+
+print("Number of chunks: ", len(chunks))
+
+print("Chunk 0: ", chunks[0].page_content)
+
+print("Chunk 1: ", chunks[1].page_content)
+
+print("Chunk 2: ", chunks[2].page_content)
