@@ -1,0 +1,59 @@
+from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from langchain_core.output_parsers import PydanticOutputParser
+
+load_dotenv()
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+model = ChatGoogleGenerativeAI(model = "gemini-2.5-flash-lite", temperature = 0.7)
+
+# 1. Define the Pydantic Schema for structured extraction
+class Medication(BaseModel):
+    name: str = Field(description="Name of the medication")
+    dosage: str = Field(description="Dosage amount e.g. 20mg")
+    frequency: str = Field(description="How often it is taken e.g. daily")
+
+class PatientAnalytics(BaseModel):
+    name: str = Field(description="Full name of the patient")
+    age: int = Field(description="Age of the patient")
+    gender: str = Field(description="Gender of the patient")
+    date: str = Field(description="Date of the encounter")
+    provider: str = Field(description="Name of the healthcare provider/doctor")
+    symptoms: List[str] = Field(description="List of symptoms reported")
+    diagnosis: str = Field(description="Primary medical diagnosis")
+    icd_10_code: str = Field(description="The ICD-10 medical code")
+    medications: List[Medication] = Field(description="List of prescribed medications")
+    claim_id: str = Field(description="Unique insurance claim ID")
+    cpt_codes: Optional[List[str]] = Field(description="List of CPT billing codes")
+
+parser = PydanticOutputParser(pydantic_object=PatientAnalytics)
+
+
+prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """You are a specialized Medical Data Extraction Assistant for MedPulse Analytics.
+        Your task is to parse unstructured clinical narratives and extract patient relevant data.{format_instructions}"""
+    ),
+    ("human", "Please extract the data from this clinical paragraph: {input_text}")
+])
+
+para = input("Give your clinical paragraph: ")
+
+final_prompt = prompt.invoke({"input_text": para,
+                              "format_instructions": parser.get_format_instructions()})
+response = model.invoke(final_prompt)
+
+
+# 3. Example of how to do structured output with a pydantic object (e.g., GPT-4 or Claude)
+# chain = prompt | model.with_structured_output(PatientAnalytics)
+# result = chain.invoke({"input_text":
+
+print(response.content)
+print("-"*100)
+print(parser.parse(response.content))
+
+
