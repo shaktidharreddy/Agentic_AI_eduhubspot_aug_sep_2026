@@ -1,59 +1,88 @@
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser, PydanticOutputParser
 from pydantic import BaseModel, Field
-from typing import List, Optional
-from langchain_core.output_parsers import PydanticOutputParser
+from typing import List
 
 load_dotenv()
+
+# Ensure the newly installed package is recognized
+import sys
+import subprocess
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 model = ChatGoogleGenerativeAI(model = "gemini-2.5-flash-lite", temperature = 0.7)
 
-# 1. Define the Pydantic Schema for structured extraction
+# Define the schema for extraction using standard Pydantic
 class Medication(BaseModel):
     name: str = Field(description="Name of the medication")
-    dosage: str = Field(description="Dosage amount e.g. 20mg")
-    frequency: str = Field(description="How often it is taken e.g. daily")
+    dosage: str = Field(description="Dosage of the medication")
+    frequency: str = Field(description="How often the medication is taken")
+
+class PatientInfo(BaseModel):
+    name: str = Field(description="Full name of the patient")
+    age: int = Field(description="Age of the patient as an integer")
+    gender: str = Field(description="Gender of the patient")
+
+class EncounterDetails(BaseModel):
+    date: str = Field(description="Date of the service")
+    provider: str = Field(description="Name of the healthcare provider")
+    symptoms: List[str] = Field(description="List of reported symptoms")
+
+class ClinicalData(BaseModel):
+    diagnosis: str = Field(description="Primary medical diagnosis")
+    icd_10_code: str = Field(description="The ICD-10 code for the diagnosis")
+    medications: List[Medication] = Field(description="List of medications")
+
+class BillingClaims(BaseModel):
+    claim_id: str = Field(description="Insurance Claim ID")
+    cpt_codes: List[str] = Field(description="List of CPT billing codes")
 
 class PatientAnalytics(BaseModel):
-    name: str = Field(description="Full name of the patient")
-    age: int = Field(description="Age of the patient")
-    gender: str = Field(description="Gender of the patient")
-    date: str = Field(description="Date of the encounter")
-    provider: str = Field(description="Name of the healthcare provider/doctor")
-    symptoms: List[str] = Field(description="List of symptoms reported")
-    diagnosis: str = Field(description="Primary medical diagnosis")
-    icd_10_code: str = Field(description="The ICD-10 medical code")
-    medications: List[Medication] = Field(description="List of prescribed medications")
-    claim_id: str = Field(description="Unique insurance claim ID")
-    cpt_codes: Optional[List[str]] = Field(description="List of CPT billing codes")
+    patient_info: PatientInfo
+    encounter_details: EncounterDetails
+    clinical_data: ClinicalData
+    billing_claims: BillingClaims
 
+# Use PydanticOutputParser
 parser = PydanticOutputParser(pydantic_object=PatientAnalytics)
 
+# Get format instructions
+format_instructions = parser.get_format_instructions()
 
 prompt = ChatPromptTemplate.from_messages([
     (
         "system",
         """You are a specialized Medical Data Extraction Assistant for MedPulse Analytics.
-        Your task is to parse unstructured clinical narratives and extract patient relevant data.{format_instructions}"""
+        Your task is to parse unstructured clinical narratives into a precise JSON format.
+
+        ### Extraction Rules:
+        1. **Patient Info**: Identify name, age (as integer), and gender.
+        2. **Encounter**: Extract the date of service, the provider name, and a list of reported symptoms.
+        3. **Clinical Data**: Identify the primary diagnosis and its corresponding ICD-10 code.
+        4. **Medications**: For every medication, extract the name, dosage, and frequency into a list.
+        5. **Billing**: Capture the specific Insurance Claim ID and all CPT billing codes mentioned.
+
+        {format_instructions}
+        """
     ),
     ("human", "Please extract the data from this clinical paragraph: {input_text}")
 ])
 
-para = input("Give your clinical paragraph: ")
-
-final_prompt = prompt.invoke({"input_text": para,
-                              "format_instructions": parser.get_format_instructions()})
-response = model.invoke(final_prompt)
 
 
-# 3. Example of how to do structured output with a pydantic object (e.g., GPT-4 or Claude)
-# chain = prompt | model.with_structured_output(PatientAnalytics)
-# result = chain.invoke({"input_text":
+# Sample clinical narrative
+para = "Patient Maria Garcia, a 62-year-old female, visited Dr. Smith on 2023-10-12. She reported fatigue and joint pain. Diagnosis: Rheumatoid Arthritis (M06.9). Prescribed Methotrexate 15mg weekly and Ibuprofen 400mg twice daily. Claim ID: MED12345. CPT: 99214, 85025."
 
-print(response.content)
+# Example of how to do using pydantic parser
+# chain = prompt | model | parser
+# response = chain.invoke({"input_text": para, "format_instructions": format_instructions})
+
+# Example of how to do structured output with a pydantic object (e.g., GPT-4 or Claude)
+chain = prompt | model.with_structured_output(PatientAnalytics)
+response = chain.invoke({"input_text": para, "format_instructions": format_instructions })
+
+                       
+print("DEBUG: Parsed JSON: ", response.dict())
 print("-"*100)
-print(parser.parse(response.content))
-
-
