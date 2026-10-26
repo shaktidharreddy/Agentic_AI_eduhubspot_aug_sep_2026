@@ -1,0 +1,2746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hands-on Knowledge Graphs for GVD Evidence – Neo4j + Cypher + Vectors</title>
+<style>
+  :root{
+    --bg:#f7f8fb; --panel:#ffffff; --ink:#1d2433; --muted:#5b6578; --line:#e3e7ef;
+    --nav:#14213d; --nav-ink:#cfd8ea; --accent:#2f6fde; --accent-soft:#e8f0fe;
+    --ref:#d6e9f8; --ref-b:#3b8bc9; --proj:#fde9cc; --proj-b:#d9822b;
+    --code-bg:#0f172a; --code-ink:#e2e8f0; --ok:#1f9d55; --warn:#b7791f; --bad:#c53030;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent)}
+  .layout{display:flex;min-height:100vh}
+  nav.side{width:290px;flex:0 0 290px;background:var(--nav);color:var(--nav-ink);
+    position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 0}
+  nav.side h1{font-size:17px;color:#fff;margin:0 22px 4px;line-height:1.3}
+  nav.side .sub{font-size:12px;margin:0 22px 18px;color:#8fa0c0}
+  nav.side a{display:flex;gap:10px;align-items:flex-start;padding:9px 22px;color:var(--nav-ink);
+    text-decoration:none;font-size:14px;border-left:3px solid transparent}
+  nav.side a:hover{background:#1c2c50}
+  nav.side a.active{background:#22355f;border-left-color:#6ea8ff;color:#fff}
+  nav.side .num{flex:0 0 26px;height:26px;border-radius:50%;background:#2a3d68;color:#fff;
+    font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  nav.side a.done .num{background:var(--ok)}
+  nav.side .layer-tag{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8fa0c0;
+    margin:16px 22px 4px}
+  main{flex:1;min-width:0;padding:34px 48px 80px;max-width:1080px}
+  .module{display:none}
+  .module.active{display:block}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700}
+  h2{font-size:30px;margin:4px 0 8px;line-height:1.25}
+  h3{font-size:21px;margin:34px 0 8px;padding-top:8px;border-top:1px solid var(--line)}
+  h4{font-size:16px;margin:22px 0 6px}
+  p.lead{font-size:18px;color:var(--muted);margin-top:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:16px 0}
+  .goals{background:var(--accent-soft);border:1px solid #c9dafb}
+  .goals h4{margin-top:0}
+  .callout{border-left:4px solid var(--accent);background:#fff;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0}
+  .callout.tip{border-color:var(--ok)}
+  .callout.warn{border-color:var(--warn);background:#fffbf2}
+  .callout.why{border-color:#7c4dff}
+  .callout strong:first-child{display:block;margin-bottom:2px}
+  code{font-family:Consolas,"Cascadia Code","Fira Code",monospace;font-size:.92em;background:#eef1f7;
+    padding:1px 5px;border-radius:4px}
+  .codeblock{margin:14px 0 18px;border-radius:10px;overflow:hidden;border:1px solid #1e293b;background:var(--code-bg)}
+  .codehead{display:flex;justify-content:space-between;align-items:center;background:#1e293b;color:#94a3b8;
+    font:12px Consolas,monospace;padding:6px 12px}
+  .codehead .where{color:#cbd5e1}
+  .codehead .lang{background:#334155;color:#e2e8f0;border-radius:4px;padding:1px 7px;margin-right:8px}
+  .copy{background:#334155;color:#e2e8f0;border:0;border-radius:5px;padding:3px 10px;cursor:pointer;font-size:12px}
+  .copy:hover{background:#475569}
+  pre{margin:0;padding:14px 16px;overflow-x:auto;color:var(--code-ink);
+    font:13.5px/1.55 Consolas,"Cascadia Code","Fira Code",monospace;tab-size:4}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+  .output pre{background:#f1f5f9;color:#0f172a}
+  .output{border-color:#cbd5e1;background:#f1f5f9}
+  .output .codehead{background:#e2e8f0;color:#334155}
+  .tok-k{color:#7dd3fc;font-weight:600} .tok-s{color:#a7f3d0} .tok-c{color:#64748b;font-style:italic}
+  .tok-n{color:#fca5a5} .tok-l{color:#fcd34d} .tok-p{color:#f0abfc} .tok-f{color:#c4b5fd}
+  .output .tok-k,.output .tok-s,.output .tok-c,.output .tok-n,.output .tok-l,.output .tok-p,.output .tok-f{color:inherit;font-weight:normal;font-style:normal}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;background:#fff}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f0f3f9}
+  .pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600}
+  .pill.ref{background:var(--ref);color:#1f5f8f;border:1px solid var(--ref-b)}
+  .pill.proj{background:var(--proj);color:#8a4b0c;border:1px solid var(--proj-b)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:900px){.grid2{grid-template-columns:1fr} nav.side{display:none} main{padding:20px}}
+  .steps{counter-reset:s;list-style:none;padding-left:0}
+  .steps>li{counter-increment:s;position:relative;padding-left:40px;margin:10px 0}
+  .steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .pager{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:14px;text-decoration:none}
+  .btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .btn.done{background:var(--ok)}
+  .schema-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;overflow-x:auto}
+  svg text{font-family:"Segoe UI",Arial,sans-serif}
+  .filetree{font:13.5px/1.6 Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;white-space:pre}
+  details{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600}
+  kbd{background:#fff;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="side" id="nav">
+  <h1>Knowledge Graphs for Evidence (GVD)</h1>
+  <div class="sub">Neo4j Desktop · Cypher · OpenAI embeddings · Python</div>
+  <div class="layer-tag">Start here</div>
+  <a href="#journey" data-m="journey"><span class="num">&#9733;</span><span>Learning journey: learn &amp; teach</span></a>
+  <a href="#install" data-m="install"><span class="num">&#8595;</span><span>Install Neo4j on Windows &amp; connect</span></a>
+  <a href="#m0" data-m="m0"><span class="num">0</span><span>Welcome &amp; roadmap</span></a>
+  <a href="#m1" data-m="m1"><span class="num">1</span><span>Setup: Neo4j Desktop + Python</span></a>
+  <a href="#m2" data-m="m2"><span class="num">2</span><span>Graph concepts &amp; our minimal schema</span></a>
+  <div class="layer-tag">Reference layer</div>
+  <a href="#m3" data-m="m3"><span class="num">3</span><span>Build the reference graph</span></a>
+  <a href="#m4" data-m="m4"><span class="num">4</span><span>Query with Cypher (filters, no vectors)</span></a>
+  <a href="#m5" data-m="m5"><span class="num">5</span><span>Add OpenAI embeddings + vector index</span></a>
+  <a href="#m6" data-m="m6"><span class="num">6</span><span>Vector search + property filters</span></a>
+  <div class="layer-tag">Project layer</div>
+  <a href="#m7" data-m="m7"><span class="num">7</span><span>Retrieval writes project nodes</span></a>
+  <a href="#m8" data-m="m8"><span class="num">8</span><span>Cross-layer capability queries</span></a>
+  <div class="layer-tag">pgvector track (alternative to 5–8)</div>
+  <a href="#m5p" data-m="m5p"><span class="num">5P</span><span>Store embeddings in pgvector</span></a>
+  <a href="#m6p" data-m="m6p"><span class="num">6P</span><span>pgvector search + SQL/Cypher filters</span></a>
+  <a href="#m7p" data-m="m7p"><span class="num">7P</span><span>pgvector retrieval writes project nodes</span></a>
+  <a href="#m8p" data-m="m8p"><span class="num">8P</span><span>Two stores: sync &amp; capability queries</span></a>
+  <div class="layer-tag">Reference</div>
+  <a href="#m9" data-m="m9"><span class="num">9</span><span>Cheat sheet &amp; troubleshooting</span></a>
+</nav>
+
+<main id="main">
+
+<!-- ===================================================== JOURNEY ===================================================== -->
+<section class="module" id="journey">
+  <div class="eyebrow">Start here</div>
+  <h2>Learning journey: how to learn and teach with this site</h2>
+  <p class="lead">A suggested path through the modules: five short sittings to learn it yourself, then a ready-made plan for demonstrating and teaching it to beginners.</p>
+
+  <div class="card goals">
+    <h4>How the site and the code fit together</h4>
+    <ul>
+      <li>Each module has <b>text and diagrams</b>, <b>Browser snippets</b> (Cypher you type in Neo4j Browser) and a <b>Python script</b> (the same file is in the <code>code</code> folder).</li>
+      <li>The grey <b>Expected output</b> boxes show what a correct run prints, so you can check your result.</li>
+      <li>Use <b>Mark module complete</b> at the bottom of each module; the sidebar remembers your progress in this browser.</li>
+      <li>The Python scripts are commented line by line, so open them in an editor while you read.</li>
+    </ul>
+  </div>
+
+  <h3>Every time you sit down</h3>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Go to the course code and switch on its Python environment
+cd C:\D_drive\KG_Handson\code
+.\.venv\Scripts\Activate.ps1</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser (always first)"><pre><code>:use gvd</code></pre></div>
+  <div class="callout warn"><strong>Always run <code>:use gvd</code> first in Browser</strong>Each result card remembers the database it ran against. If you see Chunk, Company or Manager nodes, that card came from another database (<code>neo4j</code> or <code>sec</code>). Run <code>:use gvd</code>, close the old card, and run the query again.</div>
+
+  <h3>Part 1 – Learn it yourself (5 sittings of 1–2 hours)</h3>
+  <h4>The method for every module</h4>
+  <ol class="steps">
+    <li><b>Read</b> the module text and look at its diagram.</li>
+    <li><b>Type</b> its Browser snippets by hand in Neo4j Browser (typing, not pasting, makes the syntax stick).</li>
+    <li><b>Run</b> its script and compare with the Expected output box.</li>
+    <li><b>Answer</b> the Checkpoint or "Try it yourself" questions where a module has them, before opening the solutions.</li>
+    <li><b>Change one thing</b> (a filter, a value, a question), predict the result, then run it.</li>
+  </ol>
+  <p>To start from an empty course database:</p>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Empties only the gvd database (it refuses to touch neo4j or sec)
+python reset.py
+# Drops only the kg_gvd schema in Postgres (needed for the pgvector track)
+python reset_pg.py</code></pre></div>
+
+  <details open><summary>Sitting 1 – Foundations: Install tab, Modules 0–2</summary>
+    <ul>
+      <li><a href="#install">Install tab</a>: run <code>hello_neo4j.py</code>, then <code>create_db.py</code> (a quick read if Neo4j and <code>gvd</code> already exist).</li>
+      <li><a href="#m0">Module 0</a>: the story. A fictional drug (Zentrax), two trials, and the reference layer vs project layer.</li>
+      <li><a href="#m1">Module 1</a>: run <code>python s0_check.py</code>.</li>
+      <li><a href="#m2">Module 2</a>: study the schema until you can explain each relationship type (<code>REPORTS</code>, <code>VERSUS</code>, <code>BASED_ON</code>, …).</li>
+    </ul>
+    <p><b>Goal:</b> explain in one sentence why Claims carry a <code>projectId</code> but Results don't.</p>
+  </details>
+
+  <details open><summary>Sitting 2 – Build and query the graph: Modules 3–4</summary>
+    <ul>
+      <li><a href="#m3">Module 3</a>: first type the small <code>MERGE</code> snippets to create 2–3 nodes by hand, then run <code>python s1_build_reference.py</code> to load everything. Look at it with <code>MATCH (n) RETURN n</code>.</li>
+      <li><a href="#m4">Module 4</a>: run every Cypher snippet in Browser (the most important sitting), then <code>python s2_queries.py</code>.</li>
+    </ul>
+    <p><b>Goal:</b> write from memory a query for "results vs Placebo with p &lt; 0.05, with their study".</p>
+  </details>
+
+  <details open><summary>Sitting 3 – Embeddings and vector search: Modules 5–6</summary>
+    <ul>
+      <li><a href="#m5">Module 5</a>: run <code>python s3_embed.py</code>. Run it again: it embeds 0 results, because it skips nodes that already have an embedding. Peek at an embedding with the Browser snippet.</li>
+      <li><a href="#m6">Module 6</a>: try the "more like this" snippet (no API call needed), then run <code>python s4_vector_search.py</code>.</li>
+    </ul>
+    <div class="callout why"><strong>Key insight</strong>Plain vector search ranks a <i>safety</i> result first for a <i>skin-clearance</i> question, because it matches words, not meaning. Adding a graph filter fixes that. This is the main reason to combine graphs with vectors.</div>
+    <p><b>Goal:</b> explain why <code>k</code> (the number of candidates) must be larger than the number of rows you want: filtering happens after the search.</p>
+  </details>
+
+  <details open><summary>Sitting 4 – Project layer and impact: Modules 7–8</summary>
+    <ul>
+      <li><a href="#m7">Module 7</a>: run <code>python s5_project_layer.py</code>. In Browser, look at the Dossier → Section → Claim → Result path and the audit query on <code>BASED_ON</code> (score, method, query).</li>
+      <li><a href="#m8">Module 8</a>: run <code>python s6_capability_queries.py</code>. It covers impact analysis (R1-FINAL supersedes R1, so affected claims are flagged) and evidence reuse across projects.</li>
+    </ul>
+    <p><b>Goal:</b> explain what happens to German (DE) claims when a study result is updated.</p>
+  </details>
+
+  <details open><summary>Sitting 5 – pgvector track and review: Modules 5P–8P and 9</summary>
+    <p>Run the four pgvector scripts in order, reading each module next to its Neo4j counterpart:</p>
+    <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Each script builds on the previous one (s1_build_reference.py must have run first)
+python s3p_embed_pg.py
+python s4p_vector_search_pg.py
+python s5p_project_layer_pg.py
+python s6p_capability_queries_pg.py</code></pre></div>
+    <ul>
+      <li>Compare scores: the safety search gives the same R3 0.675 and R6 0.649 in both stores.</li>
+      <li><a href="#m8p">Module 8P</a>: with two stores, data can drift apart, so you need the sync step. Compare the "before sync" and "after sync" reports.</li>
+      <li><a href="#m9">Module 9</a>: keep the cheat sheet open while you practise.</li>
+    </ul>
+  </details>
+
+  <div class="callout tip"><strong>Self-test</strong>Reset both databases and rebuild everything from memory with only the cheat sheet. To check your result, run <code>python run_all.py</code>, which runs every step and ends with "All steps finished successfully."</div>
+
+  <h3>Part 2 – Demonstrate and teach beginners</h3>
+  <h4>The day before class</h4>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Prove everything still works end to end (takes about 1–2 minutes)
+python run_all.py
+# Then empty the course databases so students see the graph being built live
+python reset.py
+python reset_pg.py</code></pre></div>
+  <ul>
+    <li>Open this site and Neo4j Browser side by side; run <code>:use gvd</code> and close old result cards.</li>
+    <li>Check that the OpenAI key in <code>.env</code> works (embedding cost is under 1 cent per full run).</li>
+  </ul>
+
+  <h4>Suggested course: 4 sessions of about 90 minutes, plus an optional 5th</h4>
+  <table>
+    <tr><th>Session</th><th>Modules</th><th>Demonstrate live</th><th>Student exercise</th></tr>
+    <tr><td>1. What is a graph?</td><td>Install, 0–2</td><td><code>hello_neo4j.py</code>, <code>RETURN 'Hello, graph!'</code>, the schema diagram</td><td>Draw 3 nodes and 2 arrows from the Zentrax story on paper</td></tr>
+    <tr><td>2. Build and ask</td><td>3–4</td><td>Hand-typed <code>MERGE</code> snippets, then <code>s1_build_reference.py</code>; the Module 4 queries</td><td>Module 4 "Try it yourself" exercises 1–3</td></tr>
+    <tr><td>3. Meaning search</td><td>5–6</td><td><code>s3_embed.py</code>, "more like this", plain vs filtered search</td><td>Change the question and filters in <code>s4_vector_search.py</code></td></tr>
+    <tr><td>4. Projects and impact</td><td>7–8</td><td><code>s5_project_layer.py</code>, the impact path query</td><td>Add a new claim with <code>write_claim(...)</code> for a new project</td></tr>
+    <tr><td>5. (Optional) Two stores</td><td>5P–8P</td><td>The pgvector scripts and the sync report</td><td>Compare scores between Neo4j and pgvector</td></tr>
+  </table>
+
+  <h4>A teaching rhythm for each module (about 20 minutes)</h4>
+  <ol class="steps">
+    <li><b>Story (2 min):</b> the question we want to answer, in drug-dossier terms.</li>
+    <li><b>Picture (3 min):</b> point at the diagram or the graph view.</li>
+    <li><b>Type it live (5 min):</b> one small snippet typed by hand in Browser, so students see every part.</li>
+    <li><b>Run the script (5 min):</b> scroll through the commented <code>.py</code> file, run it, and compare with the Expected output.</li>
+    <li><b>Break it (5 min):</b> change a filter value or remove a <code>WHERE</code>; ask students to predict the result first.</li>
+  </ol>
+
+  <h4>The "aha" moments worth slowing down for</h4>
+  <ul>
+    <li><b>Module 3:</b> running <code>MERGE</code> twice doesn't create duplicates, but <code>CREATE</code> would.</li>
+    <li><b>Module 4:</b> <code>OPTIONAL MATCH</code> keeps products that have no studies; plain <code>MATCH</code> drops them.</li>
+    <li><b>Module 6:</b> vector search alone gives a wrong top hit; the graph filter gives the right answer.</li>
+    <li><b>Module 7:</b> the same result (R5) supports claims in two countries' dossiers. Reference data is shared; project data is separate.</li>
+    <li><b>Module 8:</b> one updated result tells you instantly which dossiers need review.</li>
+  </ul>
+
+  <h4>If something goes wrong mid-demo</h4>
+  <ul>
+    <li><b>Strange nodes in Browser:</b> run <code>:use gvd</code> and re-run the query.</li>
+    <li><b>Lost track of the state:</b> run <code>python reset.py</code>, then the scripts up to the current module (each takes seconds).</li>
+    <li><b>Anything else:</b> see the troubleshooting table in <a href="#m9">Module 9</a>.</li>
+  </ul>
+
+  <h4>Handout for students</h4>
+  <p>Give them this <code>index.html</code> and the <code>code</code> folder <b>without</b> <code>.env</code> and <code>.venv</code>. They create their own environment and <code>.env</code> as shown in <a href="#m1">Module 1</a>, then follow Part 1 at their own pace.</p>
+</section>
+
+<!-- ===================================================== INSTALL ===================================================== -->
+<section class="module" id="install">
+  <div class="eyebrow">Before you start</div>
+  <h2>Install Neo4j on Windows and connect with code</h2>
+  <p class="lead">Install Neo4j Desktop, create a local database, open it in the Browser, and connect to it from Python. That takes about 15 minutes.</p>
+
+  <div class="card goals">
+    <h4>At the end of this tab you will have</h4>
+    <ul>
+      <li>Neo4j Desktop installed, with a local database running on <code>localhost</code>.</li>
+      <li>Neo4j Browser open at <code>http://localhost:7474</code>.</li>
+      <li>A Python script that connects with the official <code>neo4j</code> driver and runs a query.</li>
+    </ul>
+  </div>
+
+  <h3>A. Download and install Neo4j Desktop</h3>
+  <ol class="steps">
+    <li>Go to <a href="https://neo4j.com/download/" target="_blank">neo4j.com/download</a> and click <b>Download Neo4j Desktop</b>. Fill in the short form. The Windows installer (<code>Neo4j Desktop Setup x.y.z.exe</code>) downloads.<br>
+      <i>Desktop 1.x only:</i> the page also shows an <b>activation key</b>. Copy it, because Desktop asks for it on first launch. Desktop 2.x doesn't need a key.</li>
+    <li>Run the <code>.exe</code>. Choosing "Only for me" avoids needing admin rights.</li>
+    <li>On first launch, Desktop asks where to store its data, for example <code>C:\Users\&lt;you&gt;\.Neo4jDesktop</code> or <code>D:\Neo4jData</code>. Pick a drive with a few GB free.</li>
+    <li>Paste the activation key if asked (Desktop 1.x). Desktop bundles its own Java, so <b>you don't need to install Java</b>.</li>
+  </ol>
+
+  <h3>B. Create and start a local database</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4 style="margin-top:0">Neo4j Desktop 2.x</h4>
+      <ol>
+        <li>Open <b>Local instances</b> and click <b>Create instance</b>.</li>
+        <li>Instance name: <code>gvd-kg</code>. Version: the newest offered (2025.x).</li>
+        <li>Set a <b>password</b> (for example <code>password123</code>; user is <code>neo4j</code>).</li>
+        <li>Click <b>Create</b>, then <b>Start</b>. Wait until it says <i>Running</i>.</li>
+        <li>Click <b>Query</b> or <b>Connect</b> to open the Browser or Query tool.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0">Neo4j Desktop 1.x</h4>
+      <ol>
+        <li>Open the default <b>Project</b>, click <b>Add</b>, then <b>Local DBMS</b>.</li>
+        <li>Name: <code>gvd-kg</code>. Version: 2026.01 or newer (Module 6 uses the new <code>SEARCH</code> clause; 5.13+ works with the older procedure shown there).</li>
+        <li>Set a <b>password</b> and click <b>Create</b>.</li>
+        <li>Hover the DBMS and click <b>Start</b>. Wait for the green <i>Active</i> dot.</li>
+        <li>Click <b>Open</b> to launch <b>Neo4j Browser</b>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h4>The connection details you need</h4>
+  <table>
+    <tr><th>Setting</th><th>Default value</th><th>Used by</th></tr>
+    <tr><td>Bolt URL (for code)</td><td><code>neo4j://localhost:7687</code> (or <code>bolt://localhost:7687</code>)</td><td>Python driver</td></tr>
+    <tr><td>Browser URL</td><td><code>http://localhost:7474</code></td><td>Your web browser</td></tr>
+    <tr><td>Username</td><td><code>neo4j</code></td><td>both</td></tr>
+    <tr><td>Password</td><td>the one you set when creating the instance</td><td>both</td></tr>
+    <tr><td>Database</td><td><code>neo4j</code> (default database)</td><td>both</td></tr>
+  </table>
+  <div class="callout tip"><strong>Where to check the port</strong>If 7687 is already taken (for example by another instance), Desktop picks a different port. In Desktop, open the instance's details, settings or "..." menu to see the actual Bolt port, and use that number in your code.</div>
+
+  <h3>C. Verify it's running</h3>
+  <p>In PowerShell, check that the Bolt port answers:</p>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Checks whether anything is listening on Neo4j's Bolt port (7687) on this machine
+Test-NetConnection localhost -Port 7687</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Look for"><pre><code>TcpTestSucceeded : True</code></pre></div>
+  <p>Then open <a href="http://localhost:7474" target="_blank">http://localhost:7474</a>, log in with <code>neo4j</code> and your password, and run:</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// dbms.components() is a built-in procedure describing the server
+// YIELD picks the output columns we want; versions is a list, [0] takes the first item
+CALL dbms.components() YIELD name, versions, edition
+RETURN name, versions[0] AS version, edition</code></pre></div>
+
+  <h3>D. Connect from Python</h3>
+  <h4>1. Install Python packages</h4>
+  <p>You need Python 3.9+ (check with <code>python --version</code>; install from <a href="https://www.python.org/downloads/windows/" target="_blank">python.org</a> and tick "Add python.exe to PATH").</p>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Make a project folder and move into it
+mkdir kg-gvd
+cd kg-gvd
+# Create an isolated Python environment in the .venv folder
+python -m venv .venv
+# Activate it: from now on 'python' and 'pip' use this environment
+.\.venv\Scripts\Activate.ps1
+# Install the Neo4j driver and the .env file loader
+pip install neo4j python-dotenv</code></pre></div>
+  <div class="callout warn"><strong>"running scripts is disabled on this system"?</strong>Run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once in PowerShell, then activate again. Or use <code>.\.venv\Scripts\activate.bat</code> from <code>cmd</code>.</div>
+
+  <h4>2. The smallest possible connection script</h4>
+  <p>This puts everything in one file so you can see the moving parts. Replace the password with yours.</p>
+  <div class="codeblock" data-lang="python" data-where="hello_neo4j.py"><pre><code>from neo4j import GraphDatabase      # the official Neo4j driver (pip install neo4j)
+
+URI = "neo4j://localhost:7687"       # Bolt address of your local database (port 7687)
+AUTH = ("neo4j", "password123")      # &lt;- your instance password
+
+# "with" closes the driver automatically at the end of the block, even if an error happens.
+with GraphDatabase.driver(URI, auth=AUTH) as driver:
+    driver.verify_connectivity()     # raises an error if the DB is not reachable
+    print("Connected!")
+
+    # Write: create a node with properties
+    # MERGE = create the Person only if one with this name doesn't exist yet.
+    # $name and $role are parameters, filled from the dict on the next line.
+    driver.execute_query(
+        "MERGE (p:Person {name: $name}) SET p.role = $role",
+        {"name": "Ada", "role": "analyst"},
+        database_="neo4j",            # which database inside the server to use
+    )
+
+    # Read: query it back
+    # execute_query returns (records, summary, keys): the rows, statistics, and column names.
+    records, summary, keys = driver.execute_query(
+        "MATCH (p:Person) RETURN p.name AS name, p.role AS role",
+        database_="neo4j",
+    )
+    for record in records:
+        # Access columns by the alias used after AS in the query.
+        print(record["name"], "-", record["role"])
+    print("Query took", summary.result_available_after, "ms")
+
+    # Clean up the test node (DETACH DELETE also removes any relationships it has)
+    driver.execute_query("MATCH (p:Person {name: 'Ada'}) DETACH DELETE p", database_="neo4j")</code></pre></div>
+  <div class="codeblock" data-lang="bash" data-where="PowerShell"><pre><code># Run the script with the active virtual environment's Python
+python hello_neo4j.py</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Expected output"><pre><code>Connected!
+Ada - analyst
+Query took 2 ms</code></pre></div>
+
+  <h4>3. The better way: keep the password out of the code</h4>
+  <p>Create a <code>.env</code> file next to your script:</p>
+  <div class="codeblock" data-lang="text" data-where=".env"><pre><code># Where Neo4j listens (Bolt protocol, port 7687)
+NEO4J_URI=neo4j://localhost:7687
+# Login details you set when creating the instance
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password123
+# Which database inside the server to use
+NEO4J_DATABASE=neo4j</code></pre></div>
+  <div class="codeblock" data-lang="python" data-where="hello_neo4j_env.py"><pre><code>import os
+
+from dotenv import load_dotenv
+from neo4j import GraphDatabase
+
+load_dotenv()   # reads .env into environment variables
+
+# Build the driver from settings in .env, so no password is written in the code.
+driver = GraphDatabase.driver(
+    os.getenv("NEO4J_URI"),
+    auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD")),
+)
+driver.verify_connectivity()   # fail fast if the database is unreachable or the password is wrong
+
+# datetime() is a built-in Cypher function returning the server's current time.
+records, _, _ = driver.execute_query(
+    "RETURN 'Hello from Neo4j' AS message, datetime() AS serverTime",
+    database_=os.getenv("NEO4J_DATABASE", "neo4j"),
+)
+# records[0] is the first (and only) row; columns are read by their AS name.
+print(records[0]["message"], "at", records[0]["serverTime"])
+driver.close()   # release connections when done</code></pre></div>
+  <p>Module 1 builds on exactly this pattern with a reusable <code>kg.py</code> helper.</p>
+
+  <h4>4. Bonus: the session API (you'll see it in many tutorials)</h4>
+  <p><code>execute_query</code> is the simplest choice. Older examples use sessions and transactions, which do the same job:</p>
+  <div class="codeblock" data-lang="python" data-where="hello_session.py"><pre><code>from neo4j import GraphDatabase
+
+with GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "password123")) as driver:
+    # A session is a short-lived "conversation" with one database.
+    with driver.session(database="neo4j") as session:
+        # execute_read runs the function inside a READ transaction (and retries on temporary errors).
+        # tx.run(...) sends the query; .single() takes the only row; ["c"] reads the column named c.
+        count = session.execute_read(
+            lambda tx: tx.run("MATCH (n) RETURN count(n) AS c").single()["c"]
+        )
+        print("Nodes in database:", count)</code></pre></div>
+
+  <h3>E. Create a dedicated database for this course (recommended)</h3>
+  <p>One Neo4j instance can hold several databases. Give this course its own database, <code>gvd</code>, so it never mixes with other graphs you have, such as the movies or SEC 10-K data from other notebooks. Resetting or deleting data here then can't touch those graphs.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser (run one line at a time)"><pre><code>:use system
+CREATE DATABASE gvd IF NOT EXISTS WAIT   // admin commands run in 'system'; WAIT = until it is online
+SHOW DATABASES                           // list every database and its status
+:use gvd</code></pre></div>
+  <p>Or do it from Python. Database admin commands always run against the special <code>system</code> database:</p>
+  <div class="codeblock" data-lang="python" data-where="create_db.py"><pre><code>from neo4j import GraphDatabase
+
+with GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "password123")) as driver:
+    # Admin commands like CREATE DATABASE always run against the special 'system' database.
+    # IF NOT EXISTS = no error if it already exists; WAIT = return only when the new database is online.
+    driver.execute_query("CREATE DATABASE gvd IF NOT EXISTS WAIT", database_="system")
+    # List all databases and whether they are online.
+    records, _, _ = driver.execute_query("SHOW DATABASES YIELD name, currentStatus", database_="system")
+    for r in records:
+        print(r["name"], r["currentStatus"])</code></pre></div>
+  <p>Then point every script at it with <code>NEO4J_DATABASE=gvd</code> in <code>.env</code>. All course scripts read that value through <code>kg.py</code>. In Neo4j Browser, use the database dropdown or type <code>:use gvd</code> before running queries.</p>
+  <div class="callout warn"><strong>"Unsupported administration command" or "CREATE DATABASE is not supported"?</strong>You're on <b>Community Edition</b>, which allows only one user database (<code>neo4j</code>). Neo4j Desktop's local instances are normally Enterprise (free for local development), so this mostly affects the ZIP install. If it happens, create a <b>separate instance</b> in Desktop just for this course and keep <code>NEO4J_DATABASE=neo4j</code>. In Desktop 1.x only one instance can run at a time, so stop the other one first.</div>
+  <div class="callout tip"><strong>Check which database you're in</strong>Run <code>CALL db.info() YIELD name RETURN name</code>. In Python, <code>kg.run("CALL db.info() YIELD name RETURN name")</code> should print <code>gvd</code>.</div>
+
+  <h3>F. Common connection errors</h3>
+  <table>
+    <tr><th>Error</th><th>Meaning and fix</th></tr>
+    <tr><td><code>ServiceUnavailable: Couldn't connect to localhost:7687</code></td><td>The database isn't started, or it runs on a different port. Start it in Desktop and check the port.</td></tr>
+    <tr><td><code>AuthError ... unauthorized</code></td><td>Wrong password. In Desktop, use the instance menu to <b>Reset password</b>, or recreate the instance.</td></tr>
+    <tr><td><code>ModuleNotFoundError: No module named 'neo4j'</code></td><td>The virtual environment isn't active, or the package isn't installed. Activate <code>.venv</code> and run <code>pip install neo4j</code>.</td></tr>
+    <tr><td><code>Unable to retrieve routing information</code></td><td>Rare on a local single instance. Switch the URI to <code>bolt://localhost:7687</code>.</td></tr>
+    <tr><td>Browser stays on "Connecting..."</td><td>Use <code>neo4j://localhost:7687</code> in the Browser's connect URL, and make sure the instance shows <i>Running</i>.</td></tr>
+  </table>
+
+  <details><summary>Alternative: Neo4j Community Server ZIP (no Desktop)</summary>
+    <p>If you can't install Desktop, download the <b>Community Edition Windows ZIP</b> from the <a href="https://neo4j.com/deployment-center/" target="_blank">Neo4j Deployment Center</a>. It needs Java installed: <b>Java 21</b> for Neo4j 2025.x, or <b>Java 17</b> for Neo4j 5.x (for example from <a href="https://adoptium.net/" target="_blank">adoptium.net</a>). Unzip it, for example to <code>C:\neo4j</code>, then:</p>
+    <div class="codeblock" data-lang="bash" data-where="PowerShell, inside the unzipped folder"><pre><code># Go to the folder where you unzipped Neo4j
+cd C:\neo4j
+# Set the password for the 'neo4j' user (only works before the first start)
+.\bin\neo4j-admin dbms set-initial-password password123
+# Start the server in this window (Ctrl+C stops it)
+.\bin\neo4j console</code></pre></div>
+    <p>Leave that window open while you work. Browser and Bolt URLs are the same as above, and <kbd>Ctrl</kbd>+<kbd>C</kbd> stops the server.</p>
+  </details>
+</section>
+
+<!-- ===================================================== M0 ===================================================== -->
+<section class="module" id="m0">
+  <div class="eyebrow">Module 0</div>
+  <h2>Welcome: a hands-on evidence knowledge graph</h2>
+  <p class="lead">You'll build a small but real knowledge graph in your local Neo4j: clinical evidence (studies, results, documents) as a shared <b>reference layer</b>, and dossier work (claims, value messages, sections) as a <b>project layer</b> that links into that evidence instead of copying it.</p>
+
+  <div class="card goals">
+    <h4>What you'll be able to do by the end</h4>
+    <ul>
+      <li>Create nodes and relationships, both with properties, in Neo4j.</li>
+      <li>Query the graph with Cypher using patterns and value filters.</li>
+      <li>Add OpenAI embeddings to nodes and create a vector index.</li>
+      <li>Combine vector similarity search with normal Cypher filters (hybrid retrieval).</li>
+      <li>Write <i>retrieval results</i> back into the graph as project-scoped nodes (claims) that point to reference evidence.</li>
+      <li>Run cross-layer queries: traceability, reuse, impact analysis, gap finding.</li>
+    </ul>
+  </div>
+
+  <h3>The big idea in one picture</h3>
+  <div class="grid2">
+    <div class="card">
+      <span class="pill ref">Reference layer</span>
+      <p>Entities that are <b>true regardless of any dossier</b>: <code>Product</code>, <code>Indication</code>, <code>Study</code>, <code>Endpoint</code>, <code>Population</code>, <code>Result</code>, <code>SourceDocument</code>.</p>
+      <p>Built once by <b>ingestion</b> and shared by every project. These nodes have <b>no</b> <code>projectId</code>.</p>
+    </div>
+    <div class="card">
+      <span class="pill proj">Project layer</span>
+      <p>Entities that <b>exist because a dossier project exists</b>: <code>Dossier</code>, <code>Section</code>, <code>ValueMessage</code>, <code>Claim</code>.</p>
+      <p>Created by <b>retrieval + authoring</b>. Every one carries a <code>projectId</code>. A new GVD links into existing evidence instead of copying it.</p>
+    </div>
+  </div>
+
+  <h3>Roadmap</h3>
+  <table>
+    <tr><th>#</th><th>Module</th><th>You produce</th><th>File</th></tr>
+    <tr><td>1</td><td>Setup</td><td>Running local DB, Python env, connection check</td><td><code>kg.py</code>, <code>s0_check.py</code></td></tr>
+    <tr><td>2</td><td>Concepts &amp; schema</td><td>Understanding of nodes, relationships, properties, layers</td><td>(none)</td></tr>
+    <tr><td>3</td><td>Build reference graph</td><td>19 nodes, 35 relationships</td><td><code>s1_build_reference.py</code></td></tr>
+    <tr><td>4</td><td>Cypher queries</td><td>Filtered pattern queries</td><td><code>s2_queries.py</code></td></tr>
+    <tr><td>5</td><td>Embeddings</td><td><code>Result.embedding</code> + vector index</td><td><code>s3_embed.py</code></td></tr>
+    <tr><td>6</td><td>Hybrid search</td><td>Vector + filter retrieval function</td><td><code>s4_vector_search.py</code></td></tr>
+    <tr><td>7</td><td>Project layer</td><td>Two dossiers whose claims point to shared evidence</td><td><code>s5_project_layer.py</code></td></tr>
+    <tr><td>8</td><td>Capability queries</td><td>Traceability, reuse, impact, gaps</td><td><code>s6_capability_queries.py</code></td></tr>
+    <tr><td>5P</td><td>pgvector: store embeddings</td><td>Vectors in a Postgres table with an HNSW index, synced from the graph</td><td><code>pg.py</code>, <code>s3p_embed_pg.py</code></td></tr>
+    <tr><td>6P</td><td>pgvector: hybrid search</td><td>pgvector similarity + SQL filters + Cypher graph filters</td><td><code>s4p_vector_search_pg.py</code></td></tr>
+    <tr><td>7P</td><td>pgvector: project layer</td><td>Claims retrieved via pgvector, written into the graph</td><td><code>s5p_project_layer_pg.py</code></td></tr>
+    <tr><td>8P</td><td>pgvector: sync &amp; capabilities</td><td>Consistency checks, update propagation, impact</td><td><code>s6p_capability_queries_pg.py</code></td></tr>
+  </table>
+  <div class="callout"><strong>Two vector tracks</strong>Modules 5–8 keep embeddings <b>inside Neo4j</b>. Modules 5P–8P do the same jobs with embeddings in <b>PostgreSQL + pgvector</b>, while the graph stays in Neo4j. Both start after Module 4 and share the same project-layer code, so you can do either or both.</div>
+
+  <div class="callout warn"><strong>Fictional data</strong>The drug "Zentrax", its studies and numbers are made up for teaching. They are realistic enough to make the queries meaningful.</div>
+
+  <div class="callout tip"><strong>How to use this site</strong>Each module has copy-ready code. <b>Cypher</b> blocks marked <i>Neo4j Browser</i> can be pasted straight into the Browser query bar. <b>Python</b> blocks are full files: save them under the shown filename and run with <code>python filename.py</code>. Click "Mark module complete" at the bottom to track progress.</div>
+</section>
+
+<!-- ===================================================== M1 ===================================================== -->
+<section class="module" id="m1">
+  <div class="eyebrow">Module 1</div>
+  <h2>Setup: local Neo4j Desktop + Python</h2>
+  <p class="lead">Get a database running on <code>localhost</code>, a Python environment, and one helper file that every later script imports.</p>
+
+  <h3>1.1 Start the database in Neo4j Desktop</h3>
+  <ol class="steps">
+    <li>Open <b>Neo4j Desktop</b>.<br>
+      <i>Desktop 2.x:</i> go to <b>Local instances</b>, then <b>Create instance</b>.<br>
+      <i>Desktop 1.x:</i> open a project, click <b>Add</b>, then <b>Local DBMS</b>.</li>
+    <li>Name it, for example <code>gvd-kg</code>. Pick a 5.x or 2025.x version and <b>set a password</b> you'll remember.</li>
+    <li>Click <b>Start</b> and wait until the status shows <i>Running</i>.</li>
+    <li>Click <b>Open</b> or <b>Query</b> to launch <b>Neo4j Browser</b>. Defaults: URL <code>neo4j://localhost:7687</code>, user <code>neo4j</code>, database <code>neo4j</code>.</li>
+  </ol>
+  <p>Test the Browser with your first Cypher statement:</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// The simplest query: no MATCH, just return a value. AS gives the column a name.
+RETURN 'Hello, graph!' AS greeting</code></pre></div>
+  <div class="callout tip"><strong>No plugins needed</strong>This course doesn't need APOC or the GenAI plugin. Embeddings are computed in Python with the OpenAI SDK and stored as plain list properties. Vector indexes are built into Neo4j 5.13+, and the <code>SEARCH</code> clause into 2026.01+.</div>
+
+  <h3>1.2 Create the Python project</h3>
+  <div class="filetree">kg-gvd/
+├── .env                      # secrets (never commit)
+├── kg.py                     # shared helpers: connection, run(), embed(), show()
+├── s0_check.py               # Module 1
+├── s1_build_reference.py     # Module 3
+├── s2_queries.py             # Module 4
+├── s3_embed.py               # Module 5
+├── s4_vector_search.py       # Module 6
+├── s5_project_layer.py       # Module 7
+├── s6_capability_queries.py  # Module 8
+└── reset.py                  # wipe and start over</div>
+
+  <div class="codeblock" data-lang="bash" data-where="Terminal (Windows PowerShell)"><pre><code># Make a project folder and move into it
+mkdir kg-gvd
+cd kg-gvd
+# Create and activate an isolated Python environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+# Neo4j driver, OpenAI SDK (embeddings + LLM), .env loader
+pip install neo4j openai python-dotenv</code></pre></div>
+  <div class="codeblock" data-lang="bash" data-where="Terminal (macOS / Linux)"><pre><code># Make a project folder and move into it
+mkdir kg-gvd &amp;&amp; cd kg-gvd
+# Create and activate an isolated Python environment
+python3 -m venv .venv
+source .venv/bin/activate
+# Neo4j driver, OpenAI SDK (embeddings + LLM), .env loader
+pip install neo4j openai python-dotenv</code></pre></div>
+
+  <h3>1.3 Secrets file</h3>
+  <div class="codeblock" data-lang="text" data-where=".env"><pre><code># Neo4j connection
+NEO4J_URI=neo4j://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=your-password-here
+# The course's own database (create it first, see the install tab)
+NEO4J_DATABASE=gvd
+# Needed from Module 5 on (embeddings and the optional LLM answer)
+OPENAI_API_KEY=sk-your-key-here</code></pre></div>
+  <div class="callout warn"><strong>Use the dedicated <code>gvd</code> database</strong>Create it first (see the install tab, step E). If you leave <code>NEO4J_DATABASE=neo4j</code>, the course writes into your default database next to any other graphs, and <code>reset.py</code> would delete them too.</div>
+
+  <h3>1.4 The shared helper: <code>kg.py</code></h3>
+  <p>All scripts use these four helpers, which keeps each lesson focused on the Cypher.</p>
+  <div class="codeblock" data-lang="python" data-where="kg.py"><pre><code>"""Shared helpers used by every script in this course.
+
+Every other script does `from kg import ...`, so connection details live in ONE place.
+"""
+import os                                   # read environment variables (our settings)
+
+from dotenv import load_dotenv              # loads the key=value pairs from the .env file
+from neo4j import GraphDatabase             # the official Neo4j Python driver
+
+# Copy every line of .env into os.environ so os.getenv() can see it.
+load_dotenv()
+
+# --- Neo4j connection settings (second argument = default if .env does not set it) ---
+NEO4J_URI = os.getenv("NEO4J_URI", "neo4j://localhost:7687")          # where the database listens
+NEO4J_AUTH = (os.getenv("NEO4J_USERNAME", "neo4j"), os.getenv("NEO4J_PASSWORD"))  # (user, password)
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")                 # which database inside the server
+
+# --- Embedding settings (used from Module 5 on) ---
+EMBED_MODEL = "text-embedding-3-small"   # OpenAI model that turns text into numbers
+EMBED_DIMS = 1536                        # how many numbers that model returns per text
+
+# One driver object for the whole program. It manages a pool of connections for us,
+# so we create it once here instead of connecting again for every query.
+driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
+
+
+def run(cypher, **params):
+    """Run one Cypher statement and return the rows as a list of plain dicts.
+
+    Example:  run("MATCH (s:Study {id: $id}) RETURN s.name AS name", id="ZEN-301")
+              -&gt; [{'name': 'ZEN-301'}]
+    Every keyword argument becomes a $parameter inside the Cypher text.
+    """
+    # execute_query sends the query, waits for all rows, and returns three things:
+    # the records (rows), a summary (timings, counters) and the column names.
+    records, _summary, _keys = driver.execute_query(cypher, params, database_=NEO4J_DATABASE)
+    # record.data() converts each row into a normal Python dict: {column_name: value}.
+    return [record.data() for record in records]
+
+
+def show(rows, title=None):
+    """Print query rows one per line, with an optional heading."""
+    if title:
+        print(f"\n== {title} ==")
+    if not rows:                       # an empty list means the query matched nothing
+        print("(no rows)")
+    for row in rows:
+        print(row)
+
+
+def embed(texts):
+    """Turn a list of strings into a list of embedding vectors (one list of 1536 floats per string)."""
+    # Imported here (not at the top) so Modules 1-4 work even without an OpenAI key installed.
+    from openai import OpenAI
+
+    client = OpenAI()           # reads OPENAI_API_KEY (and optional OPENAI_BASE_URL) from the environment
+    # One API call can embed many texts at once, which is faster and cheaper than one call per text.
+    response = client.embeddings.create(model=EMBED_MODEL, input=texts)
+    # response.data has one item per input text, in the same order; .embedding is the vector.
+    return [item.embedding for item in response.data]</code></pre></div>
+
+  <h3>1.5 Check the connection</h3>
+  <div class="codeblock" data-lang="python" data-where="s0_check.py"><pre><code>"""Module 1 – confirm Python can talk to the local Neo4j database."""
+from kg import driver, run, show   # our shared helpers (see kg.py)
+
+# Ask the driver to open a test connection. Raises a clear error if Neo4j is down
+# or the password is wrong, so you find problems before running real queries.
+driver.verify_connectivity()
+
+# The smallest possible query: no MATCH, just RETURN a literal value.
+show(run("RETURN 'connected' AS status"), "Connection")
+
+# dbms.components() is a built-in procedure that reports the server version.
+# CALL runs a procedure, YIELD picks which of its output columns we want.
+show(run("CALL dbms.components() YIELD name, versions RETURN name, versions[0] AS version"), "Server")
+
+# MATCH (n) matches every node; count(n) counts them. A fresh 'gvd' database should say 0.
+show(run("MATCH (n) RETURN count(n) AS nodes"), "Nodes currently in the database")
+
+# Release the connection pool when the script is done.
+driver.close()</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Expected output (version may differ)"><pre><code>== Connection ==
+{'status': 'connected'}
+
+== Server ==
+{'name': 'Neo4j Kernel', 'version': '5.26.0'}
+
+== Nodes currently in the database ==
+{'nodes': 0}</code></pre></div>
+  <div class="callout tip"><strong>Confirm you're in the right database</strong>The last line should show <code>{'nodes': 0}</code> on a fresh <code>gvd</code> database. If you see hundreds of nodes, you're probably still pointed at <code>neo4j</code>, which holds your other graphs. Check <code>NEO4J_DATABASE</code> in <code>.env</code>.</div>
+  <div class="callout warn"><strong>If it fails</strong><code>ServiceUnavailable</code> means the DBMS isn't started or the port isn't 7687. <code>AuthError</code> means the password in <code>.env</code> doesn't match. See Module 9 for more.</div>
+</section>
+
+<!-- ===================================================== M2 ===================================================== -->
+<section class="module" id="m2">
+  <div class="eyebrow">Module 2</div>
+  <h2>Graph concepts &amp; our minimal schema</h2>
+  <p class="lead">A knowledge graph stores data as <b>nodes</b> (things) and <b>relationships</b> (how things connect). Both can hold <b>properties</b>.</p>
+
+  <h3>2.1 The four building blocks</h3>
+  <table>
+    <tr><th>Concept</th><th>What it is</th><th>Example in our graph</th></tr>
+    <tr><td><b>Node</b></td><td>A data record for one thing</td><td>the study ZEN-301</td></tr>
+    <tr><td><b>Label</b></td><td>A group or type for nodes</td><td><code>:Study</code>, <code>:Result</code></td></tr>
+    <tr><td><b>Property</b></td><td>A key-value pair stored on a node <i>or</i> a relationship</td><td><code>phase: 3</code>, <code>page: 45</code></td></tr>
+    <tr><td><b>Relationship</b></td><td>A directed, typed link between two nodes, which can also hold properties</td><td><code>(Study)-[:REPORTS {primary:true}]-&gt;(Result)</code></td></tr>
+  </table>
+
+  <p>Cypher draws graphs with ASCII art: nodes in <code>()</code>, relationships in <code>[]</code>, direction with <code>-&gt;</code>.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Pattern notation (read-only example)"><pre><code>// A node:  (variable:Label {property: value})
+// A relationship:  -[:TYPE {property: value}]-&gt;   (the arrow shows the direction)
+(s:Study {id: 'ZEN-301'})-[:REPORTS {primary: true}]-&gt;(r:Result {value: 78.0})
+//  ^ variable : Label  {properties}     ^ relationship type + properties</code></pre></div>
+
+  <div class="callout why"><strong>Modelling tip from the course: let relationships carry meaning</strong>We don't add a label like <code>:Comparator</code> to Adalimumab. It's a comparator because a result is measured <code>VERSUS</code> it. In the same way, a Result is "primary" because of a property on the <code>REPORTS</code> relationship, not because of its own label.</div>
+
+  <h3>2.2 The minimal schema we'll build</h3>
+  <p>We start from the full GVD evidence schema (14 node types, 24 edge types) and trim it to <b>11 node types and 13 relationship types</b>. That's enough to show every idea without overwhelming you.</p>
+  <div class="schema-wrap"><svg id="schema" viewBox="0 0 960 520" width="100%"></svg></div>
+
+  <h3>2.3 Nodes and their properties</h3>
+  <table>
+    <tr><th>Label</th><th>Layer</th><th>Properties</th></tr>
+    <tr><td><code>Product</code></td><td><span class="pill ref">ref</span></td><td><code>id, name, type</code> (investigational or comparator)</td></tr>
+    <tr><td><code>Indication</code></td><td><span class="pill ref">ref</span></td><td><code>id, name</code></td></tr>
+    <tr><td><code>Study</code></td><td><span class="pill ref">ref</span></td><td><code>id, name, phase, design, year, n</code></td></tr>
+    <tr><td><code>Endpoint</code></td><td><span class="pill ref">ref</span></td><td><code>id, name, category</code> (efficacy, safety, quality_of_life)</td></tr>
+    <tr><td><code>Population</code></td><td><span class="pill ref">ref</span></td><td><code>id, name</code></td></tr>
+    <tr><td><code>Result</code></td><td><span class="pill ref">ref</span></td><td><code>id, text, value, comparatorValue, unit, pValue</code>, plus <code>embedding</code> from Module 5</td></tr>
+    <tr><td><code>SourceDocument</code></td><td><span class="pill ref">ref</span></td><td><code>id, title, docType, year</code></td></tr>
+    <tr><td><code>Dossier</code></td><td><span class="pill proj">proj</span></td><td><code>id, projectId, name, market</code></td></tr>
+    <tr><td><code>Section</code></td><td><span class="pill proj">proj</span></td><td><code>id, projectId, title, order</code></td></tr>
+    <tr><td><code>ValueMessage</code></td><td><span class="pill proj">proj</span></td><td><code>id, projectId, text</code></td></tr>
+    <tr><td><code>Claim</code></td><td><span class="pill proj">proj</span></td><td><code>id, projectId, text, status, updatedAt</code></td></tr>
+  </table>
+
+  <h3>2.4 Relationships and their properties</h3>
+  <table>
+    <tr><th>Pattern</th><th>Layer</th><th>Relationship properties</th></tr>
+    <tr><td><code>(Study)-[:EVALUATES]-&gt;(Product)</code></td><td>ref</td><td><code>role</code></td></tr>
+    <tr><td><code>(Study)-[:IN_INDICATION]-&gt;(Indication)</code></td><td>ref</td><td>none</td></tr>
+    <tr><td><code>(Study)-[:REPORTS]-&gt;(Result)</code></td><td>ref</td><td><code>primary</code> (true/false)</td></tr>
+    <tr><td><code>(Result)-[:MEASURES]-&gt;(Endpoint)</code></td><td>ref</td><td>none</td></tr>
+    <tr><td><code>(Result)-[:FOR_POPULATION]-&gt;(Population)</code></td><td>ref</td><td>none</td></tr>
+    <tr><td><code>(Result)-[:VERSUS]-&gt;(Product)</code></td><td>ref</td><td>none</td></tr>
+    <tr><td><code>(Result)-[:EXTRACTED_FROM]-&gt;(SourceDocument)</code></td><td>ref</td><td><code>page, table</code>, which replaces the separate <code>Locator</code> node</td></tr>
+    <tr><td><code>(Population)-[:SUBGROUP_OF]-&gt;(Population)</code></td><td>ref</td><td><code>criterion</code></td></tr>
+    <tr><td><code>(Result)-[:SUPERSEDES]-&gt;(Result)</code></td><td>ref</td><td><code>reason, date</code> (added in Module 8)</td></tr>
+    <tr><td><code>(Section)-[:PART_OF]-&gt;(Dossier)</code></td><td>proj</td><td>none</td></tr>
+    <tr><td><code>(Claim)-[:APPEARS_IN]-&gt;(Section)</code></td><td>proj</td><td><code>order</code></td></tr>
+    <tr><td><code>(Claim)-[:SUPPORTS]-&gt;(ValueMessage)</code></td><td>proj</td><td>none</td></tr>
+    <tr><td><code>(Claim)-[:BASED_ON]-&gt;(Result)</code></td><td><b>bridge</b></td><td><code>score, method, query, linkedAt</code></td></tr>
+  </table>
+
+  <details><summary>What we removed from the full schema, and why</summary>
+    <ul>
+      <li><b>Locator</b> node: collapsed into <code>page</code>/<code>table</code> properties on <code>EXTRACTED_FROM</code>. This is a nice example of relationship properties.</li>
+      <li><b>Market</b> node: became a <code>market</code> property on <code>Dossier</code>.</li>
+      <li><b>DossierVersion</b>, <code>VERSION_OF</code>, <code>INCLUDES</code>: versioning is an advanced topic.</li>
+      <li><code>CITES</code>, <code>DERIVED_FROM</code>, <code>RELEVANT_TO</code>, Claim-level <code>SUPERSEDES</code>, Result→ValueMessage <code>SUPPORTS</code>, Product <code>IN_INDICATION</code>: useful later, but not needed to learn the core ideas.</li>
+    </ul>
+    <p>Once you finish the course, adding any of these back is just more <code>MERGE</code> statements.</p>
+  </details>
+
+  <div class="callout"><strong>The bridge is the whole point</strong><code>(Claim)-[:BASED_ON]-&gt;(Result)</code> is the only relationship that crosses layers, and it always points <b>from project to reference</b>. Reference nodes never point at project nodes, so deleting a project can never damage the shared evidence.</div>
+</section>
+
+<!-- ===================================================== M3 ===================================================== -->
+<section class="module" id="m3">
+  <div class="eyebrow">Module 3 · Reference layer</div>
+  <h2>Build the reference graph (ingestion)</h2>
+  <p class="lead">First, write a few nodes by hand in Neo4j Browser to learn the syntax. Then load the whole reference layer with a repeatable Python script.</p>
+
+  <h3>3.1 Hands-on in Neo4j Browser</h3>
+  <h4>Create a node with properties</h4>
+  <p><code>MERGE</code> means "find it, or create it if it doesn't exist", so running it twice never makes a duplicate. <code>SET</code> writes properties.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// MERGE: find a Product with this id, or create it if none exists (never duplicates)
+MERGE (p:Product {id: 'P-ZEN'})
+// SET: write (or overwrite) properties on the node
+SET p.name = 'Zentrax', p.type = 'investigational'
+// RETURN: show the node in the result panel
+RETURN p</code></pre></div>
+
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Same pattern for a Study: numbers are stored as numbers, text in quotes
+MERGE (s:Study {id: 'ZEN-301'})
+SET s.name = 'ZEN-301', s.phase = 3, s.design = 'RCT vs placebo', s.year = 2024, s.n = 600
+RETURN s</code></pre></div>
+
+  <h4>Create a relationship with properties</h4>
+  <p>To connect two nodes, <code>MATCH</code> them first, then <code>MERGE</code> the relationship between them.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// 1) MATCH finds the two existing nodes (comma = both patterns at once)
+MATCH (s:Study {id: 'ZEN-301'}), (p:Product {id: 'P-ZEN'})
+// 2) MERGE creates the arrow Study -&gt; Product only if it is not there yet
+MERGE (s)-[e:EVALUATES]-&gt;(p)
+// 3) relationships can have properties too
+SET e.role = 'investigational arm'
+RETURN s, e, p</code></pre></div>
+  <p>The Browser draws the two nodes and the arrow. Click the arrow to see its <code>role</code> property.</p>
+
+  <h4>Read it back</h4>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Find every Study that EVALUATES a Product and return one row per match
+MATCH (s:Study)-[e:EVALUATES]-&gt;(p:Product)
+RETURN s.name AS study, e.role AS role, p.name AS product</code></pre></div>
+  <div class="callout tip"><strong>No clean-up needed</strong>The script below uses the same ids and <code>MERGE</code>, so it reuses these nodes rather than duplicating them.</div>
+
+  <h3>3.2 Uniqueness constraints</h3>
+  <p>A constraint guarantees that no two nodes with the same label share an <code>id</code>. It also creates an index, which makes <code>MERGE</code> and <code>MATCH</code> by id fast. The script creates one per label, like this:</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser (example)"><pre><code>// No two Study nodes may have the same id. Also creates an index, so lookups by id are fast.
+// IF NOT EXISTS: safe to run again
+CREATE CONSTRAINT study_id IF NOT EXISTS
+FOR (n:Study) REQUIRE n.id IS UNIQUE</code></pre></div>
+
+  <h3>3.3 Load the full reference layer with Python</h3>
+  <p>The data lives in plain Python dicts, which stand in for what a real ingestion pipeline would extract from CSRs and publications. Every write uses <b>parameters</b> (<code>$rows</code>, <code>$fid</code>, ...) instead of string-pasting values. That's safer and lets Neo4j cache the query plan.</p>
+  <div class="codeblock" data-lang="python" data-where="s1_build_reference.py"><pre><code>"""Module 3 – ingest the REFERENCE layer: evidence that is true regardless of any dossier.
+Reference nodes never get a projectId.
+
+How the script is organised:
+  1. NODES          – the data for every node, grouped by label
+  2. RELS           – the relationships between nodes (with their properties)
+  3. three functions that write constraints, nodes and relationships into Neo4j
+"""
+from kg import run, show
+
+# ---------------------------------------------------------------------------
+# 1. NODES: a dict of  label -&gt; list of property dicts.
+#    Every node gets a unique, human-readable "id" so we can find it again later.
+#    All other keys become node properties (name, phase, pValue, ...).
+# ---------------------------------------------------------------------------
+NODES = {
+    "Product": [                                   # drugs: the one we study + comparators
+        {"id": "P-ZEN", "name": "Zentrax", "type": "investigational"},
+        {"id": "P-PBO", "name": "Placebo", "type": "comparator"},
+        {"id": "P-ADA", "name": "Adalimumab", "type": "comparator"},
+    ],
+    "Indication": [                                # the disease the drug treats
+        {"id": "IND-PSO", "name": "Moderate-to-severe plaque psoriasis"},
+    ],
+    "Study": [                                     # clinical trials
+        {"id": "ZEN-301", "name": "ZEN-301", "phase": 3, "design": "RCT vs placebo", "year": 2024, "n": 600},
+        {"id": "ZEN-302", "name": "ZEN-302", "phase": 3, "design": "RCT vs active comparator", "year": 2025, "n": 450},
+    ],
+    "Endpoint": [                                  # what was measured; category is used for filtering later
+        {"id": "E-PASI75", "name": "PASI 75 at week 16", "category": "efficacy"},
+        {"id": "E-DLQI", "name": "DLQI 0/1 at week 16", "category": "quality_of_life"},
+        {"id": "E-SAE", "name": "Serious adverse events", "category": "safety"},
+    ],
+    "Population": [                                # which patients a result is about
+        {"id": "POP-ITT", "name": "Intention-to-treat"},
+        {"id": "POP-BIONAIVE", "name": "Biologic-naive"},
+    ],
+    "SourceDocument": [                            # where the numbers were found
+        {"id": "DOC-CSR-301", "title": "ZEN-301 Clinical Study Report", "docType": "CSR", "year": 2025},
+        {"id": "DOC-PUB-302", "title": "Zentrax vs adalimumab head-to-head trial (J Derm Trials)", "docType": "publication", "year": 2025},
+    ],
+    # Results are the heart of the graph. "text" is a readable sentence (embedded in Module 5);
+    # value / comparatorValue / pValue are numbers we can filter on with WHERE.
+    "Result": [
+        {"id": "R1", "value": 78.0, "comparatorValue": 6.0, "unit": "%", "pValue": 0.0001,
+         "text": "In ZEN-301, 78% of patients on Zentrax achieved PASI 75 at week 16 versus 6% on placebo."},
+        {"id": "R2", "value": 62.0, "comparatorValue": 9.0, "unit": "%", "pValue": 0.0001,
+         "text": "Quality of life improved: 62% of Zentrax patients reported DLQI 0/1 at week 16 compared with 9% on placebo."},
+        {"id": "R3", "value": 2.1, "comparatorValue": 1.8, "unit": "%", "pValue": 0.81,
+         "text": "Serious adverse events occurred in 2.1% of Zentrax patients and 1.8% of placebo patients through week 16."},
+        {"id": "R4", "value": 81.0, "comparatorValue": 70.0, "unit": "%", "pValue": 0.003,
+         "text": "In the head-to-head ZEN-302 trial, PASI 75 at week 16 was reached by 81% with Zentrax versus 70% with adalimumab."},
+        {"id": "R5", "value": 84.0, "comparatorValue": 71.0, "unit": "%", "pValue": 0.01,
+         "text": "Among biologic-naive patients in ZEN-302, PASI 75 response was 84% for Zentrax and 71% for adalimumab."},
+        {"id": "R6", "value": 1.2, "comparatorValue": 1.5, "unit": "%", "pValue": 0.62,
+         "text": "Rates of serious infections were low and similar: 1.2% with Zentrax and 1.5% with adalimumab."},
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# 2. RELS: one tuple per relationship.
+#    (from_label, from_id, REL_TYPE, to_label, to_id, {relationship properties})
+#    The arrow always goes from the first node to the second node.
+# ---------------------------------------------------------------------------
+RELS = [
+    ("Study", "ZEN-301", "EVALUATES", "Product", "P-ZEN", {"role": "investigational arm"}),
+    ("Study", "ZEN-302", "EVALUATES", "Product", "P-ZEN", {"role": "investigational arm"}),
+    ("Study", "ZEN-301", "IN_INDICATION", "Indication", "IND-PSO", {}),        # {} = no properties
+    ("Study", "ZEN-302", "IN_INDICATION", "Indication", "IND-PSO", {}),
+    # A node can point at another node of the SAME label: Biologic-naive is a subgroup of ITT.
+    ("Population", "POP-BIONAIVE", "SUBGROUP_OF", "Population", "POP-ITT", {"criterion": "No prior biologic therapy"}),
+]
+
+# Every Result connects to the same five kinds of things, so we describe them as one row each
+# instead of writing 30 tuples by hand:
+# result, study,    endpoint,   population,     versus,  document,      page, table,    primary
+RESULT_LINKS = [
+    ("R1", "ZEN-301", "E-PASI75", "POP-ITT",      "P-PBO", "DOC-CSR-301", 45, "14.2.1", True),
+    ("R2", "ZEN-301", "E-DLQI",   "POP-ITT",      "P-PBO", "DOC-CSR-301", 52, "14.2.4", False),
+    ("R3", "ZEN-301", "E-SAE",    "POP-ITT",      "P-PBO", "DOC-CSR-301", 88, "14.3.1", False),
+    ("R4", "ZEN-302", "E-PASI75", "POP-ITT",      "P-ADA", "DOC-PUB-302", 4,  "2",      True),
+    ("R5", "ZEN-302", "E-PASI75", "POP-BIONAIVE", "P-ADA", "DOC-PUB-302", 6,  "3",      False),
+    ("R6", "ZEN-302", "E-SAE",    "POP-ITT",      "P-ADA", "DOC-PUB-302", 7,  "4",      False),
+]
+# Expand each row into five relationship tuples and append them to RELS.
+for rid, study, endpoint, pop, versus, doc, page, table, primary in RESULT_LINKS:
+    RELS += [
+        ("Study", study, "REPORTS", "Result", rid, {"primary": primary}),          # property on the relationship
+        ("Result", rid, "MEASURES", "Endpoint", endpoint, {}),
+        ("Result", rid, "FOR_POPULATION", "Population", pop, {}),
+        ("Result", rid, "VERSUS", "Product", versus, {}),
+        # page/table live on the relationship: they describe WHERE in the document this result is.
+        ("Result", rid, "EXTRACTED_FROM", "SourceDocument", doc, {"page": page, "table": table}),
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 3. Functions that write to Neo4j
+# ---------------------------------------------------------------------------
+def create_constraints():
+    """One uniqueness constraint per label: no two Study nodes may share an id (and lookups by id get fast)."""
+    for label in NODES:
+        # IF NOT EXISTS makes the statement safe to run again and again.
+        run(f"CREATE CONSTRAINT {label.lower()}_id IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE")
+
+
+def load_nodes():
+    """Create (or update) every node with a single query per label."""
+    # Labels cannot be parameters in Cypher, so the label goes in the f-string; values stay as $parameters.
+    # {{ and }} are how you write a literal { } inside a Python f-string.
+    for label, rows in NODES.items():
+        # UNWIND turns the list $rows into one row per dict, called "row".
+        # MERGE finds the node with that id, or creates it if missing (so no duplicates on re-run).
+        # SET n += row copies every key of the dict onto the node as properties.
+        run(f"UNWIND $rows AS row MERGE (n:{label} {{id: row.id}}) SET n += row", rows=rows)
+
+
+def load_relationships():
+    """Create (or update) every relationship."""
+    for from_label, from_id, rel_type, to_label, to_id, props in RELS:
+        run(f"""
+            // 1) find the two existing nodes by their id
+            MATCH (a:{from_label} {{id: $fid}}), (b:{to_label} {{id: $tid}})
+            // 2) create the arrow between them only if it is not there yet
+            MERGE (a)-[r:{rel_type}]-&gt;(b)
+            // 3) copy the property dict onto the relationship
+            SET r += $props
+        """, fid=from_id, tid=to_id, props=props)
+
+
+# This block only runs when you execute the file directly (python s1_build_reference.py),
+# not when another script imports it.
+if __name__ == "__main__":
+    create_constraints()
+    load_nodes()
+    load_relationships()
+    # labels(n) returns a list of labels; [0] takes the first. count(*) counts rows per label.
+    show(run("MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count ORDER BY label"), "Nodes")
+    # ()-[r]-&gt;() matches every relationship; type(r) gives its type name, e.g. 'REPORTS'.
+    show(run("MATCH ()-[r]-&gt;() RETURN type(r) AS type, count(*) AS count ORDER BY type"), "Relationships")</code></pre></div>
+
+  <div class="codeblock output" data-lang="text" data-where="Expected output"><pre><code>== Nodes ==
+{'label': 'Endpoint', 'count': 3}
+{'label': 'Indication', 'count': 1}
+{'label': 'Population', 'count': 2}
+{'label': 'Product', 'count': 3}
+{'label': 'Result', 'count': 6}
+{'label': 'SourceDocument', 'count': 2}
+{'label': 'Study', 'count': 2}
+
+== Relationships ==
+{'type': 'EVALUATES', 'count': 2}
+{'type': 'EXTRACTED_FROM', 'count': 6}
+{'type': 'FOR_POPULATION', 'count': 6}
+{'type': 'IN_INDICATION', 'count': 2}
+{'type': 'MEASURES', 'count': 6}
+{'type': 'REPORTS', 'count': 6}
+{'type': 'SUBGROUP_OF', 'count': 1}
+{'type': 'VERSUS', 'count': 6}</code></pre></div>
+  <p>Run the script a second time. The counts stay the same, because <code>MERGE</code> makes ingestion <b>idempotent</b> (safe to re-run).</p>
+
+  <h3>3.4 Look at it</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Every node in the database (the Browser also draws the relationships between them)
+MATCH (n) RETURN n</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – the schema Neo4j inferred"><pre><code>// Draws one circle per label and one arrow per relationship type found in the data
+CALL db.schema.visualization()</code></pre></div>
+
+  <div class="card goals"><h4>Checkpoint</h4>
+    <ul><li>What's the difference between <code>CREATE</code> and <code>MERGE</code>?</li>
+    <li>Which relationship stores the page number, and why is that better than a property on <code>Result</code>? (Hint: one result could be extracted from two documents.)</li>
+    <li>Do any reference nodes have a <code>projectId</code>? Run <code>MATCH (n) WHERE n.projectId IS NOT NULL RETURN count(n)</code>.</li></ul>
+  </div>
+</section>
+
+<!-- ===================================================== M4 ===================================================== -->
+<section class="module" id="m4">
+  <div class="eyebrow">Module 4 · Reference layer</div>
+  <h2>Query with Cypher: patterns and value filters</h2>
+  <p class="lead">Cypher works by <b>pattern matching</b>: you describe the shape you want and Neo4j finds every place in the graph that fits. No vectors yet, just exact filters.</p>
+
+  <h3>4.1 Single-node patterns</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – count everything by label"><pre><code>// labels(n) is a list like ['Study']; [0] takes the first label
+// count(*) counts rows per label (Cypher groups by the non-aggregated columns automatically)
+MATCH (n)
+RETURN labels(n)[0] AS label, count(*) AS count
+ORDER BY label</code></pre></div>
+
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – all studies, selected properties"><pre><code>// Return only the properties you need instead of whole nodes
+MATCH (s:Study)
+RETURN s.id, s.design, s.year, s.n
+ORDER BY s.year</code></pre></div>
+
+  <h4>Inline property filter <code>{...}</code> (exact match)</h4>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// {type: 'comparator'} inside the pattern = exact-match filter
+MATCH (p:Product {type: 'comparator'})
+RETURN p.name</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Result"><pre><code>"Placebo"
+"Adalimumab"</code></pre></div>
+
+  <h4><code>WHERE</code> filters (comparisons, AND/OR, IN, string matching)</h4>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – significant results with a response of at least 75%"><pre><code>// WHERE allows comparisons (&lt;, &gt;=, ...) and combining conditions with AND / OR
+MATCH (r:Result)
+WHERE r.pValue &lt; 0.05 AND r.value &gt;= 75
+RETURN r.id, r.value, r.pValue
+ORDER BY r.value DESC        // highest response first</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Result"><pre><code>r.id   r.value  r.pValue
+"R5"   84.0     0.01
+"R4"   81.0     0.003
+"R1"   78.0     0.0001</code></pre></div>
+
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – text filters"><pre><code>// CONTAINS = substring match (case-sensitive); IN = value is one of a list
+MATCH (r:Result)
+WHERE r.text CONTAINS 'adalimumab' OR r.id IN ['R1', 'R2']
+RETURN r.id, r.text</code></pre></div>
+
+  <h3>4.2 Relationship patterns (this is where graphs shine)</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – one hop"><pre><code>// Follow the REPORTS arrow from each study to its results.
+// collect() gathers the result ids of each study into one list.
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)
+RETURN s.id AS study, collect(r.id) AS results</code></pre></div>
+
+  <h4>Multi-hop pattern + filters on several nodes</h4>
+  <p>"Show the efficacy results where Zentrax was compared against adalimumab."</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Three patterns that share the variable r = one connected shape:
+//   study -&gt; result -&gt; comparator Adalimumab,  result -&gt; efficacy endpoint,  result -&gt; population
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)-[:VERSUS]-&gt;(cmp:Product {name: 'Adalimumab'}),
+      (r)-[:MEASURES]-&gt;(e:Endpoint {category: 'efficacy'}),
+      (r)-[:FOR_POPULATION]-&gt;(pop:Population)
+RETURN s.id AS study, e.name AS endpoint, pop.name AS population,
+       r.value AS zentrax, r.comparatorValue AS adalimumab, r.pValue AS p</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Result"><pre><code>study      endpoint              population            zentrax  adalimumab  p
+"ZEN-302"  "PASI 75 at week 16"  "Intention-to-treat"  81.0     70.0        0.003
+"ZEN-302"  "PASI 75 at week 16"  "Biologic-naive"      84.0     71.0        0.01</code></pre></div>
+
+  <h4>Filter on a <i>relationship</i> property</h4>
+  <p>Give the relationship a variable (<code>x</code>) and filter on it like a node.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – results found in the first 50 pages of their document"><pre><code>// Name the relationship (x) to read or filter its properties, just like a node
+MATCH (r:Result)-[x:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+WHERE x.page &lt; 50
+RETURN r.id, d.title, x.page, x.table
+ORDER BY d.title, x.page</code></pre></div>
+
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – primary results only"><pre><code>// Inline filter on a relationship property: only REPORTS arrows with primary = true
+MATCH (s:Study)-[rep:REPORTS {primary: true}]-&gt;(r:Result)
+RETURN s.id, r.text</code></pre></div>
+
+  <h3>4.3 Aggregation and OPTIONAL MATCH</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – results per endpoint"><pre><code>// count() and collect() are aggregations: one output row per endpoint
+MATCH (r:Result)-[:MEASURES]-&gt;(e:Endpoint)
+RETURN e.name AS endpoint, count(r) AS results, collect(r.id) AS ids
+ORDER BY results DESC</code></pre></div>
+  <p><code>OPTIONAL MATCH</code> works like a LEFT JOIN: rows are kept even when the pattern isn't found.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – how many studies evaluate each product?"><pre><code>// Start from every product...
+MATCH (p:Product)
+// ...and OPTIONALLY find studies evaluating it. Products without studies are kept (s = null, count = 0).
+OPTIONAL MATCH (s:Study)-[:EVALUATES]-&gt;(p)
+RETURN p.name AS product, count(s) AS studies</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Result"><pre><code>"Zentrax"     2
+"Placebo"     0
+"Adalimumab"  0</code></pre></div>
+
+  <h3>4.4 Variable-length paths</h3>
+  <p><code>*1..</code> means "follow this relationship type one or more times". It's handy for hierarchies like population subgroups.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// *1.. = follow SUBGROUP_OF one or more times (handles subgroups of subgroups too)
+// path = the whole matched chain; length(path) = number of relationships in it
+MATCH path = (sub:Population)-[:SUBGROUP_OF*1..]-&gt;(parent:Population)
+RETURN sub.name AS subgroup, parent.name AS parent, length(path) AS hops</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – everything within 2 hops of ZEN-302 (graph view)"><pre><code>// [*1..2] = any relationship type, 1 or 2 hops; no arrow head = either direction
+MATCH path = (s:Study {id: 'ZEN-302'})-[*1..2]-(x)
+RETURN path</code></pre></div>
+
+  <h3>4.5 Parameters</h3>
+  <p>In real code, values come in as <code>$parameters</code>. In Neo4j Browser you can set one with <code>:param</code>. The line below stores the text <code>'Placebo'</code> under the name <code>comparator</code>, so any later query can use it as <code>$comparator</code>. (Browser commands that start with <code>:</code> don't accept comments, so the explanation is here instead of in the snippet.)</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser (run as two separate commands)"><pre><code>:param comparator =&gt; 'Placebo'</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// $comparator is filled from the :param you set above
+// (:Product ...) has no variable because we don't need to return it
+MATCH (r:Result)-[:VERSUS]-&gt;(:Product {name: $comparator})
+RETURN r.id, r.text</code></pre></div>
+
+  <h3>4.6 The same queries from Python</h3>
+  <div class="codeblock" data-lang="python" data-where="s2_queries.py"><pre><code>"""Module 4 – Cypher pattern queries with value filters (no vectors yet).
+
+Values are passed as keyword arguments (max_p=0.05) and used in Cypher as $max_p.
+Never paste values into the query text yourself: parameters are safer and faster.
+"""
+from kg import run, show
+
+# Query 1: filter on node properties with WHERE.
+show(run("""
+    MATCH (r:Result)                                  // every Result node, called r
+    WHERE r.pValue &lt; $max_p AND r.value &gt;= $min_value // keep only significant, high-response results
+    RETURN r.id AS id, r.value AS value, r.pValue AS p
+    ORDER BY value DESC                               // biggest response first
+""", max_p=0.05, min_value=75), "Significant results with value &gt;= 75")
+
+# Query 2: a multi-hop pattern. The comma joins two patterns that share the variable r.
+show(run("""
+    MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)-[:VERSUS]-&gt;(cmp:Product {name: $comparator}),
+          (r)-[:MEASURES]-&gt;(e:Endpoint {category: $category})
+    RETURN s.id AS study, e.name AS endpoint, r.value AS zentrax, r.comparatorValue AS comparator
+""", comparator="Adalimumab", category="efficacy"), "Efficacy vs Adalimumab")
+
+# Query 3: filter on a RELATIONSHIP property. Giving the relationship a variable (x) lets us use x.page.
+show(run("""
+    MATCH (r:Result)-[x:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+    WHERE x.page &lt; $max_page
+    RETURN r.id AS id, d.title AS document, x.page AS page
+    ORDER BY document, page
+""", max_page=50), "Results on early pages")
+
+# Query 4: OPTIONAL MATCH keeps products even when no study evaluates them (count becomes 0).
+show(run("""
+    MATCH (p:Product)
+    OPTIONAL MATCH (s:Study)-[:EVALUATES]-&gt;(p)
+    RETURN p.name AS product, count(s) AS studies
+"""), "Studies per product")</code></pre></div>
+
+  <div class="card goals"><h4>Try it yourself</h4>
+    <ol>
+      <li>List every safety result with its study and comparator.</li>
+      <li>Find results where Zentrax beat the comparator by more than 10 points (<code>r.value - r.comparatorValue &gt; 10</code>).</li>
+      <li>Count results per source document.</li>
+    </ol>
+    <details><summary>Solutions</summary>
+<div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// 1 – safety results with their study and comparator
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)-[:MEASURES]-&gt;(:Endpoint {category: 'safety'}),
+      (r)-[:VERSUS]-&gt;(c:Product)
+RETURN s.id, c.name, r.text;</code></pre></div>
+<div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// 2 – arithmetic works inside WHERE: difference between drug and comparator
+MATCH (r:Result)
+WHERE r.value - r.comparatorValue &gt; 10
+RETURN r.id, r.value, r.comparatorValue;</code></pre></div>
+<div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// 3 – group results by document and count them
+MATCH (r:Result)-[:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+RETURN d.title, count(r) AS results;</code></pre></div>
+    </details>
+  </div>
+</section>
+
+<!-- ===================================================== M5 ===================================================== -->
+<section class="module" id="m5">
+  <div class="eyebrow">Module 5 · Reference layer</div>
+  <h2>Add OpenAI embeddings and a vector index</h2>
+  <p class="lead">Exact filters need exact words. To find "results about skin clearance" when the text says "PASI 75", we need <b>semantic</b> search. We turn each <code>Result.text</code> into a vector and index it.</p>
+
+  <h3>5.1 What's happening</h3>
+  <ol class="steps">
+    <li>Read every <code>Result</code> that doesn't have an embedding yet.</li>
+    <li>Send its <code>text</code> to OpenAI <code>text-embedding-3-small</code>, which returns 1536 numbers.</li>
+    <li>Store the list on the node as the property <code>embedding</code>.</li>
+    <li>Create a <b>vector index</b> on <code>Result.embedding</code> with cosine similarity.</li>
+  </ol>
+  <div class="callout why"><strong>Why embed <code>Result</code> and not everything?</strong>In this schema, results are what the retrieval step looks for. Studies, endpoints and documents are reached by <i>following relationships</i> from a matched result. That's the graph advantage over plain vector RAG.</div>
+
+  <h3>5.2 The script</h3>
+  <div class="codeblock" data-lang="python" data-where="s3_embed.py"><pre><code>"""Module 5 – add OpenAI embeddings to Result nodes and create a vector index.
+
+An embedding is a list of numbers that captures the MEANING of a text.
+Texts with similar meaning get vectors that point in similar directions,
+which is what makes "semantic" search possible.
+"""
+from kg import EMBED_DIMS, embed, run, show
+
+# 1. Which results still need an embedding? Re-running the script only embeds new ones,
+#    so you never pay OpenAI twice for the same text.
+todo = run("MATCH (r:Result) WHERE r.embedding IS NULL RETURN r.id AS id, r.text AS text")
+print(f"{len(todo)} result(s) to embed")
+
+if todo:
+    # 2. One API call for the whole batch: send all texts, get back one vector per text (same order).
+    vectors = embed([row["text"] for row in todo])
+
+    # 3. Store each vector as a list property called "embedding" on its node.
+    #    zip() pairs each row with its vector; we send them all in one query via UNWIND.
+    run("""
+        UNWIND $rows AS row
+        MATCH (r:Result {id: row.id})
+        SET r.embedding = row.embedding
+    """, rows=[{"id": row["id"], "embedding": vec} for row, vec in zip(todo, vectors)])
+
+# 4. Create the vector index. Without it Neo4j would have to compare the question with
+#    every node one by one; the index finds the nearest vectors quickly.
+#    - vector.dimensions must equal the model's output size (1536)
+#    - cosine similarity compares the direction of two vectors (recommended by OpenAI)
+#    The backticks around `vector.dimensions` are needed because the name contains a dot.
+run(f"""
+    CREATE VECTOR INDEX result_embedding IF NOT EXISTS
+    FOR (r:Result) ON (r.embedding)
+    OPTIONS {{ indexConfig: {{
+        `vector.dimensions`: {EMBED_DIMS},
+        `vector.similarity_function`: 'cosine'
+    }} }}
+""")
+# Indexes are built in the background; wait (max 300 s) until it is ONLINE before using it.
+run("CALL db.awaitIndexes(300)")
+
+# Sanity checks: every Result should now have a 1536-long list, and the index should be ONLINE.
+show(run("MATCH (r:Result) RETURN r.id AS id, size(r.embedding) AS dims ORDER BY id"), "Embedding sizes")
+show(run("""
+    SHOW INDEXES YIELD name, type, state, labelsOrTypes, properties
+    WHERE type = 'VECTOR'
+    RETURN name, state, labelsOrTypes, properties
+"""), "Vector indexes")</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Expected output"><pre><code>6 result(s) to embed
+
+== Embedding sizes ==
+{'id': 'R1', 'dims': 1536}
+{'id': 'R2', 'dims': 1536}
+...
+{'id': 'R6', 'dims': 1536}
+
+== Vector indexes ==
+{'name': 'result_embedding', 'state': 'ONLINE', 'labelsOrTypes': ['Result'], 'properties': ['embedding']}</code></pre></div>
+
+  <h3>5.3 Inspect in Neo4j Browser</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – peek at the first 5 numbers"><pre><code>// r.embedding is a list of 1536 floats; [0..5] slices the first five
+// size() returns the length of a list
+MATCH (r:Result {id: 'R1'})
+RETURN r.text, r.embedding[0..5] AS first_five, size(r.embedding) AS dims</code></pre></div>
+  <div class="callout tip"><strong>Tip</strong>From now on, avoid <code>RETURN r</code> on Result nodes in Python. Each one carries 1536 floats. Return the specific properties you need instead.</div>
+
+  <div class="card goals"><h4>Checkpoint</h4>
+    <ul><li>Why must the index dimensions (1536) match the embedding model?</li>
+    <li>Run the script again. It should say "0 result(s) to embed". Why?</li></ul>
+  </div>
+</section>
+
+<!-- ===================================================== M6 ===================================================== -->
+<section class="module" id="m6">
+  <div class="eyebrow">Module 6 · Reference layer</div>
+  <h2>Vector search + normal property filters (hybrid retrieval)</h2>
+  <p class="lead">Use the vector index to find semantically similar results, then use ordinary Cypher patterns and <code>WHERE</code> filters to narrow them down and pull in connected context.</p>
+
+  <h3>6.1 The SEARCH clause</h3>
+  <p>Since Neo4j 2026.01, vector search is part of <code>MATCH</code> itself: you write a normal node pattern and add a <code>SEARCH</code> subclause that lets the vector index choose which nodes match.</p>
+  <div class="codeblock" data-lang="cypher" data-where="Shape of every vector query"><pre><code>CYPHER 25                       // use the Cypher version that has SEARCH (safe even if it is already the default)
+MATCH (r:Result)                // r = the nodes we want to find
+  SEARCH r IN (
+    VECTOR INDEX result_embedding   // which vector index to ask (name, not in quotes)
+    FOR $questionVector             // the question's embedding (a list of 1536 numbers)
+    LIMIT $k                        // how many nearest neighbours to return
+  ) SCORE AS score              // similarity in [0, 1], higher = closer
+RETURN r.id, score
+ORDER BY score DESC</code></pre></div>
+  <div class="callout tip"><strong>Older Neo4j (before 2026.01)?</strong>Use the older procedure, which gives the same nodes and scores:<br><code>CALL db.index.vector.queryNodes('result_embedding', $k, $questionVector) YIELD node AS r, score</code><br>Neo4j 2026.x still runs it but shows a deprecation warning.</div>
+
+  <h4>Try it in Browser without an API call: "more like this"</h4>
+  <p>You can use an existing node's embedding as the query vector:</p>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Use an existing node's embedding as the "question": find results similar to R4
+CYPHER 25
+MATCH (seed:Result {id: 'R4'})
+// SEARCH must be in its own MATCH, and its pattern may contain only the searched node
+MATCH (node:Result)
+  SEARCH node IN (VECTOR INDEX result_embedding FOR seed.embedding LIMIT 4) SCORE AS score
+WITH node, score
+WHERE node &lt;&gt; seed                 // the most similar node is R4 itself, so skip it
+RETURN node.id, round(score, 3) AS score, node.text</code></pre></div>
+  <p>You'll most likely see R5 and R1 near the top, since they're also PASI 75 results.</p>
+
+  <h3>6.2 Pure vector vs. vector + filters</h3>
+  <p>The key pattern is: <b>vector search first → <code>MATCH</code> the surrounding graph → filter with <code>WHERE</code></b>.</p>
+  <div class="codeblock" data-lang="cypher" data-where="The hybrid query used in s4_vector_search.py"><pre><code>CYPHER 25
+// 1) the vector index proposes the k most similar results (as r) with their score
+MATCH (r:Result)
+  SEARCH r IN (VECTOR INDEX result_embedding FOR $qvec LIMIT $k) SCORE AS score
+// 2) walk from each candidate to its study, endpoint, comparator and population
+MATCH (s:Study)-[:REPORTS]-&gt;(r)-[:MEASURES]-&gt;(e:Endpoint),
+      (r)-[:VERSUS]-&gt;(cmp:Product),
+      (r)-[:FOR_POPULATION]-&gt;(pop:Population)
+// 3) keep only candidates that pass the filters
+WHERE score &gt;= $minScore
+  AND ($category IS NULL OR e.category = $category)      // optional filter
+  AND ($versus   IS NULL OR cmp.name   = $versus)        // optional filter
+  AND ($maxP     IS NULL OR r.pValue  &lt;= $maxP)          // optional filter
+  AND NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(r) }        // skip outdated results (Module 8)
+RETURN r.id AS id, round(score, 3) AS score, s.id AS study, e.name AS endpoint,
+       cmp.name AS versus, pop.name AS population, r.text AS text
+ORDER BY score DESC</code></pre></div>
+  <div class="callout why"><strong>The <code>$x IS NULL OR ...</code> trick</strong>This lets one fixed query serve every combination of filters. Pass <code>None</code> to switch a filter off. You avoid building Cypher strings by hand, so there's no injection risk.</div>
+  <div class="callout warn"><strong>Post-filtering caveat</strong><code>SEARCH</code> returns the top <code>k</code> <i>before</i> your <code>WHERE</code> runs. If filters remove most hits, you can end up with too few rows. Ask for a larger <code>k</code> (for example 10–50) than the number of rows you finally want.</div>
+
+  <h3>6.3 The retrieval module</h3>
+  <div class="codeblock" data-lang="python" data-where="s4_vector_search.py"><pre><code>"""Module 6 – vector search, hybrid (vector + filter) search, and graph-expanded context.
+
+Three ideas, from simple to powerful:
+  plain_search()  – "which results MEAN something similar to my question?"
+  search()        – the same, plus exact filters on the graph (category, comparator, p-value)
+  context_for()   – follow relationships from the hits to their study and source page
+"""
+import os
+
+from kg import embed, run, show
+
+# The SEARCH clause (Neo4j 2026.01+, Cypher 25) asks the vector index 'result_embedding'
+# for the k Result nodes whose embeddings are closest to the query vector ($qvec).
+# SCORE AS score adds the similarity (0..1, higher = closer).
+# "CYPHER 25" on the first line makes sure the new syntax is used even if the database
+# defaults to the older Cypher 5.
+PLAIN_SEARCH = """
+CYPHER 25
+MATCH (r:Result)
+  SEARCH r IN (VECTOR INDEX result_embedding FOR $qvec LIMIT $k) SCORE AS score
+RETURN r.id AS id, round(score, 3) AS score, r.text AS text
+ORDER BY score DESC
+"""
+
+# Hybrid search = vector search first, then ordinary Cypher on the hits:
+#   1. SEARCH lets the vector index propose the k most similar Result nodes (named r)
+#   2. the second MATCH walks from r to its study, endpoint, comparator and population
+#   3. WHERE keeps only the rows that pass the filters
+# "$category IS NULL OR ..." means: if Python passed None, the filter is switched off.
+HYBRID_SEARCH = """
+CYPHER 25
+MATCH (r:Result)
+  SEARCH r IN (VECTOR INDEX result_embedding FOR $qvec LIMIT $k) SCORE AS score
+MATCH (s:Study)-[:REPORTS]-&gt;(r)-[:MEASURES]-&gt;(e:Endpoint),
+      (r)-[:VERSUS]-&gt;(cmp:Product),
+      (r)-[:FOR_POPULATION]-&gt;(pop:Population)
+WHERE score &gt;= $minScore
+  AND ($category IS NULL OR e.category = $category)
+  AND ($versus   IS NULL OR cmp.name   = $versus)
+  AND ($maxP     IS NULL OR r.pValue  &lt;= $maxP)
+  AND NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(r) }   // skip results replaced by a newer one (Module 8)
+RETURN r.id AS id, round(score, 3) AS score, s.id AS study, e.name AS endpoint,
+       cmp.name AS versus, pop.name AS population, r.text AS text
+ORDER BY score DESC
+"""
+
+# Graph expansion: given result ids, collect the extra facts an LLM needs to cite properly.
+CONTEXT = """
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)-[x:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+WHERE r.id IN $ids
+RETURN r.id AS id, r.text AS text, s.id AS study, s.design AS design, s.n AS n,
+       d.title AS source, x.page AS page
+"""
+
+
+def plain_search(question, k=3):
+    """Vector similarity only."""
+    # embed() takes a LIST of texts and returns a list of vectors; [0] picks the one vector we need.
+    return run(PLAIN_SEARCH, k=k, qvec=embed([question])[0])
+
+
+def search(question, k=10, min_score=0.0, category=None, versus=None, max_p=None):
+    """Vector similarity + optional graph/value filters. Pass None to switch a filter off.
+
+    k         – how many candidates the vector index returns BEFORE filtering (keep it generous)
+    min_score – drop weak matches (0.7 is a sensible start for this model)
+    """
+    return run(HYBRID_SEARCH, k=k, qvec=embed([question])[0], minScore=min_score,
+               category=category, versus=versus, maxP=max_p)
+
+
+def context_for(result_ids):
+    """Follow relationships from matched results to their study and source page."""
+    return run(CONTEXT, ids=result_ids)
+
+
+def answer(question, search_fn=search):
+    """Optional bonus: GraphRAG – retrieve, expand via the graph, then ask an LLM.
+    search_fn lets Module 6P swap in pgvector retrieval without changing this function."""
+    from openai import OpenAI
+
+    # Step 1 – RETRIEVE: best 3 results above the threshold.
+    hits = search_fn(question, k=5, min_score=0.7)[:3]
+    # Step 2 – EXPAND: fetch study design, sample size and page for each hit, and format
+    #          them as bullet lines the LLM can quote.
+    evidence = "\n".join(
+        f"- {c['text']} (Study {c['study']}, {c['design']}, n={c['n']}; source: {c['source']}, p.{c['page']})"
+        for c in context_for([h["id"] for h in hits])
+    )
+    # Step 3 – GENERATE: the system message restricts the model to our evidence (reduces hallucination).
+    response = OpenAI().chat.completions.create(
+        model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+        messages=[
+            {"role": "system", "content": "Answer only from the evidence and cite the source and page. "
+                                          "If the evidence is insufficient, say you don't know."},
+            {"role": "user", "content": f"Evidence:\n{evidence}\n\nQuestion: {question}"},
+        ],
+    )
+    return response.choices[0].message.content
+
+
+if __name__ == "__main__":
+    question = "How does Zentrax compare with adalimumab for skin clearance?"
+    # Pure similarity: notice a SAFETY result can rank first because it mentions both drug names.
+    show(plain_search(question), f"Plain vector search: {question}")
+
+    # Same idea, but only safety endpoints are allowed through.
+    show(search("Is the drug safe?", category="safety"), "Hybrid: safety results only")
+
+    # Two filters at once: comparator must be Placebo AND p-value at most 0.05.
+    show(search("skin clearance response", versus="Placebo", max_p=0.05),
+         "Hybrid: skin clearance vs placebo, p &lt;= 0.05")
+
+    # No graph filters, only a minimum similarity score.
+    show(search("How well does Zentrax work in patients new to biologics?", min_score=0.7),
+         "Hybrid: score threshold only")
+
+    # Retrieve, then walk the graph to get study + page for each hit.
+    hits = search("quality of life", k=3)
+    show(context_for([h["id"] for h in hits]), "Graph-expanded context for 'quality of life'")
+
+    print("\n== LLM answer ==")
+    print(answer(question))</code></pre></div>
+
+  <div class="codeblock output" data-lang="text" data-where="Real output from a test run (scores may differ slightly on yours)"><pre><code>== Plain vector search: How does Zentrax compare with adalimumab for skin clearance? ==
+{'id': 'R6', 'score': 0.827, 'text': 'Rates of serious infections were low and similar: ...'}
+{'id': 'R4', 'score': 0.809, 'text': 'In the head-to-head ZEN-302 trial, PASI 75 at week 16 ...'}
+{'id': 'R5', 'score': 0.799, 'text': 'Among biologic-naive patients in ZEN-302, ...'}
+
+== Hybrid: safety results only ==
+{'id': 'R3', 'score': 0.675, 'study': 'ZEN-301', 'endpoint': 'Serious adverse events', 'versus': 'Placebo', ...}
+{'id': 'R6', 'score': 0.649, 'study': 'ZEN-302', 'endpoint': 'Serious adverse events', 'versus': 'Adalimumab', ...}
+
+== Hybrid: skin clearance vs placebo, p &lt;= 0.05 ==
+{'id': 'R1', 'score': 0.639, 'study': 'ZEN-301', 'endpoint': 'PASI 75 at week 16', 'versus': 'Placebo', ...}
+{'id': 'R2', 'score': 0.63, 'study': 'ZEN-301', 'endpoint': 'DLQI 0/1 at week 16', 'versus': 'Placebo', ...}
+
+== Hybrid: score threshold only ==
+{'id': 'R5', 'score': 0.81, ...}   (then R6, R3, R1, R4, R2, all above 0.7)
+
+== LLM answer ==
+Zentrax demonstrates better skin clearance compared to adalimumab in the ZEN-302 trial. Specifically,
+PASI 75 at week 16 was achieved by 81% of patients on Zentrax compared to 70% for those on adalimumab
+(source: ... J Derm Trials, p.4). Additionally, among biologic-naive patients ... 84% ... versus 71% ... (p.6).</code></pre></div>
+  <p>The top plain-search hit is R6, a <i>safety</i> result, because it mentions both "Zentrax" and "adalimumab". Pure similarity doesn't know you meant efficacy. Adding <code>category="efficacy"</code> fixes that, which is why hybrid retrieval matters.</p>
+
+  <div class="callout"><strong>About score thresholds</strong>Neo4j turns cosine similarity into a score between 0 and 1 (<code>(1 + cosine) / 2</code>). With <code>text-embedding-3-small</code>, related texts usually score around 0.75–0.90 and unrelated ones around 0.55–0.65. Treat <code>0.7</code> as a starting point and tune it on your data.</div>
+
+  <div class="card goals"><h4>Try it yourself</h4>
+    <ul>
+      <li>Search "itching relief" with <code>category="efficacy"</code> and compare it to the unfiltered search.</li>
+      <li>Add a filter <code>$study</code> on <code>s.id</code> to <code>HYBRID_SEARCH</code> and the <code>search()</code> function.</li>
+      <li>Extend <code>CONTEXT</code> to also return the population name.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================================================== M7 ===================================================== -->
+<section class="module" id="m7">
+  <div class="eyebrow">Module 7 · Project layer</div>
+  <h2>Retrieval writes project nodes into the graph</h2>
+  <p class="lead">This is where the two layers meet. A dossier project defines sections and value messages. For each claim we <b>retrieve</b> evidence with hybrid search and <b>write</b> a <code>Claim</code> node whose <code>BASED_ON</code> relationships point at the shared reference <code>Result</code> nodes. Nothing is copied.</p>
+
+  <h3>7.1 The flow</h3>
+  <ol class="steps">
+    <li><b>Project skeleton</b>: create <code>Dossier</code> → <code>Section</code>s and <code>ValueMessage</code>s, all stamped with <code>projectId</code>.</li>
+    <li><b>Retrieve</b>: run <code>search()</code> from Module 6 with a question and filters.</li>
+    <li><b>Ingest the retrieval</b>: <code>MERGE</code> a <code>Claim</code> (with <code>projectId</code>), connect it to its section and value message, and create <code>BASED_ON</code> relationships to the hits. The retrieval score and query are stored <i>on the relationship</i> for auditability.</li>
+  </ol>
+
+  <div class="grid2">
+    <div class="callout"><strong>Project-layer rules</strong>
+      <ul style="margin:4px 0 0">
+        <li>Every project node has <code>projectId</code>.</li>
+        <li>Project ids are prefixed, for example <code>GVD-DE-2026:C1</code>, so they're unique across projects.</li>
+        <li>A claim can only attach to a section or value message <b>of the same project</b> (enforced in the <code>MATCH</code>).</li>
+      </ul></div>
+    <div class="callout why"><strong>Why store score and query on <code>BASED_ON</code>?</strong>A reviewer can later ask "why is this result linked to this claim?" and see the search question and score that produced the link.</div>
+  </div>
+
+  <h3>7.2 The script</h3>
+  <div class="codeblock" data-lang="python" data-where="s5_project_layer.py"><pre><code>"""Module 7 – PROJECT layer: dossier skeleton + claims written from retrieval results.
+Every node created here carries a projectId and links INTO the reference layer.
+
+Flow:  create_project()  -&gt;  write_claim() = search() + WRITE_CLAIM query
+"""
+from kg import run, show
+from s4_vector_search import search          # the hybrid search from Module 6
+
+PROJECT_LABELS = ["Dossier", "Section", "ValueMessage", "Claim"]
+
+
+def ensure_project_schema():
+    """Constraints + indexes for the project-layer labels (safe to run every time)."""
+    for label in PROJECT_LABELS:
+        # Unique ids, exactly like the reference layer.
+        run(f"CREATE CONSTRAINT {label.lower()}_id IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE")
+        # An ordinary index on projectId makes "give me everything of project X" fast.
+        run(f"CREATE INDEX {label.lower()}_project IF NOT EXISTS FOR (n:{label}) ON (n.projectId)")
+
+
+def create_project(pid, name, market, sections, value_messages):
+    """Create the dossier, its sections and its value messages. All get projectId = pid."""
+    run("""
+        // the dossier node itself; its id IS the project id
+        MERGE (d:Dossier {id: $pid})
+        SET d.projectId = $pid, d.name = $name, d.market = $market
+        // WITH passes d on to the next part of the query
+        WITH d
+        // one row per section dict in the $sections list
+        UNWIND $sections AS sec
+        // ids are prefixed with the project id ('GVD-DE-2026:S-EFF') so they are unique across projects
+        MERGE (s:Section {id: $pid + ':' + sec.key})
+        SET s.projectId = $pid, s.title = sec.title, s.order = sec.order
+        MERGE (s)-[:PART_OF]-&gt;(d)
+    """, pid=pid, name=name, market=market, sections=sections)
+
+    run("""
+        UNWIND $vms AS vm
+        MERGE (v:ValueMessage {id: $pid + ':' + vm.key})
+        SET v.projectId = $pid, v.text = vm.text
+    """, pid=pid, vms=value_messages)
+
+
+# Writes ONE claim plus all its links in a single query.
+WRITE_CLAIM = """
+// 1) Find the value message and section. Requiring projectId = $pid means a claim
+//    can never be attached to another project's section by mistake.
+MATCH (vm:ValueMessage {id: $vmId, projectId: $pid}),
+      (sec:Section     {id: $secId, projectId: $pid})
+// 2) Create/update the claim node (project layer, so it gets projectId).
+MERGE (c:Claim {id: $claimId})
+SET c.projectId = $pid, c.text = $text, c.status = 'draft', c.updatedAt = datetime()
+// 3) Project-layer links.
+MERGE (c)-[:SUPPORTS]-&gt;(vm)
+MERGE (c)-[a:APPEARS_IN]-&gt;(sec)
+SET a.order = $order
+// 4) The BRIDGE into the reference layer: one BASED_ON per retrieved result.
+//    The retrieval score, method and question are stored ON the relationship for auditing.
+WITH c
+UNWIND $evidence AS ev
+MATCH (r:Result {id: ev.id})
+MERGE (c)-[b:BASED_ON]-&gt;(r)
+SET b.score = ev.score, b.method = $method, b.query = $question, b.linkedAt = datetime()
+RETURN c.id AS claim, collect(r.id) AS basedOn
+"""
+
+
+def write_claim(pid, key, text, vm_key, section_key, question,
+                order=1, top_n=2, min_score=0.7, search_fn=search, method="neo4j-vector+filter", **filters):
+    """Retrieve evidence for a claim, then write the claim and its BASED_ON links.
+    search_fn / method let Module 7P plug in pgvector retrieval instead of the Neo4j vector index.
+
+    pid / key        – project id and short claim key; the stored id becomes 'pid:key'
+    question         – what we search for in the evidence
+    top_n            – how many of the best hits become BASED_ON links
+    **filters        – any extra keyword (category=..., versus=...) is passed on to the search
+    """
+    # RETRIEVAL: ask for 10 candidates, keep the best top_n.
+    hits = search_fn(question, k=10, min_score=min_score, **filters)[:top_n]
+    if not hits:
+        # No good evidence: better to write nothing than an unsupported claim.
+        print(f"No evidence above {min_score} for {question!r}; claim NOT written")
+        return []
+    print(f"\n{pid}:{key}  retrieved -&gt; {[(h['id'], h['score']) for h in hits]}")
+    # INGESTION: write the claim and its links back into the graph.
+    rows = run(WRITE_CLAIM, pid=pid, claimId=f"{pid}:{key}", text=text,
+               vmId=f"{pid}:{vm_key}", secId=f"{pid}:{section_key}", order=order,
+               question=question, method=method,
+               evidence=[{"id": h["id"], "score": h["score"]} for h in hits])
+    if not rows:
+        # The MATCH in step 1 found nothing (wrong key or another project's section).
+        print("Section or value message not found in this project; nothing written")
+    return rows
+
+
+if __name__ == "__main__":
+    ensure_project_schema()
+
+    # ---------- Project 1: German GVD ----------
+    DE = "GVD-DE-2026"
+    create_project(DE, "Zentrax GVD - Germany", "Germany",
+                   sections=[{"key": "S-EFF", "title": "Clinical efficacy", "order": 1},
+                             {"key": "S-SAF", "title": "Safety", "order": 2}],
+                   value_messages=[{"key": "VM-EFF", "text": "Zentrax delivers superior skin clearance"},
+                                   {"key": "VM-SAF", "text": "Zentrax has a favourable safety profile"},
+                                   {"key": "VM-QOL", "text": "Zentrax improves patients' quality of life"}])
+
+    # category="efficacy" leaves only the three PASI 75 results, so top_n=3 takes all of them.
+    show(write_claim(DE, "C1", "Zentrax achieved higher PASI 75 response rates than placebo and adalimumab at week 16.",
+                     vm_key="VM-EFF", section_key="S-EFF", order=1,
+                     question="PASI 75 skin clearance response at week 16",
+                     top_n=3, category="efficacy"), "DE claim C1")
+
+    show(write_claim(DE, "C2", "Serious adverse event rates with Zentrax were comparable to placebo and adalimumab.",
+                     vm_key="VM-SAF", section_key="S-SAF", order=1,
+                     question="serious adverse events and infections",
+                     top_n=2, category="safety"), "DE claim C2")
+    # Note: VM-QOL gets no claim on purpose – Module 8 finds it as a "gap".
+
+    # ---------- Project 2: UK GVD reuses the SAME evidence ----------
+    UK = "GVD-UK-2026"
+    create_project(UK, "Zentrax GVD - United Kingdom", "United Kingdom",
+                   sections=[{"key": "S-EFF", "title": "Comparative effectiveness", "order": 1}],
+                   value_messages=[{"key": "VM-EFF", "text": "Zentrax outperforms adalimumab in biologic-naive patients"}])
+
+    show(write_claim(UK, "C1", "In biologic-naive patients, Zentrax outperformed adalimumab on PASI 75.",
+                     vm_key="VM-EFF", section_key="S-EFF", order=1,
+                     question="PASI 75 response in biologic-naive patients compared with adalimumab",
+                     top_n=1, category="efficacy", versus="Adalimumab"), "UK claim C1")
+
+    # coalesce() returns the first non-null value: reference nodes have no projectId, so they show as 'reference'.
+    show(run("""
+        MATCH (n)
+        RETURN coalesce(n.projectId, 'reference') AS layer, labels(n)[0] AS label, count(*) AS count
+        ORDER BY layer, label
+    """), "Nodes per layer")</code></pre></div>
+
+  <div class="codeblock output" data-lang="text" data-where="Real output from a test run"><pre><code>GVD-DE-2026:C1  retrieved -&gt; [('R1', 0.792), ('R4', 0.789), ('R5', 0.764)]
+== DE claim C1 ==
+{'claim': 'GVD-DE-2026:C1', 'basedOn': ['R1', 'R4', 'R5']}
+
+GVD-DE-2026:C2  retrieved -&gt; [('R6', 0.754), ('R3', 0.749)]
+== DE claim C2 ==
+{'claim': 'GVD-DE-2026:C2', 'basedOn': ['R6', 'R3']}
+
+GVD-UK-2026:C1  retrieved -&gt; [('R5', 0.893)]
+== UK claim C1 ==
+{'claim': 'GVD-UK-2026:C1', 'basedOn': ['R5']}
+
+== Nodes per layer ==
+{'layer': 'GVD-DE-2026', 'label': 'Claim', 'count': 2}
+{'layer': 'GVD-DE-2026', 'label': 'Dossier', 'count': 1}
+{'layer': 'GVD-DE-2026', 'label': 'Section', 'count': 2}
+{'layer': 'GVD-DE-2026', 'label': 'ValueMessage', 'count': 3}
+{'layer': 'GVD-UK-2026', 'label': 'Claim', 'count': 1}
+{'layer': 'GVD-UK-2026', 'label': 'Dossier', 'count': 1}
+{'layer': 'GVD-UK-2026', 'label': 'Section', 'count': 1}
+{'layer': 'GVD-UK-2026', 'label': 'ValueMessage', 'count': 1}
+{'layer': 'reference', 'label': 'Endpoint', 'count': 3}
+...                                   (reference counts unchanged: still 19 nodes)</code></pre></div>
+  <p>The filters make the evidence choice predictable. <code>category="efficacy"</code> leaves only the three PASI 75 results, and <code>category="safety"</code> leaves R3 and R6. The UK query adds <code>versus="Adalimumab"</code>, so the vector score only needs to choose between R4 and R5.</p>
+
+  <h3>7.3 See both layers in Neo4j Browser</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – one project and the evidence it links to"><pre><code>// Dossier &lt;- Section &lt;- Claim -&gt; Result: the project layer and the evidence it points to
+MATCH path = (d:Dossier {projectId: 'GVD-DE-2026'})&lt;-[:PART_OF]-(:Section)&lt;-[:APPEARS_IN]-(c:Claim)-[:BASED_ON]-&gt;(r:Result)
+// also draw each claim's value message, if it has one
+OPTIONAL MATCH vmPath = (c)-[:SUPPORTS]-&gt;(:ValueMessage)
+RETURN path, vmPath</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – shared evidence: both projects point at R5"><pre><code>// Every claim (from any project) that is based on result R5
+MATCH path = (c:Claim)-[:BASED_ON]-&gt;(r:Result {id: 'R5'})
+RETURN path</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – audit a link"><pre><code>// The BASED_ON relationship stores how each link was made: score, method, question, time
+MATCH (c:Claim)-[b:BASED_ON]-&gt;(r:Result)
+RETURN c.id, r.id, b.score, b.method, b.query, b.linkedAt
+ORDER BY c.id</code></pre></div>
+
+  <div class="card goals"><h4>Try it yourself</h4>
+    <ul>
+      <li>DE's <code>VM-QOL</code> has no claim yet. Write one with <code>write_claim(DE, "C3", ..., vm_key="VM-QOL", section_key="S-EFF", question="quality of life DLQI", category="quality_of_life", top_n=1)</code>. Run Module 8 before and after to watch the gap disappear.</li>
+      <li>Call <code>write_claim(UK, ..., section_key="S-SAF", ...)</code>. <code>S-SAF</code> exists only in the DE project, so the project check in <code>WRITE_CLAIM</code> finds nothing and writes nothing.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================================================== M8 ===================================================== -->
+<section class="module" id="m8">
+  <div class="eyebrow">Module 8 · Both layers</div>
+  <h2>Cross-layer capability queries</h2>
+  <p class="lead">The schema was designed backwards from questions like these. Each one is a short Cypher pattern because the answer is literally a path in the graph.</p>
+
+  <table>
+    <tr><th>Capability</th><th>Question</th><th>Pattern</th></tr>
+    <tr><td><b>Traceability</b></td><td>Where exactly does this claim come from?</td><td>Claim → Result → SourceDocument (page)</td></tr>
+    <tr><td><b>Reuse</b></td><td>Which evidence is used by more than one dossier?</td><td>Result ← Claim, grouped by projectId</td></tr>
+    <tr><td><b>Gap finding</b></td><td>Which value messages have no supporting claim?</td><td>ValueMessage without an incoming SUPPORTS</td></tr>
+    <tr><td><b>Impact analysis</b></td><td>A result was updated. Which claims in which dossiers must be reviewed?</td><td>new SUPERSEDES old ← Claim → Section → Dossier</td></tr>
+  </table>
+
+  <h3>8.1 The script</h3>
+  <div class="codeblock" data-lang="python" data-where="s6_capability_queries.py"><pre><code>"""Module 8 – capability queries that cross the reference and project layers.
+
+Each question below is answered by ONE graph pattern, because the answer is literally a path:
+  1. Traceability  Claim -&gt; Result -&gt; SourceDocument (page)
+  2. Reuse         Result &lt;- Claims from several projects
+  3. Gaps          ValueMessage with no incoming SUPPORTS
+  4. Impact        new Result SUPERSEDES old Result &lt;- Claim -&gt; Section -&gt; Dossier
+  5. Isolation     delete one project without touching shared evidence
+"""
+from kg import embed, run, show
+from s5_project_layer import create_project
+
+# 1. TRACEABILITY: claim -&gt; result -&gt; study + document page
+#    Two MATCH clauses: the first walks claim -&gt; result -&gt; document, the second adds the study.
+show(run("""
+    MATCH (c:Claim {id: $claimId})-[b:BASED_ON]-&gt;(r:Result)-[x:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+    MATCH (s:Study)-[:REPORTS]-&gt;(r)
+    RETURN r.id AS result, b.score AS score, s.id AS study, d.title AS document, x.page AS page, x.table AS tbl
+    ORDER BY result
+""", claimId="GVD-DE-2026:C1"), "1. Traceability for GVD-DE-2026:C1")
+
+# 2. REUSE: reference results used by more than one project
+#    collect(DISTINCT ...) gathers the project ids per result into a list; size() counts them.
+#    WITH works like a pipe: aggregate first, then filter on the aggregate.
+show(run("""
+    MATCH (c:Claim)-[:BASED_ON]-&gt;(r:Result)
+    WITH r, collect(DISTINCT c.projectId) AS projects
+    WHERE size(projects) &gt; 1
+    RETURN r.id AS result, projects, r.text AS text
+"""), "2. Evidence reused across projects")
+
+# 3. GAPS: value messages with no supporting claim, per project
+#    NOT EXISTS { pattern } is true when the pattern cannot be found.
+show(run("""
+    MATCH (vm:ValueMessage)
+    WHERE NOT EXISTS { (vm)&lt;-[:SUPPORTS]-(:Claim) }
+    RETURN vm.projectId AS project, vm.id AS valueMessage, vm.text AS text
+"""), "3. Value messages without evidence")
+
+# 4. IMPACT: a final analysis supersedes R1 -&gt; which claims are affected?
+#    First simulate ingestion of a corrected result (reference layer, so no projectId).
+new_result = {
+    "id": "R1-FINAL", "value": 79.0, "comparatorValue": 5.0, "unit": "%", "pValue": 0.0001,
+    "text": "Final analysis of ZEN-301: 79% of patients on Zentrax achieved PASI 75 at week 16 versus 5% on placebo.",
+}
+run("""
+    // find the old result and everything it is connected to
+    MATCH (old:Result {id: 'R1'})&lt;-[:REPORTS]-(s:Study),
+          (old)-[:MEASURES]-&gt;(e:Endpoint),
+          (old)-[:FOR_POPULATION]-&gt;(pop:Population),
+          (old)-[:VERSUS]-&gt;(cmp:Product),
+          (old)-[:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+    // create the new result (with its embedding so the Neo4j vector index can find it)
+    MERGE (new:Result {id: $row.id})
+    SET new += $row, new.embedding = $embedding
+    // give it the same connections as the old one
+    MERGE (s)-[:REPORTS {primary: true}]-&gt;(new)
+    MERGE (new)-[:MEASURES]-&gt;(e)
+    MERGE (new)-[:FOR_POPULATION]-&gt;(pop)
+    MERGE (new)-[:VERSUS]-&gt;(cmp)
+    MERGE (new)-[:EXTRACTED_FROM {page: 112, table: '14.2.1a'}]-&gt;(d)
+    // and record that it replaces the old one
+    MERGE (new)-[sup:SUPERSEDES]-&gt;(old)
+    SET sup.reason = 'final analysis', sup.date = date('2026-03-01')
+""", row=new_result, embedding=embed([new_result["text"]])[0])
+
+#    Now the impact query: follow SUPERSEDES back to old results, then to the claims using them,
+#    their sections and dossiers. SET flags each affected claim for human review.
+show(run("""
+    MATCH (new:Result)-[:SUPERSEDES]-&gt;(old:Result)&lt;-[:BASED_ON]-(c:Claim)-[:APPEARS_IN]-&gt;(sec:Section)-[:PART_OF]-&gt;(d:Dossier)
+    SET c.status = 'needs_review'
+    RETURN d.projectId AS project, sec.title AS section, c.id AS claim,
+           old.id AS outdated, new.id AS replacement, c.status AS status
+"""), "4. Impact of superseded evidence")
+
+# 5. PROJECT ISOLATION: delete a whole project without touching reference evidence
+#    Create a throw-away project, count reference nodes, delete the project, count again.
+create_project("GVD-SANDBOX", "Throw-away dossier", "Nowhere",
+               sections=[{"key": "S1", "title": "Scratch", "order": 1}],
+               value_messages=[{"key": "VM1", "text": "temporary"}])
+before = run("MATCH (n) WHERE n.projectId IS NULL RETURN count(n) AS referenceNodes")[0]
+# DETACH DELETE removes the nodes AND their relationships. Only nodes with this projectId match.
+run("MATCH (n {projectId: $pid}) DETACH DELETE n", pid="GVD-SANDBOX")
+after = run("MATCH (n) WHERE n.projectId IS NULL RETURN count(n) AS referenceNodes")[0]
+show([{"before": before["referenceNodes"], "after": after["referenceNodes"]}],
+     "5. Reference nodes before/after deleting GVD-SANDBOX")</code></pre></div>
+
+  <div class="codeblock output" data-lang="text" data-where="Expected output (scores approximate)"><pre><code>== 1. Traceability for GVD-DE-2026:C1 ==
+{'result': 'R1', 'score': 0.792, 'study': 'ZEN-301', 'document': 'ZEN-301 Clinical Study Report', 'page': 45, 'tbl': '14.2.1'}
+{'result': 'R4', 'score': 0.789, 'study': 'ZEN-302', 'document': 'Zentrax vs adalimumab head-to-head trial (J Derm Trials)', 'page': 4, 'tbl': '2'}
+{'result': 'R5', 'score': 0.764, 'study': 'ZEN-302', 'document': 'Zentrax vs adalimumab head-to-head trial (J Derm Trials)', 'page': 6, 'tbl': '3'}
+
+== 2. Evidence reused across projects ==
+{'result': 'R5', 'projects': ['GVD-DE-2026', 'GVD-UK-2026'], 'text': 'Among biologic-naive patients in ZEN-302, ...'}
+
+== 3. Value messages without evidence ==
+{'project': 'GVD-DE-2026', 'valueMessage': 'GVD-DE-2026:VM-QOL', 'text': "Zentrax improves patients' quality of life"}
+
+== 4. Impact of superseded evidence ==
+{'project': 'GVD-DE-2026', 'section': 'Clinical efficacy', 'claim': 'GVD-DE-2026:C1', 'outdated': 'R1', 'replacement': 'R1-FINAL', 'status': 'needs_review'}
+
+== 5. Reference nodes before/after deleting GVD-SANDBOX ==
+{'before': 20, 'after': 20}</code></pre></div>
+  <p>The reference layer has 20 nodes in step 5 because step 4 added <code>R1-FINAL</code>. Notice also that <code>search()</code> from Module 6 now skips R1 automatically, thanks to the <code>NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(r) }</code> line. Any new claim will pick up R1-FINAL instead.</p>
+
+  <h3>8.2 The same queries in Neo4j Browser</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – visual impact path"><pre><code>// new result -&gt; replaces old result &lt;- used by a claim -&gt; in a section -&gt; of a dossier
+MATCH path = (new:Result)-[:SUPERSEDES]-&gt;(old:Result)&lt;-[:BASED_ON]-(c:Claim)-[:APPEARS_IN]-&gt;(:Section)-[:PART_OF]-&gt;(:Dossier)
+RETURN path</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – the whole graph, hiding outdated (superseded) results"><pre><code>// Keep every node except Results that something SUPERSEDES (i.e. outdated results)
+MATCH (n) WHERE NOT n:Result OR NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(n) }
+RETURN n</code></pre></div>
+
+  <div class="card goals"><h4>Where to go next</h4>
+    <ul>
+      <li>Add back <code>Market</code> as a node and <code>RELEVANT_TO</code> relationships, then ask "which evidence is relevant to the UK market?"</li>
+      <li>Add <code>DossierVersion</code> so that claims are <code>INCLUDES</code>-ed by a specific version.</li>
+      <li>Embed <code>Claim.text</code> as well and find near-duplicate claims across projects.</li>
+      <li>Let an LLM write Cypher from the schema (LangChain <code>GraphCypherQAChain</code>), as in the original course's Lesson 7.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PG-TRACK-START -->
+<!-- ===================================================== M5P ===================================================== -->
+<section class="module" id="m5p">
+  <div class="eyebrow">Module 5P · pgvector track (counterpart of Module 5)</div>
+  <h2>Store embeddings in pgvector instead of the graph</h2>
+  <p class="lead">Same goal as Module 5: give every <code>Result</code> an embedding. This time the vectors live in a <b>PostgreSQL table with the pgvector extension</b>. Neo4j keeps the entities and relationships, and the two stores are joined on <code>Result.id</code>.</p>
+
+  <div class="callout tip"><strong>Both tracks can coexist</strong>Modules 5–8 (vectors in Neo4j) stay unchanged. Modules 5P–8P use the same graph from Module 3, the same <code>kg.py</code>, and the same project-layer code from Module 7. Only the vector store changes. You can run either track, or both.</div>
+
+  <h3>5P.1 Who stores what</h3>
+  <table>
+    <tr><th></th><th>Neo4j (graph)</th><th>PostgreSQL + pgvector</th></tr>
+    <tr><td>Entities and relationships</td><td>✔ source of truth (reference + project layers)</td><td>✘</td></tr>
+    <tr><td>Embeddings + vector index</td><td>✘ in this track</td><td>✔ <code>vector(1536)</code> column + HNSW index</td></tr>
+    <tr><td>Simple filters</td><td>✔ any property or pattern</td><td>✔ on a few <i>copied</i> columns (category, comparator, p-value)</td></tr>
+    <tr><td>Graph filters (population, superseded, ...)</td><td>✔</td><td>✘</td></tr>
+    <tr><td>Join key</td><td colspan="2" style="text-align:center"><code>Result.id</code> = <code>result_embeddings.result_id</code></td></tr>
+  </table>
+  <div class="callout why"><strong>Why would you do this?</strong>Your organisation may already run Postgres and pgvector as the standard vector store, with backups, access control and other RAG apps. Keeping vectors there and graph structure in Neo4j uses the strength of each. The cost: you have to keep the two stores in <b>sync</b> (Module 8P).</div>
+
+  <h3>5P.2 Get a Postgres with pgvector</h3>
+  <p>First check whether your Postgres already has the extension available:</p>
+  <div class="codeblock" data-lang="sql" data-where="psql / pgAdmin"><pre><code>-- One row = pgvector is available on this server.
+-- installed_version is NULL until CREATE EXTENSION has been run in this database.
+SELECT name, default_version, installed_version
+FROM pg_available_extensions WHERE name = 'vector';</code></pre></div>
+  <p>No row means pgvector isn't installed on that server. Pick one option:</p>
+  <details><summary>Option A: install pgvector into a local Windows PostgreSQL</summary>
+    <p>Install "Visual Studio Build Tools" with the C++ workload. Open the <b>"x64 Native Tools Command Prompt for VS"</b> <i>as Administrator</i>, then run the following. Adjust 18 to your Postgres version.</p>
+    <div class="codeblock" data-lang="bash" data-where="x64 Native Tools Command Prompt (cmd)"><pre><code>REM Tell the build where PostgreSQL is installed
+set "PGROOT=C:\Program Files\PostgreSQL\18"
+REM Work in the temp folder and download the pgvector source code
+cd %TEMP%
+git clone --branch v0.8.1 https://github.com/pgvector/pgvector.git
+cd pgvector
+REM Compile, then copy the files into the PostgreSQL folders
+nmake /F Makefile.win
+nmake /F Makefile.win install</code></pre></div>
+  </details>
+  <details><summary>Option A2: prebuilt Windows binary, no compiler needed (unofficial)</summary>
+    <p>The community project <a href="https://github.com/andreiramani/pgvector_pgsql_windows" target="_blank">andreiramani/pgvector_pgsql_windows</a> publishes prebuilt zips per Postgres version. They contain <code>vector.dll</code>, SQL files and headers. It's not an official pgvector release, so check your company's software policy first. This script downloads the PG18 build and installs it. Run it from an <b>Administrator</b> PowerShell:</p>
+    <div class="codeblock" data-lang="powershell" data-where="install_pgvector_pg18.ps1"><pre><code># Installs the prebuilt pgvector (unofficial build from github.com/andreiramani/pgvector_pgsql_windows)
+# into a local PostgreSQL 18 on Windows. Must run as Administrator.
+
+# Parameters with defaults: override them like  -PgRoot "D:\PostgreSQL\18"  if your install differs.
+param(
+    [string]$PgRoot = "C:\Program Files\PostgreSQL\18",      # PostgreSQL install folder
+    [string]$Service = "postgresql-x64-18",                   # Windows service name (see services.msc)
+    [string]$Url = "https://github.com/andreiramani/pgvector_pgsql_windows/releases/download/0.8.6_18/vector.v0.8.6-pg18.zip",
+    [string]$Log = "$env:TEMP\pgvector_install.log"          # everything printed is also saved here
+)
+$ErrorActionPreference = "Stop"          # turn every error into a hard stop (caught below)
+Start-Transcript -Path $Log -Force | Out-Null
+try {
+    # 1. Download and unzip into a fresh temp folder.
+    $work = Join-Path $env:TEMP "pgvector_pg18_install"
+    Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory $work | Out-Null
+    Invoke-WebRequest $Url -OutFile "$work\vector.zip"
+    Expand-Archive "$work\vector.zip" "$work\x"
+
+    # 2. Stop Postgres so the DLL can be copied safely.
+    Write-Output "Stopping $Service"
+    Stop-Service $Service
+
+    # 3. Copy the three parts of an extension into the Postgres folders:
+    #    lib\vector.dll (the compiled code), share\extension\* (control + SQL files), include\* (headers).
+    Copy-Item "$work\x\lib\vector.dll" "$PgRoot\lib\" -Force
+    Copy-Item "$work\x\share\extension\*" "$PgRoot\share\extension\" -Force
+    New-Item -ItemType Directory "$PgRoot\include\server\extension\vector" -Force | Out-Null
+    Copy-Item "$work\x\include\server\extension\vector\*" "$PgRoot\include\server\extension\vector\" -Force
+
+    # 4. Start Postgres again and confirm the control file is in place.
+    Write-Output "Starting $Service"
+    Start-Service $Service
+    Write-Output "INSTALL_OK: $(Test-Path "$PgRoot\share\extension\vector.control")"
+}
+catch {
+    Write-Output "INSTALL_FAILED: $_"
+    Start-Service $Service -ErrorAction SilentlyContinue     # never leave Postgres stopped
+}
+finally {
+    Stop-Transcript | Out-Null
+}</code></pre></div>
+    <div class="codeblock" data-lang="bash" data-where="Administrator PowerShell"><pre><code># Bypass only for this one run, so the unsigned local script is allowed to execute
+powershell -ExecutionPolicy Bypass -File .\install_pgvector_pg18.ps1</code></pre></div>
+    <p>Then create a database for the course and enable the extension (as the <code>postgres</code> superuser):</p>
+    <div class="codeblock" data-lang="sql" data-where="psql -U postgres"><pre><code>-- A separate database for the course, so it doesn't mix with your other data
+CREATE DATABASE kg_gvd;
+\c kg_gvd
+-- Enable pgvector in THIS database (extensions are per database)
+CREATE EXTENSION IF NOT EXISTS vector;
+-- Should return one row with the version, e.g. 0.8.6
+SELECT extversion FROM pg_extension WHERE extname = 'vector';</code></pre></div>
+    <p>Use <code>PG_DBNAME=kg_gvd</code>, <code>PG_USER=postgres</code> and your local password in <code>.env</code>.</p>
+  </details>
+  <details><summary>Option B: Docker image with pgvector preinstalled</summary>
+    <div class="codeblock" data-lang="bash" data-where="Terminal"><pre><code># Start a Postgres container with pgvector preinstalled, reachable on local port 5433
+# -d = run in the background, -e = environment variable (the postgres password), -p host:container port
+docker run -d --name pgvector -e POSTGRES_PASSWORD=postgres -p 5433:5432 pgvector/pgvector:pg17</code></pre></div>
+    <p>Then use <code>PG_HOST=localhost</code>, <code>PG_PORT=5433</code>, <code>PG_USER=postgres</code>, <code>PG_DBNAME=postgres</code>.</p>
+  </details>
+  <details><summary>Option C: a shared or managed Postgres (for example AWS RDS) that already has pgvector</summary>
+    <p>Use the host, database and service user your team gives you. The course writes <b>only</b> into its own schema, <code>kg_gvd</code>, so it never touches other applications' tables. On RDS, <code>CREATE EXTENSION vector</code> needs to have been run once by an admin. The script's <code>CREATE EXTENSION IF NOT EXISTS</code> is then a no-op.</p>
+  </details>
+
+  <h3>5P.3 Install and configure</h3>
+  <div class="codeblock" data-lang="bash" data-where="Terminal (venv active)"><pre><code># psycopg = PostgreSQL driver (binary build, no compiler needed); pgvector = vector type helpers
+pip install "psycopg[binary]" pgvector</code></pre></div>
+  <p>Add these to the same <code>.env</code>:</p>
+  <div class="codeblock" data-lang="text" data-where=".env (append)"><pre><code># Postgres server address (localhost, or your RDS / server host name)
+PG_HOST=localhost
+PG_PORT=5432
+# Database name (e.g. kg_gvd locally, genaidb on the shared server)
+PG_DBNAME=postgres
+# Login (e.g. postgres locally, your service user on a shared server)
+PG_USER=postgres
+# Wrap the password in single quotes if it contains special characters like ! or @
+PG_PASSWORD=your-pg-password
+# The course's own schema; reset_pg.py drops only this
+PG_SCHEMA=kg_gvd</code></pre></div>
+
+  <h3>5P.4 The Postgres helper: <code>pg.py</code></h3>
+  <p>This is the counterpart of <code>kg.py</code>. <code>register_vector</code> lets you pass and receive vectors as Python objects, and <code>search_path</code> makes our schema plus <code>public</code> (where pgvector usually lives) visible.</p>
+  <div class="codeblock" data-lang="python" data-where="pg.py"><pre><code>"""pgvector helpers – the Postgres counterpart of kg.py."""
+import os
+
+import psycopg                                     # PostgreSQL driver for Python (version 3)
+from dotenv import load_dotenv
+from pgvector.psycopg import register_vector       # teaches psycopg the 'vector' column type
+
+load_dotenv()
+
+PG_SCHEMA = os.getenv("PG_SCHEMA", "kg_gvd")   # our own schema keeps the course isolated
+TABLE = f"{PG_SCHEMA}.result_embeddings"        # fully qualified table name: schema.table
+
+
+def pg_connect(register=True):
+    """Open an autocommit connection. register=True teaches psycopg the 'vector' type.
+
+    Use it with `with pg_connect() as conn:` so the connection is closed automatically.
+    """
+    conn = psycopg.connect(
+        host=os.getenv("PG_HOST", "localhost"),
+        port=int(os.getenv("PG_PORT", "5432")),
+        dbname=os.getenv("PG_DBNAME", "postgres"),
+        user=os.getenv("PG_USER", "postgres"),
+        password=os.getenv("PG_PASSWORD"),
+        # search_path = where Postgres looks for unqualified names (tables, types, functions).
+        options=f"-c search_path={PG_SCHEMA},public",   # pgvector is usually installed in 'public'
+        # autocommit: every statement is saved immediately (no explicit COMMIT needed).
+        autocommit=True,
+    )
+    if register:
+        # Needs the extension to exist already; that's why setup connects once with register=False.
+        register_vector(conn)
+    return conn
+
+
+def pg_rows(conn, sql, params=None):
+    """Run a SELECT and return a list of dicts (same shape as kg.run)."""
+    cur = conn.execute(sql, params)                    # params fills the %(name)s placeholders
+    cols = [c.name for c in cur.description]           # column names of the result
+    return [dict(zip(cols, row)) for row in cur.fetchall()]   # turn each tuple into {column: value}</code></pre></div>
+
+  <h3>5P.5 The table and HNSW index</h3>
+  <p>One row per <code>Result</code>. The <code>embedding</code> column is a <code>vector(1536)</code>, the same size as in Module 5. The HNSW index with <code>vector_cosine_ops</code> plays the role of Neo4j's cosine vector index.</p>
+  <div class="codeblock" data-lang="sql" data-where="What the script creates (for reading)"><pre><code>-- One row per Result node in Neo4j
+CREATE TABLE kg_gvd.result_embeddings (
+    result_id         text PRIMARY KEY,      -- = Result.id in Neo4j
+    content           text NOT NULL,         -- the text that was embedded
+    model             text NOT NULL,         -- which embedding model made the vector
+    study_id          text,                  -- filter columns COPIED from the graph
+    endpoint_category text,
+    versus            text,
+    p_value           double precision,
+    embedding         vector(1536) NOT NULL, -- pgvector column: exactly 1536 numbers
+    updated_at        timestamptz NOT NULL DEFAULT now()
+);
+-- HNSW = fast approximate nearest-neighbour index; vector_cosine_ops = compare by cosine distance
+CREATE INDEX result_embeddings_hnsw ON kg_gvd.result_embeddings
+USING hnsw (embedding vector_cosine_ops);</code></pre></div>
+
+  <h3>5P.6 Sync the graph into pgvector</h3>
+  <p>Unlike Module 5, this is a <b>sync</b>. It reads results from Neo4j, embeds only new or changed texts, refreshes the copied filter columns, and deletes rows whose <code>Result</code> no longer exists. Re-running it is safe and cheap.</p>
+  <div class="codeblock" data-lang="python" data-where="s3p_embed_pg.py"><pre><code>"""Module 5P – store Result embeddings in pgvector instead of on the graph nodes.
+Neo4j stays the source of truth; Postgres holds one row per Result, keyed by Result.id."""
+from pgvector import Vector                        # wraps a Python list so it is sent as a pgvector value
+
+from kg import EMBED_DIMS, EMBED_MODEL, embed, run, show
+from pg import PG_SCHEMA, TABLE, pg_connect, pg_rows
+
+# SQL run once (all statements use IF NOT EXISTS, so re-running is harmless).
+SETUP_SQL = [
+    # enable pgvector in this database (adds the 'vector' type and the &lt;=&gt; distance operator)
+    "CREATE EXTENSION IF NOT EXISTS vector",
+    # a separate schema = a separate "folder" for our tables, isolated from other apps
+    f"CREATE SCHEMA IF NOT EXISTS {PG_SCHEMA}",
+    f"""CREATE TABLE IF NOT EXISTS {TABLE} (
+            result_id         text PRIMARY KEY,          -- = Result.id in Neo4j (the join key)
+            content           text NOT NULL,             -- the exact text that was embedded
+            model             text NOT NULL,             -- which embedding model produced the vector
+            study_id          text,                      -- filter columns copied from the graph
+            endpoint_category text,
+            versus            text,
+            p_value           double precision,
+            embedding         vector({EMBED_DIMS}) NOT NULL,
+            updated_at        timestamptz NOT NULL DEFAULT now()
+        )""",
+    # HNSW = an approximate-nearest-neighbour index; vector_cosine_ops = rank by cosine distance
+    f"""CREATE INDEX IF NOT EXISTS result_embeddings_hnsw
+        ON {TABLE} USING hnsw (embedding vector_cosine_ops)""",
+]
+
+# Read every Result plus the facts we copy into the filter columns.
+GRAPH_RESULTS = """
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result)-[:MEASURES]-&gt;(e:Endpoint),
+      (r)-[:VERSUS]-&gt;(cmp:Product)
+RETURN r.id AS id, r.text AS text, s.id AS study, e.category AS category,
+       cmp.name AS versus, r.pValue AS p
+ORDER BY id
+"""
+
+# "Upsert" = INSERT a new row, or UPDATE it if the primary key already exists.
+# %(name)s are psycopg placeholders, filled from a dict with the same keys.
+UPSERT = f"""
+INSERT INTO {TABLE} (result_id, content, model, study_id, endpoint_category, versus, p_value, embedding)
+VALUES (%(id)s, %(text)s, %(model)s, %(study)s, %(category)s, %(versus)s, %(p)s, %(embedding)s)
+ON CONFLICT (result_id) DO UPDATE SET
+    content = EXCLUDED.content, model = EXCLUDED.model, study_id = EXCLUDED.study_id,
+    endpoint_category = EXCLUDED.endpoint_category, versus = EXCLUDED.versus,
+    p_value = EXCLUDED.p_value, embedding = EXCLUDED.embedding, updated_at = now()
+"""
+
+# Cheap update of the copied columns only (no new embedding needed).
+REFRESH_METADATA = f"""
+UPDATE {TABLE}
+SET study_id = %(study)s, endpoint_category = %(category)s, versus = %(versus)s, p_value = %(p)s
+WHERE result_id = %(id)s
+"""
+
+
+def setup(conn):
+    """Create extension, schema, table and index if they don't exist yet."""
+    for statement in SETUP_SQL:
+        conn.execute(statement)
+
+
+def sync():
+    """Make the pgvector table match the graph: embed new/changed results, refresh filters, drop orphans."""
+    graph_rows = run(GRAPH_RESULTS)                 # what the graph says (source of truth)
+    with pg_connect(register=False) as conn:
+        setup(conn)                                # the extension must exist before register_vector()
+    with pg_connect() as conn:
+        # What Postgres already has: {result_id: content}
+        stored = {r["result_id"]: r["content"] for r in pg_rows(conn, f"SELECT result_id, content FROM {TABLE}")}
+
+        # 1. embed only results that are new or whose text changed
+        #    (stored.get() returns None for ids that are not in Postgres yet)
+        todo = [r for r in graph_rows if stored.get(r["id"]) != r["text"]]
+        if todo:
+            vectors = embed([r["text"] for r in todo])
+            with conn.cursor() as cur:
+                # executemany runs the same SQL once per dict; {**r, ...} copies r and adds two keys.
+                cur.executemany(UPSERT, [{**r, "model": EMBED_MODEL, "embedding": Vector(v)}
+                                         for r, v in zip(todo, vectors)])
+
+        # 2. refresh the copied filter columns for everything else (cheap, no API call)
+        unchanged = [r for r in graph_rows if r not in todo]
+        if unchanged:
+            with conn.cursor() as cur:
+                cur.executemany(REFRESH_METADATA, unchanged)
+
+        # 3. remove rows whose Result no longer exists in the graph
+        #    set(stored) = ids in Postgres; minus the ids in the graph = leftovers ("orphans")
+        orphans = sorted(set(stored) - {r["id"] for r in graph_rows})
+        if orphans:
+            # ANY(%s) matches any value of a Python list passed as one parameter
+            conn.execute(f"DELETE FROM {TABLE} WHERE result_id = ANY(%s)", (orphans,))
+
+        print(f"embedded {len(todo)}, refreshed {len(unchanged)}, deleted orphans {orphans}")
+        # vector_dims() is a pgvector function returning the length of a vector.
+        return pg_rows(conn, f"""
+            SELECT result_id, endpoint_category, versus, vector_dims(embedding) AS dims, model
+            FROM {TABLE} ORDER BY result_id
+        """)
+
+
+if __name__ == "__main__":
+    show(sync(), f"Rows in {TABLE}")</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Output on a fresh graph (Modules 1–4 done)"><pre><code>embedded 6, refreshed 0, deleted orphans []
+
+== Rows in kg_gvd.result_embeddings ==
+{'result_id': 'R1', 'endpoint_category': 'efficacy', 'versus': 'Placebo', 'dims': 1536, 'model': 'text-embedding-3-small'}
+{'result_id': 'R2', 'endpoint_category': 'quality_of_life', 'versus': 'Placebo', 'dims': 1536, 'model': 'text-embedding-3-small'}
+{'result_id': 'R3', 'endpoint_category': 'safety', 'versus': 'Placebo', 'dims': 1536, 'model': 'text-embedding-3-small'}
+{'result_id': 'R4', 'endpoint_category': 'efficacy', 'versus': 'Adalimumab', 'dims': 1536, 'model': 'text-embedding-3-small'}
+{'result_id': 'R5', 'endpoint_category': 'efficacy', 'versus': 'Adalimumab', 'dims': 1536, 'model': 'text-embedding-3-small'}
+{'result_id': 'R6', 'endpoint_category': 'safety', 'versus': 'Adalimumab', 'dims': 1536, 'model': 'text-embedding-3-small'}</code></pre></div>
+  <p>If you already ran Module 8, you'll see 7 rows, because <code>R1-FINAL</code> is synced too. Run the script again and it prints <code>embedded 0, refreshed 6</code>.</p>
+
+  <h4>Look at it in SQL</h4>
+  <div class="codeblock" data-lang="sql" data-where="psql / pgAdmin"><pre><code>-- vector_dims() returns the length of a vector; ::text turns it into a string so left() can cut it
+SELECT result_id, endpoint_category, vector_dims(embedding) AS dims,
+       left(embedding::text, 60) AS first_numbers
+FROM kg_gvd.result_embeddings ORDER BY result_id;</code></pre></div>
+
+  <div class="card goals"><h4>Checkpoint</h4>
+    <ul><li>Why does the table store <code>content</code>? (Hint: how does the sync know a text changed?)</li>
+    <li>Which columns are <i>copies</i> of graph data, and what keeps them correct?</li></ul>
+  </div>
+</section>
+
+<!-- ===================================================== M6P ===================================================== -->
+<section class="module" id="m6p">
+  <div class="eyebrow">Module 6P · pgvector track (counterpart of Module 6)</div>
+  <h2>pgvector search + SQL filters + Cypher filters</h2>
+  <p class="lead">Retrieval now runs in two steps. <b>pgvector</b> finds the nearest results, optionally filtered in SQL. Then <b>Neo4j</b> applies graph filters and adds context. The function returns exactly the same shape as Module 6's <code>search()</code>, so everything downstream works unchanged.</p>
+
+  <h3>6P.1 Vector search in SQL</h3>
+  <p>pgvector adds distance operators. <code>&lt;=&gt;</code> is <b>cosine distance</b>, so cosine similarity is <code>1 - distance</code>. <code>ORDER BY embedding &lt;=&gt; :q LIMIT k</code> is the query shape that uses the HNSW index.</p>
+  <div class="codeblock" data-lang="sql" data-where="Shape of every pgvector query"><pre><code>-- &lt;=&gt; = cosine DISTANCE (0 = identical direction); 1 - distance = cosine similarity
+-- $1 = the question's embedding, passed in by the program
+SELECT result_id, 1 - (embedding &lt;=&gt; $1) AS cosine
+FROM kg_gvd.result_embeddings
+WHERE endpoint_category = 'safety'          -- optional SQL filter
+ORDER BY embedding &lt;=&gt; $1                  -- nearest first (uses the HNSW index)
+LIMIT 10;</code></pre></div>
+
+  <h4>Try it in SQL without an API call: "more like this"</h4>
+  <div class="codeblock" data-lang="sql" data-where="psql / pgAdmin"><pre><code>-- Self-join: a = the seed row (R4), b = every other row; rank b by distance to a
+SELECT b.result_id, round((1 - (b.embedding &lt;=&gt; a.embedding))::numeric, 3) AS cosine
+FROM kg_gvd.result_embeddings a
+JOIN kg_gvd.result_embeddings b ON b.result_id &lt;&gt; a.result_id
+WHERE a.result_id = 'R4'
+ORDER BY b.embedding &lt;=&gt; a.embedding
+LIMIT 3;</code></pre></div>
+
+  <h3>6P.2 Two places to filter</h3>
+  <div class="grid2">
+    <div class="callout"><strong>In SQL (before the vector ranking)</strong>Uses the columns copied into the table: <code>endpoint_category</code>, <code>versus</code>, <code>p_value</code>. Fast and simple, but it only knows what you copied.</div>
+    <div class="callout"><strong>In Cypher (after the vector ranking)</strong>Pass the hits as <code>$hits</code>, <code>UNWIND</code> them, <code>MATCH</code> the graph and filter on anything: population, superseded status, study design, and more.</div>
+  </div>
+  <div class="callout why"><strong>Same scores as Module 6</strong>Neo4j reports cosine as <code>(1 + cosine) / 2</code>. We convert pgvector's cosine to that scale, so the <code>min_score=0.7</code> threshold means the same thing in both tracks. In our test run, the safety query scored R3 = 0.675 and R6 = 0.649 in <i>both</i> stores.</div>
+
+  <h3>6P.3 The retrieval module</h3>
+  <div class="codeblock" data-lang="python" data-where="s4p_vector_search_pg.py"><pre><code>"""Module 6P – vector search in pgvector, filters in SQL and/or Cypher, context from the graph."""
+from pgvector import Vector
+
+from kg import embed, run, show
+from pg import TABLE, pg_connect, pg_rows
+from s4_vector_search import answer, context_for   # reused unchanged from Module 6
+
+# &lt;=&gt; is pgvector's COSINE DISTANCE operator (0 = same direction, 2 = opposite).
+# Cosine similarity = 1 - distance. ORDER BY ... &lt;=&gt; ... LIMIT k is the pattern the HNSW index speeds up.
+PLAIN_SQL = f"""
+SELECT result_id AS id,
+       round((1 - (embedding &lt;=&gt; %(q)s))::numeric, 3)::float8 AS cosine,
+       content AS text
+FROM {TABLE}
+ORDER BY embedding &lt;=&gt; %(q)s
+LIMIT %(k)s
+"""
+
+# Same query plus optional SQL filters on the copied columns.
+# "%(category)s::text IS NULL OR ..." switches a filter off when Python passes None;
+# the ::text / ::float8 casts tell Postgres the type of a NULL parameter.
+FILTERED_SQL = f"""
+SELECT result_id AS id, 1 - (embedding &lt;=&gt; %(q)s) AS cosine
+FROM {TABLE}
+WHERE (%(category)s::text IS NULL OR endpoint_category = %(category)s)
+  AND (%(versus)s::text   IS NULL OR versus = %(versus)s)
+  AND (%(max_p)s::float8  IS NULL OR p_value &lt;= %(max_p)s)
+ORDER BY embedding &lt;=&gt; %(q)s
+LIMIT %(k)s
+"""
+
+# Step 2 runs in Neo4j: the pgvector hits arrive as a list of {id, score} dicts.
+# UNWIND turns the list into rows, MATCH finds each Result and its neighbours,
+# WHERE applies filters that only the graph can answer (population, superseded).
+GRAPH_FILTER = """
+UNWIND $hits AS hit
+MATCH (s:Study)-[:REPORTS]-&gt;(r:Result {id: hit.id})-[:MEASURES]-&gt;(e:Endpoint),
+      (r)-[:VERSUS]-&gt;(cmp:Product),
+      (r)-[:FOR_POPULATION]-&gt;(pop:Population)
+WHERE hit.score &gt;= $minScore
+  AND ($population IS NULL OR pop.name = $population)
+  AND NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(r) }
+RETURN r.id AS id, hit.score AS score, s.id AS study, e.name AS endpoint,
+       cmp.name AS versus, pop.name AS population, r.text AS text
+ORDER BY score DESC
+"""
+
+
+def plain_search_pg(question, k=3):
+    """pgvector only: nearest rows by cosine distance."""
+    with pg_connect() as conn:
+        # Vector(...) wraps the Python list so psycopg sends it as a pgvector value.
+        return pg_rows(conn, PLAIN_SQL, {"q": Vector(embed([question])[0]), "k": k})
+
+
+def search_pg(question, k=10, min_score=0.0, category=None, versus=None, max_p=None, population=None):
+    """Same signature and output as s4_vector_search.search(), but the vectors live in Postgres.
+    1) pgvector: similarity + SQL filters on copied columns  2) Neo4j: graph filters + context."""
+    # Step 1 – Postgres: nearest results that pass the SQL filters.
+    with pg_connect() as conn:
+        hits = pg_rows(conn, FILTERED_SQL, {"q": Vector(embed([question])[0]), "k": k,
+                                            "category": category, "versus": versus, "max_p": max_p})
+    # Convert cosine (-1..1) to Neo4j's score scale (0..1) so thresholds mean the same in both tracks.
+    hits = [{"id": h["id"], "score": round((1 + float(h["cosine"])) / 2, 3)} for h in hits]
+    # Step 2 – Neo4j: graph filters + the same output columns as Module 6.
+    return run(GRAPH_FILTER, hits=hits, minScore=min_score, population=population)
+
+
+if __name__ == "__main__":
+    question = "How does Zentrax compare with adalimumab for skin clearance?"
+    show(plain_search_pg(question), f"pgvector only: {question}")
+
+    # Filter done in SQL (endpoint_category column).
+    show(search_pg("Is the drug safe?", category="safety"), "SQL filter: safety results only")
+
+    # Two SQL filters at once.
+    show(search_pg("skin clearance response", versus="Placebo", max_p=0.05),
+         "SQL filters: vs placebo, p &lt;= 0.05")
+
+    # Filter that only the graph knows (population is not a column in Postgres).
+    show(search_pg("PASI 75 response", population="Biologic-naive"),
+         "Graph filter: Biologic-naive population")
+
+    hits = search_pg("quality of life", k=3)
+    show(context_for([h["id"] for h in hits]), "Graph-expanded context for 'quality of life'")
+
+    print("\n== LLM answer (pgvector retrieval) ==")
+    # Same answer() as Module 6 – we only swap the search function.
+    print(answer(question, search_fn=search_pg))</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Real output from a test run (after Modules 5–8, so R1-FINAL exists)"><pre><code>== pgvector only: How does Zentrax compare with adalimumab for skin clearance? ==
+{'id': 'R6', 'cosine': 0.653, 'text': 'Rates of serious infections were low and similar: ...'}
+{'id': 'R4', 'cosine': 0.618, 'text': 'In the head-to-head ZEN-302 trial, PASI 75 at week 16 ...'}
+{'id': 'R5', 'cosine': 0.598, 'text': 'Among biologic-naive patients in ZEN-302, ...'}
+
+== SQL filter: safety results only ==
+{'id': 'R3', 'score': 0.675, 'study': 'ZEN-301', 'endpoint': 'Serious adverse events', 'versus': 'Placebo', ...}
+{'id': 'R6', 'score': 0.649, 'study': 'ZEN-302', 'endpoint': 'Serious adverse events', 'versus': 'Adalimumab', ...}
+
+== SQL filters: vs placebo, p &lt;= 0.05 ==
+{'id': 'R1-FINAL', 'score': 0.647, ...}      &lt;- R1 is hidden by the graph's SUPERSEDES filter
+{'id': 'R2', 'score': 0.63, ...}
+
+== Graph filter: Biologic-naive population ==
+{'id': 'R5', 'score': 0.777, 'study': 'ZEN-302', 'population': 'Biologic-naive', ...}
+
+== LLM answer (pgvector retrieval) ==
+Zentrax demonstrates a better skin clearance response compared to adalimumab in the head-to-head
+ZEN-302 trial ... 81% ... versus 70% ... among biologic-naive patients 84% ... compared to 71%
+(source: J Derm Trials, p.4 and p.6).</code></pre></div>
+  <p>The plain pgvector search ranks R6 (a <i>safety</i> result) first, because it mentions both "Zentrax" and "adalimumab". This is the same thing that happens with the Neo4j index in Module 6, and it's why the filters matter.</p>
+
+  <div class="card goals"><h4>Try it yourself</h4>
+    <ul>
+      <li>Add a <code>study</code> parameter. Filter it in SQL (<code>study_id</code>) and compare with filtering it in Cypher (<code>s.id</code>).</li>
+      <li>Run <code>EXPLAIN SELECT ... ORDER BY embedding &lt;=&gt; ... LIMIT 5</code> in psql. With only 7 rows Postgres may skip the index. With thousands of rows you'll see <code>Index Scan using result_embeddings_hnsw</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================================================== M7P ===================================================== -->
+<section class="module" id="m7p">
+  <div class="eyebrow">Module 7P · pgvector track (counterpart of Module 7)</div>
+  <h2>Retrieval via pgvector writes project nodes</h2>
+  <p class="lead">The project layer doesn't care where vectors live. We reuse <code>create_project()</code> and <code>write_claim()</code> from Module 7 and plug in <code>search_pg</code>. Claims still land in Neo4j with <code>BASED_ON</code> links to reference results, and the method is recorded on the link.</p>
+
+  <div class="callout"><strong>The plug-in point</strong>Module 7's <code>write_claim()</code> accepts <code>search_fn=</code> and <code>method=</code>. The default is the Neo4j vector index. Here we pass <code>search_fn=search_pg, method="pgvector+graph"</code>. Any extra keyword, such as <code>population=</code>, is forwarded to the search function.</div>
+
+  <h3>7P.1 The script</h3>
+  <p>To compare with Module 7, this creates two more dossiers, France and Italy. The Italy claim uses a <b>graph-only</b> filter (<code>population="Biologic-naive"</code>) that pgvector alone couldn't apply.</p>
+  <div class="codeblock" data-lang="python" data-where="s5p_project_layer_pg.py"><pre><code>"""Module 7P – the same project-layer write-back as Module 7, but evidence is retrieved via pgvector."""
+from kg import run, show
+from s4p_vector_search_pg import search_pg
+# Reuse Module 7's functions unchanged; only the search function differs.
+from s5_project_layer import create_project, ensure_project_schema, write_claim
+
+METHOD = "pgvector+graph"   # stored on each BASED_ON link so you can tell the two tracks apart
+
+if __name__ == "__main__":
+    ensure_project_schema()
+
+    # ---------- Project 3: French GVD ----------
+    FR = "GVD-FR-2026"
+    create_project(FR, "Zentrax GVD - France", "France",
+                   sections=[{"key": "S-EFF", "title": "Clinical efficacy", "order": 1},
+                             {"key": "S-SAF", "title": "Safety", "order": 2}],
+                   value_messages=[{"key": "VM-EFF", "text": "Zentrax delivers superior skin clearance"},
+                                   {"key": "VM-SAF", "text": "Zentrax has a favourable safety profile"}])
+
+    # search_fn=search_pg is the only real change compared with Module 7.
+    show(write_claim(FR, "C1", "Zentrax achieved higher PASI 75 response rates than placebo and adalimumab at week 16.",
+                     vm_key="VM-EFF", section_key="S-EFF", question="PASI 75 skin clearance response at week 16",
+                     top_n=3, category="efficacy", search_fn=search_pg, method=METHOD), "FR claim C1")
+
+    show(write_claim(FR, "C2", "Serious adverse event rates with Zentrax were comparable to placebo and adalimumab.",
+                     vm_key="VM-SAF", section_key="S-SAF", question="serious adverse events and infections",
+                     top_n=2, category="safety", search_fn=search_pg, method=METHOD), "FR claim C2")
+
+    # ---------- Project 4: Italian GVD ----------
+    IT = "GVD-IT-2026"
+    create_project(IT, "Zentrax GVD - Italy", "Italy",
+                   sections=[{"key": "S-EFF", "title": "Comparative effectiveness", "order": 1}],
+                   value_messages=[{"key": "VM-EFF", "text": "Zentrax outperforms adalimumab in biologic-naive patients"}])
+
+    # population= is a GRAPH-only filter: write_claim forwards it to search_pg via **filters.
+    show(write_claim(IT, "C1", "In biologic-naive patients, Zentrax outperformed adalimumab on PASI 75.",
+                     vm_key="VM-EFF", section_key="S-EFF", question="PASI 75 response compared with adalimumab",
+                     top_n=1, category="efficacy", versus="Adalimumab", population="Biologic-naive",
+                     search_fn=search_pg, method=METHOD), "IT claim C1")
+
+    # Group all BASED_ON links by project and method to compare both tracks side by side.
+    show(run("""
+        MATCH (c:Claim)-[b:BASED_ON]-&gt;(r:Result)
+        RETURN c.projectId AS project, b.method AS method, collect(DISTINCT r.id) AS results
+        ORDER BY project
+    """), "Claims per project and retrieval method")</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Real output from a test run (after Modules 5–8)"><pre><code>GVD-FR-2026:C1  retrieved -&gt; [('R4', 0.789), ('R1-FINAL', 0.783), ('R5', 0.764)]
+== FR claim C1 ==
+{'claim': 'GVD-FR-2026:C1', 'basedOn': ['R4', 'R1-FINAL', 'R5']}
+
+GVD-FR-2026:C2  retrieved -&gt; [('R6', 0.754), ('R3', 0.749)]
+== FR claim C2 ==
+{'claim': 'GVD-FR-2026:C2', 'basedOn': ['R6', 'R3']}
+
+GVD-IT-2026:C1  retrieved -&gt; [('R5', 0.86)]
+== IT claim C1 ==
+{'claim': 'GVD-IT-2026:C1', 'basedOn': ['R5']}
+
+== Claims per project and retrieval method ==
+{'project': 'GVD-DE-2026', 'method': 'neo4j-vector+filter', 'results': ['R1', 'R3', 'R4', 'R5', 'R6']}
+{'project': 'GVD-FR-2026', 'method': 'pgvector+graph', 'results': ['R3', 'R4', 'R5', 'R6', 'R1-FINAL']}
+{'project': 'GVD-IT-2026', 'method': 'pgvector+graph', 'results': ['R5']}
+{'project': 'GVD-UK-2026', 'method': 'neo4j-vector+filter', 'results': ['R5']}</code></pre></div>
+  <p>The French claim picked <code>R1-FINAL</code>, not <code>R1</code>, because the graph filter skips superseded results. If you run this track <i>without</i> Module 8, you'll get <code>R1</code> instead. The German claim from Module 7 still points at the old R1, and Module 8P shows how to find claims like that.</p>
+
+  <h3>7P.2 Check in Neo4j Browser</h3>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser – claims from both retrieval tracks share the same evidence"><pre><code>// Claims from BOTH retrieval tracks (Neo4j vector and pgvector) point at the same R5 node
+MATCH path = (c:Claim)-[b:BASED_ON]-&gt;(r:Result {id: 'R5'})
+RETURN path</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser"><pre><code>// Group the BASED_ON links by the retrieval method stored on them
+MATCH (c:Claim)-[b:BASED_ON]-&gt;(r:Result)
+RETURN b.method AS method, count(*) AS links, collect(DISTINCT c.projectId) AS projects</code></pre></div>
+</section>
+
+<!-- ===================================================== M8P ===================================================== -->
+<section class="module" id="m8p">
+  <div class="eyebrow">Module 8P · pgvector track (counterpart of Module 8)</div>
+  <h2>Capability queries with two stores: keep them in sync</h2>
+  <p class="lead">Traceability, reuse and gap queries are pure graph queries, so they work exactly as in Module 8. What's new with an external vector store is <b>consistency</b>. When ingestion changes the graph, pgvector has to follow.</p>
+
+  <h3>8P.1 The update scenario</h3>
+  <ol class="steps">
+    <li>Ingestion adds a final analysis <code>R4-FINAL</code> to the <b>graph</b> and marks it <code>SUPERSEDES</code> R4. pgvector doesn't know about it yet.</li>
+    <li>A consistency report shows <code>missing_in_pgvector: ['R4-FINAL']</code>.</li>
+    <li><code>sync()</code> from Module 5P embeds it, and the report is clean again.</li>
+    <li>Retrieval now returns <code>R4-FINAL</code>. The old R4 row is still in pgvector, but the graph filter hides it.</li>
+    <li>The impact query flags every claim in <b>any project, from either track</b> that relied on R4.</li>
+  </ol>
+  <div class="callout why"><strong>Why keep R4 in pgvector?</strong>Superseded is a <i>graph fact</i>. Keeping that rule in one place (Cypher <code>NOT EXISTS { (:Result)-[:SUPERSEDES]-&gt;(r) }</code>) means you never have to copy it into SQL. The sync only deletes rows whose node is actually gone.</div>
+
+  <h3>8P.2 The script</h3>
+  <div class="codeblock" data-lang="python" data-where="s6p_capability_queries_pg.py"><pre><code>"""Module 8P – capability queries when vectors live in pgvector: keeping two stores in sync."""
+from kg import run, show
+from pg import TABLE, pg_connect, pg_rows
+from s3p_embed_pg import sync
+from s4p_vector_search_pg import search_pg
+
+
+def consistency_report():
+    """Compare the set of Result ids in Neo4j with the set of ids in pgvector."""
+    graph_ids = {r["id"] for r in run("MATCH (r:Result) RETURN r.id AS id")}      # {...} = a Python set
+    with pg_connect() as conn:
+        pg_ids = {r["result_id"] for r in pg_rows(conn, f"SELECT result_id FROM {TABLE}")}
+    # Set difference (a - b) = items in a that are not in b.
+    return [{"in_graph": len(graph_ids), "in_pgvector": len(pg_ids),
+             "missing_in_pgvector": sorted(graph_ids - pg_ids), "orphans_in_pgvector": sorted(pg_ids - graph_ids)}]
+
+
+# 1. Ingestion adds a corrected result to the GRAPH only (no embedding anywhere yet)
+run("""
+    // copy all connections from R4 to the new R4-FINAL, then mark R4 as superseded
+    MATCH (old:Result {id: 'R4'})&lt;-[:REPORTS]-(s:Study),
+          (old)-[:MEASURES]-&gt;(e:Endpoint),
+          (old)-[:FOR_POPULATION]-&gt;(pop:Population),
+          (old)-[:VERSUS]-&gt;(cmp:Product),
+          (old)-[:EXTRACTED_FROM]-&gt;(d:SourceDocument)
+    MERGE (new:Result {id: 'R4-FINAL'})
+    SET new.text = 'Final analysis of ZEN-302: PASI 75 at week 16 was reached by 82% with Zentrax versus 69% with adalimumab.',
+        new.value = 82.0, new.comparatorValue = 69.0, new.unit = '%', new.pValue = 0.002
+    MERGE (s)-[:REPORTS {primary: true}]-&gt;(new)
+    MERGE (new)-[:MEASURES]-&gt;(e)
+    MERGE (new)-[:FOR_POPULATION]-&gt;(pop)
+    MERGE (new)-[:VERSUS]-&gt;(cmp)
+    MERGE (new)-[:EXTRACTED_FROM {page: 9, table: '2a'}]-&gt;(d)
+    MERGE (new)-[sup:SUPERSEDES]-&gt;(old)
+    SET sup.reason = 'final analysis', sup.date = date('2026-06-01')
+""")
+show(consistency_report(), "1. Graph vs pgvector BEFORE sync")      # expect R4-FINAL missing
+
+# 2. Sync pushes the new result's embedding to pgvector
+sync()
+show(consistency_report(), "2. Graph vs pgvector AFTER sync")       # expect nothing missing
+
+# 3. Retrieval now returns R4-FINAL; R4 is still in pgvector but the graph filter hides it
+show(search_pg("head-to-head PASI 75 versus adalimumab", category="efficacy", versus="Adalimumab"),
+     "3. pgvector retrieval after the update")
+
+# 4. IMPACT: which claims (any project, any retrieval method) relied on superseded evidence?
+#    Pure graph query – it doesn't matter where the vectors were stored.
+show(run("""
+    MATCH (new:Result)-[:SUPERSEDES]-&gt;(old:Result)&lt;-[b:BASED_ON]-(c:Claim)-[:APPEARS_IN]-&gt;(sec:Section)
+    SET c.status = 'needs_review'
+    RETURN c.projectId AS project, c.id AS claim, b.method AS method, old.id AS outdated, new.id AS replacement
+    ORDER BY project
+"""), "4. Claims needing review")
+
+# 5. REUSE across all projects, regardless of where the vectors were stored
+show(run("""
+    MATCH (c:Claim)-[:BASED_ON]-&gt;(r:Result)
+    WITH r, collect(DISTINCT c.projectId) AS projects
+    WHERE size(projects) &gt; 1
+    RETURN r.id AS result, projects ORDER BY size(projects) DESC
+"""), "5. Evidence reused across projects")</code></pre></div>
+  <div class="codeblock output" data-lang="text" data-where="Real output from a test run (after Modules 5–8 and 5P–7P)"><pre><code>== 1. Graph vs pgvector BEFORE sync ==
+{'in_graph': 8, 'in_pgvector': 7, 'missing_in_pgvector': ['R4-FINAL'], 'orphans_in_pgvector': []}
+embedded 1, refreshed 7, deleted orphans []
+
+== 2. Graph vs pgvector AFTER sync ==
+{'in_graph': 8, 'in_pgvector': 8, 'missing_in_pgvector': [], 'orphans_in_pgvector': []}
+
+== 3. pgvector retrieval after the update ==
+{'id': 'R5', 'score': 0.849, 'study': 'ZEN-302', 'population': 'Biologic-naive', ...}
+{'id': 'R4-FINAL', 'score': 0.841, 'study': 'ZEN-302', 'population': 'Intention-to-treat', ...}
+
+== 4. Claims needing review ==
+{'project': 'GVD-DE-2026', 'claim': 'GVD-DE-2026:C1', 'method': 'neo4j-vector+filter', 'outdated': 'R1', 'replacement': 'R1-FINAL'}
+{'project': 'GVD-DE-2026', 'claim': 'GVD-DE-2026:C1', 'method': 'neo4j-vector+filter', 'outdated': 'R4', 'replacement': 'R4-FINAL'}
+{'project': 'GVD-FR-2026', 'claim': 'GVD-FR-2026:C1', 'method': 'pgvector+graph', 'outdated': 'R4', 'replacement': 'R4-FINAL'}
+
+== 5. Evidence reused across projects ==
+{'result': 'R5', 'projects': ['GVD-DE-2026', 'GVD-UK-2026', 'GVD-FR-2026', 'GVD-IT-2026']}
+{'result': 'R3', 'projects': ['GVD-DE-2026', 'GVD-FR-2026']}
+{'result': 'R4', 'projects': ['GVD-DE-2026', 'GVD-FR-2026']}
+{'result': 'R6', 'projects': ['GVD-DE-2026', 'GVD-FR-2026']}</code></pre></div>
+  <p>If you only ran the pgvector track (no Module 8), the counts are one lower (no R1-FINAL), and only the FR claim appears in step 4.</p>
+
+  <h3>8P.3 Neo4j vector index vs pgvector: when to choose which</h3>
+  <table>
+    <tr><th></th><th>Vectors in Neo4j (Modules 5–8)</th><th>Vectors in pgvector (5P–8P)</th></tr>
+    <tr><td>Moving parts</td><td>One database</td><td>Two databases plus a sync job</td></tr>
+    <tr><td>Vector + graph filter</td><td>One Cypher query</td><td>SQL query, then a Cypher query</td></tr>
+    <tr><td>Consistency</td><td>Automatic (embedding is a node property)</td><td>Your responsibility (<code>sync()</code>, consistency report)</td></tr>
+    <tr><td>Fits best when</td><td>The graph is your main store</td><td>Your org standardises on Postgres for vectors or already runs pgvector RAG apps</td></tr>
+    <tr><td>Project layer</td><td colspan="2" style="text-align:center">Identical. Claims always live in the graph, with <code>BASED_ON</code> to reference results.</td></tr>
+  </table>
+
+  <h3>8P.4 Reset the pgvector side</h3>
+  <div class="codeblock" data-lang="python" data-where="reset_pg.py"><pre><code>"""Drop the course's pgvector schema (and only that schema)."""
+from pg import PG_SCHEMA, pg_connect
+
+# Safety guard: never drop 'public', which other apps' tables (and pgvector itself) may live in.
+if PG_SCHEMA in ("public", ""):
+    raise SystemExit("Refusing to drop the 'public' schema. Set PG_SCHEMA=kg_gvd in .env.")
+
+# register=False: we don't need the vector type just to drop a schema.
+with pg_connect(register=False) as conn:
+    # CASCADE also drops everything inside the schema (our table and its index).
+    conn.execute(f"DROP SCHEMA IF EXISTS {PG_SCHEMA} CASCADE")
+print(f"Dropped schema {PG_SCHEMA}. Re-run s3p_embed_pg.py to rebuild.")</code></pre></div>
+</section>
+<!-- PG-TRACK-END -->
+
+<!-- ===================================================== M9 ===================================================== -->
+<section class="module" id="m9">
+  <div class="eyebrow">Module 9</div>
+  <h2>Cheat sheet &amp; troubleshooting</h2>
+
+  <h3>9.1 Cypher cheat sheet</h3>
+  <table>
+    <tr><th>Task</th><th>Cypher</th></tr>
+    <tr><td>Create or reuse a node</td><td><code>MERGE (n:Label {id: 'x'}) SET n.prop = 1</code></td></tr>
+    <tr><td>Create a relationship with properties</td><td><code>MATCH (a:A {id:'1'}), (b:B {id:'2'}) MERGE (a)-[r:REL]-&gt;(b) SET r.p = 'v'</code></td></tr>
+    <tr><td>Exact filter</td><td><code>MATCH (n:Label {prop: 'v'})</code></td></tr>
+    <tr><td>Range or boolean filter</td><td><code>WHERE n.x &lt; 5 AND n.y IN ['a','b']</code></td></tr>
+    <tr><td>Relationship property filter</td><td><code>MATCH (a)-[r:REL]-&gt;(b) WHERE r.page &lt; 50</code></td></tr>
+    <tr><td>Pattern does NOT exist</td><td><code>WHERE NOT EXISTS { (n)&lt;-[:REL]-() }</code></td></tr>
+    <tr><td>Aggregate</td><td><code>RETURN key, count(*), collect(x.id)</code></td></tr>
+    <tr><td>Keep rows without a match</td><td><code>OPTIONAL MATCH</code></td></tr>
+    <tr><td>Variable-length path</td><td><code>(a)-[:REL*1..3]-&gt;(b)</code></td></tr>
+    <tr><td>Vector search</td><td><code>MATCH (n:Label) SEARCH n IN (VECTOR INDEX idx FOR $vec LIMIT k) SCORE AS score</code></td></tr>
+    <tr><td>Delete node + its relationships</td><td><code>MATCH (n {projectId:'X'}) DETACH DELETE n</code></td></tr>
+    <tr><td>List indexes and constraints</td><td><code>SHOW INDEXES</code> · <code>SHOW CONSTRAINTS</code></td></tr>
+  </table>
+
+  <h3>9.2 Reset and start over</h3>
+  <div class="codeblock" data-lang="python" data-where="reset.py"><pre><code>"""Wipe all data and the vector index (constraints are kept; scripts recreate them anyway).
+Deletes EVERYTHING in NEO4J_DATABASE, so it refuses to run against the default 'neo4j' database."""
+from kg import NEO4J_DATABASE, run
+
+# Safety guard: your other graphs (movies, SEC, ...) usually live in 'neo4j'.
+if NEO4J_DATABASE == "neo4j":
+    raise SystemExit("Refusing to wipe the default 'neo4j' database. Set NEO4J_DATABASE=gvd in .env.")
+
+# MATCH (n) = every node; DETACH DELETE also removes the relationships attached to them.
+run("MATCH (n) DETACH DELETE n")
+# Drop the vector index so Module 5 starts from a clean state (IF EXISTS = no error if it is gone).
+run("DROP INDEX result_embedding IF EXISTS")
+print("Database emptied. Re-run s1 -&gt; s3 -&gt; s5 -&gt; s6 to rebuild.")</code></pre></div>
+  <div class="codeblock" data-lang="cypher" data-where="Neo4j Browser equivalent (run :use gvd first!)"><pre><code>:use gvd
+MATCH (n) DETACH DELETE n   // deletes every node and relationship in the CURRENT database</code></pre></div>
+
+  <h4>Reset both stores and re-run everything</h4>
+  <p>All scripts are idempotent (<code>MERGE</code>, upserts), so re-running them <i>without</i> a reset won't break anything. But data from earlier runs (for example <code>R1-FINAL</code>, <code>R4-FINAL</code>, extra claims) will change the printed results. To get output that matches this site, reset first. <code>run_all.py</code> does the reset and then runs every module in order:</p>
+  <div class="codeblock" data-lang="python" data-where="run_all.py"><pre><code>"""Reset BOTH stores (Neo4j database + pgvector schema), then run every module in order.
+Usage:  python run_all.py          # everything
+        python run_all.py neo4j    # Neo4j-vector track only (Modules 1-8)
+        python run_all.py pg       # pgvector track only (Modules 1-4 + 5P-8P)"""
+import subprocess   # starts other programs (here: python on each script)
+import sys          # sys.argv = command-line words, sys.executable = path of the current python
+
+# Scripts every track needs, then the two alternative vector tracks.
+COMMON = ["s0_check.py", "s1_build_reference.py", "s2_queries.py"]
+NEO4J_TRACK = ["s3_embed.py", "s4_vector_search.py", "s5_project_layer.py", "s6_capability_queries.py"]
+PG_TRACK = ["s3p_embed_pg.py", "s4p_vector_search_pg.py", "s5p_project_layer_pg.py", "s6p_capability_queries_pg.py"]
+
+# sys.argv[0] is the script name; sys.argv[1] (if given) is the track choice.
+track = sys.argv[1] if len(sys.argv) &gt; 1 else "all"
+steps = ["reset.py"] + COMMON                      # always start by emptying the Neo4j database
+if track in ("all", "neo4j"):
+    steps += NEO4J_TRACK
+if track in ("all", "pg"):
+    # insert reset_pg.py right after reset.py, and append the pgvector scripts at the end
+    steps = steps[:1] + ["reset_pg.py"] + steps[1:] + PG_TRACK
+
+for step in steps:
+    print(f"\n######## {step}", flush=True)
+    # Run each script with the SAME python (so the venv's packages are used).
+    # returncode 0 means success; anything else means the script crashed.
+    if subprocess.run([sys.executable, step]).returncode != 0:
+        sys.exit(f"{step} failed; stopping.")
+print("\nAll steps finished successfully.")</code></pre></div>
+
+  <h3>9.3 Run order</h3>
+  <div class="codeblock" data-lang="bash" data-where="Terminal"><pre><code># Neo4j-vector track, in order (each script builds on the previous one)
+python s0_check.py
+python s1_build_reference.py
+python s2_queries.py
+python s3_embed.py
+python s4_vector_search.py
+python s5_project_layer.py
+python s6_capability_queries.py
+
+# pgvector track (needs s1 first; independent of s3–s6)
+python s3p_embed_pg.py
+python s4p_vector_search_pg.py
+python s5p_project_layer_pg.py
+python s6p_capability_queries_pg.py</code></pre></div>
+
+  <h3>9.4 Troubleshooting</h3>
+  <table>
+    <tr><th>Symptom</th><th>Fix</th></tr>
+    <tr><td><code>ServiceUnavailable: Couldn't connect to localhost:7687</code></td><td>Start the DBMS in Neo4j Desktop. Check the Bolt port in the instance's settings.</td></tr>
+    <tr><td><code>AuthError: The client is unauthorized</code></td><td>Make <code>NEO4J_PASSWORD</code> in <code>.env</code> match the instance password. Reset it in Desktop if needed.</td></tr>
+    <tr><td>Syntax error near <code>SEARCH</code></td><td>Neo4j is older than 2026.01, or the query ran as Cypher 5. Keep <code>CYPHER 25</code> as the first line, or use the older <code>db.index.vector.queryNodes</code> procedure shown in Module 6.1.</td></tr>
+    <tr><td><code>Invalid input 'VECTOR'</code> on <code>CREATE VECTOR INDEX</code></td><td>Same cause (needs 5.13+).</td></tr>
+    <tr><td><code>There is no such vector schema index: result_embedding</code></td><td>Run <code>s3_embed.py</code> before <code>s4</code>/<code>s5</code>/<code>s6</code>.</td></tr>
+    <tr><td>Vector search returns nothing</td><td>Lower <code>min_score</code>, raise <code>k</code>, or check that embeddings exist: <code>MATCH (r:Result) WHERE r.embedding IS NULL RETURN count(r)</code>.</td></tr>
+    <tr><td><code>openai.AuthenticationError</code></td><td>Set <code>OPENAI_API_KEY</code> in <code>.env</code>.</td></tr>
+    <tr><td><code>Index query vector has N dimensions, but indexed vectors have 1536</code></td><td>You changed the embedding model. Drop the index, clear <code>r.embedding</code>, and re-run <code>s3</code>.</td></tr>
+    <tr><td>Claim not written ("Section or value message not found")</td><td>The <code>vm_key</code>/<code>section_key</code> doesn't exist in that project. Ids are <code>projectId:key</code>.</td></tr>
+    <tr><td>Warning <code>01N52 ... property `embedding` does not exist</code></td><td>Harmless. Neo4j warns because no node has that property yet (first run of <code>s3_embed.py</code>).</td></tr>
+    <tr><td><code>password authentication failed</code> (Postgres)</td><td>Check <code>PG_PASSWORD</code>. Wrap it in single quotes in <code>.env</code> if it contains <code>!</code>, <code>@</code>, <code>#</code> or spaces.</td></tr>
+    <tr><td><code>extension "vector" is not available</code></td><td>pgvector isn't installed on that Postgres server. See Module 5P.2 for options.</td></tr>
+    <tr><td><code>vector type not found in the database</code> (from <code>register_vector</code>)</td><td>Run <code>s3p_embed_pg.py</code> once, which creates the extension. If pgvector lives in a schema other than <code>public</code>, add it to <code>search_path</code> in <code>pg.py</code>.</td></tr>
+    <tr><td><code>relation "kg_gvd.result_embeddings" does not exist</code></td><td>Run <code>s3p_embed_pg.py</code> before <code>s4p</code>/<code>s5p</code>/<code>s6p</code>.</td></tr>
+    <tr><td><code>:param</code> doesn't work</td><td>It only works in Neo4j Browser, not in Python. Run it as its own command.</td></tr>
+  </table>
+
+  <h3>9.5 Glossary</h3>
+  <table>
+    <tr><td><b>Reference layer</b></td><td>Shared, project-independent evidence, created by ingestion. No <code>projectId</code>.</td></tr>
+    <tr><td><b>Project layer</b></td><td>Dossier-specific nodes created during authoring and retrieval. Always has <code>projectId</code>.</td></tr>
+    <tr><td><b>Ingestion</b></td><td>Loading source data (documents, results) into the reference layer.</td></tr>
+    <tr><td><b>Retrieval</b></td><td>Finding relevant reference nodes (vector + filters) for a project task.</td></tr>
+    <tr><td><b>Hybrid retrieval</b></td><td>Vector similarity combined with exact graph and property filters.</td></tr>
+    <tr><td><b>Idempotent</b></td><td>Safe to run repeatedly with the same outcome (<code>MERGE</code>, <code>IF NOT EXISTS</code>).</td></tr>
+    <tr><td><b>Embedding</b></td><td>A list of numbers capturing the meaning of a text. Similar meaning gives nearby vectors.</td></tr>
+  </table>
+</section>
+
+<div class="pager">
+  <a class="btn ghost" id="prevBtn" href="#">&larr; Previous</a>
+  <button class="btn" id="doneBtn">Mark module complete</button>
+  <a class="btn ghost" id="nextBtn" href="#">Next &rarr;</a>
+</div>
+
+</main>
+</div>
+
+<script>
+/* ---------------- navigation ---------------- */
+const modules = [...document.querySelectorAll('.module')].map(m => m.id);
+const navLinks = [...document.querySelectorAll('nav.side a')];
+const done = new Set(JSON.parse(localStorage.getItem('kgDone') || '[]'));
+
+function showModule(id) {
+  if (!modules.includes(id)) id = modules[0];
+  document.querySelectorAll('.module').forEach(m => m.classList.toggle('active', m.id === id));
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.dataset.m === id);
+    a.classList.toggle('done', done.has(a.dataset.m));
+  });
+  const i = modules.indexOf(id);
+  const prev = document.getElementById('prevBtn'), next = document.getElementById('nextBtn');
+  prev.style.visibility = i > 0 ? 'visible' : 'hidden';
+  next.style.visibility = i < modules.length - 1 ? 'visible' : 'hidden';
+  prev.href = '#' + (modules[i - 1] || '');
+  next.href = '#' + (modules[i + 1] || '');
+  const db = document.getElementById('doneBtn');
+  db.textContent = done.has(id) ? '✓ Completed' : 'Mark module complete';
+  db.classList.toggle('done', done.has(id));
+  window.scrollTo(0, 0);
+}
+document.getElementById('doneBtn').addEventListener('click', () => {
+  const id = location.hash.slice(1) || modules[0];
+  done.has(id) ? done.delete(id) : done.add(id);
+  localStorage.setItem('kgDone', JSON.stringify([...done]));
+  showModule(id);
+});
+window.addEventListener('hashchange', () => showModule(location.hash.slice(1)));
+showModule(location.hash.slice(1));
+
+/* ---------------- code blocks: header, copy, highlighting ---------------- */
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const RULES = {
+  python: [
+    ['c', /#[^\n]*/y],
+    ['s', /(?:[rfb]|rb|br)?("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')/y],
+    ['k', /\b(?:def|return|import|from|for|in|if|else|elif|not|and|or|None|True|False|with|as|class|lambda|while|try|except|is)\b/y],
+    ['f', /\b(?:print|len|zip|run|show|embed|search|range)\b(?=\()/y],
+    ['n', /\b\d+(?:\.\d+)?\b/y],
+  ],
+  cypher: [
+    ['c', /\/\/[^\n]*/y],
+    ['s', /'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"/y],
+    ['p', /\$\w+/y],
+    ['l', /:[A-Z][A-Za-z_]*/y],
+    ['k', /\b(?:MATCH|OPTIONAL|WHERE|RETURN|WITH|MERGE|CREATE|SET|DELETE|DETACH|REMOVE|UNWIND|AS|AND|OR|NOT|IN|IS|NULL|ORDER|BY|DESC|ASC|LIMIT|CALL|YIELD|EXISTS|CONSTRAINT|INDEX|VECTOR|FOR|ON|REQUIRE|UNIQUE|IF|OPTIONS|SHOW|INDEXES|DROP|CONTAINS|DISTINCT|SEARCH|SCORE|CYPHER|TRUE|FALSE|true|false)\b/y],
+    ['n', /\b\d+(?:\.\d+)?\b/y],
+  ],
+  bash: [['c', /#[^\n]*/y], ['k', /\b(?:python3?|pip|mkdir|cd|source|docker|git|nmake|set)\b/y]],
+  sql: [
+    ['c', /--[^\n]*/y],
+    ['s', /'(?:''|[^'\n])*'/y],
+    ['p', /\$\d+/y],
+    ['k', /\b(?:SELECT|FROM|WHERE|AND|OR|NOT|NULL|IS|AS|ORDER|BY|LIMIT|JOIN|ON|CREATE|TABLE|INDEX|USING|EXTENSION|SCHEMA|IF|EXISTS|PRIMARY|KEY|DEFAULT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|EXPLAIN|text|vector|double|precision|timestamptz|numeric)\b/iy],
+    ['n', /\b\d+(?:\.\d+)?\b/y],
+  ],
+};
+function highlight(text, lang) {
+  const rules = RULES[lang];
+  if (!rules) return esc(text);
+  let out = '', i = 0, plain = '';
+  while (i < text.length) {
+    let hit = null;
+    const prevCh = i > 0 ? text[i - 1] : '';
+    for (const [cls, re] of rules) {
+      if ((cls === 'k' || cls === 'n' || cls === 'f') && /\w/.test(prevCh)) continue;
+      re.lastIndex = i;
+      const m = re.exec(text);
+      if (m && m[0].length) { hit = [cls, m[0]]; break; }
+    }
+    if (hit) {
+      out += esc(plain); plain = '';
+      out += `<span class="tok-${hit[0]}">${esc(hit[1])}</span>`;
+      i += hit[1].length;
+    } else { plain += text[i]; i++; }
+  }
+  return out + esc(plain);
+}
+document.querySelectorAll('.codeblock').forEach(block => {
+  const code = block.querySelector('code');
+  const raw = code.textContent;
+  const lang = block.dataset.lang || 'text';
+  const head = document.createElement('div');
+  head.className = 'codehead';
+  head.innerHTML = `<span><span class="lang">${lang}</span><span class="where">${esc(block.dataset.where || '')}</span></span>`;
+  const btn = document.createElement('button');
+  btn.className = 'copy'; btn.textContent = 'Copy';
+  btn.onclick = () => navigator.clipboard.writeText(raw).then(() => {
+    btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1200);
+  });
+  head.appendChild(btn);
+  block.prepend(head);
+  if (!block.classList.contains('output')) code.innerHTML = highlight(raw, lang);
+});
+
+/* ---------------- schema diagram ---------------- */
+(function drawSchema() {
+  const svg = document.getElementById('schema');
+  const R = 40;
+  const N = {
+    Product: [90, 110, 'ref'], Indication: [90, 390, 'ref'], Study: [220, 250, 'ref'],
+    Endpoint: [330, 70, 'ref'], Result: [420, 250, 'ref'], Population: [300, 430, 'ref'],
+    SourceDocument: [500, 440, 'ref'],
+    ValueMessage: [700, 80, 'proj'], Claim: [680, 270, 'proj'], Section: [850, 170, 'proj'],
+    Dossier: [850, 400, 'proj'],
+  };
+  const E = [
+    ['Study', 'Product', 'EVALUATES'], ['Study', 'Indication', 'IN_INDICATION'], ['Study', 'Result', 'REPORTS'],
+    ['Result', 'Endpoint', 'MEASURES'], ['Result', 'Product', 'VERSUS'], ['Result', 'Population', 'FOR_POPULATION'],
+    ['Result', 'SourceDocument', 'EXTRACTED_FROM'], ['Claim', 'Result', 'BASED_ON'],
+    ['Claim', 'ValueMessage', 'SUPPORTS'], ['Claim', 'Section', 'APPEARS_IN'], ['Section', 'Dossier', 'PART_OF'],
+  ];
+  const LOOPS = [['Population', 'SUBGROUP_OF', 1], ['Result', 'SUPERSEDES', -1]];
+  let s = `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker></defs>`;
+  s += `<rect x="8" y="8" width="572" height="504" rx="14" fill="#f2f8fd" stroke="#bcd8ee" stroke-dasharray="6 4"/>`;
+  s += `<rect x="592" y="8" width="360" height="504" rx="14" fill="#fff8ee" stroke="#f0d2a8" stroke-dasharray="6 4"/>`;
+  s += `<text x="22" y="30" font-size="13" font-weight="700" fill="#1f5f8f">REFERENCE LAYER (shared, no projectId)</text>`;
+  s += `<text x="606" y="30" font-size="13" font-weight="700" fill="#8a4b0c">PROJECT LAYER (has projectId)</text>`;
+  E.forEach(([a, b, label]) => {
+    const [x1, y1] = N[a], [x2, y2] = N[b];
+    const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy);
+    const sx = x1 + dx / d * R, sy = y1 + dy / d * R, ex = x2 - dx / d * (R + 2), ey = y2 - dy / d * (R + 2);
+    const bridge = label === 'BASED_ON';
+    s += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${bridge ? '#7c4dff' : '#555'}" stroke-width="${bridge ? 2.6 : 1.4}" marker-end="url(#arr)"/>`;
+    const mx = (sx + ex) / 2, my = (sy + ey) / 2;
+    s += `<rect x="${mx - label.length * 3.4 - 4}" y="${my - 9}" width="${label.length * 6.8 + 8}" height="16" rx="3" fill="#fff" opacity=".9"/>`;
+    s += `<text x="${mx}" y="${my + 3}" font-size="10.5" text-anchor="middle" fill="${bridge ? '#5b2fd6' : '#333'}" font-weight="${bridge ? 700 : 400}">${label}</text>`;
+  });
+  LOOPS.forEach(([n, label, side]) => {
+    const [x, y] = N[n];
+    const ox = side * R * 0.7, oy = R * 0.7;
+    s += `<path d="M ${x + ox} ${y - oy} C ${x + side * 95} ${y - 60}, ${x + side * 95} ${y + 60}, ${x + ox} ${y + oy}"
+      fill="none" stroke="#c0392b" stroke-width="1.4" marker-end="url(#arrB)"/>`;
+    s += `<text x="${x + side * 82}" y="${y + 4}" font-size="10.5" text-anchor="${side > 0 ? 'start' : 'end'}" fill="#c0392b">${label}</text>`;
+  });
+  Object.entries(N).forEach(([name, [x, y, layer]]) => {
+    const fill = layer === 'ref' ? '#d6e9f8' : '#fde9cc', stroke = layer === 'ref' ? '#3b8bc9' : '#d9822b';
+    s += `<circle cx="${x}" cy="${y}" r="${R}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    s += `<text x="${x}" y="${y + 4}" font-size="${name.length > 11 ? 9.5 : 11.5}" text-anchor="middle" font-weight="600" fill="#1d2433">${name}</text>`;
+  });
+  s += `<text x="600" y="505" font-size="11" fill="#5b2fd6">Purple = the only cross-layer edge (project → reference)</text>`;
+  svg.innerHTML = s;
+})();
+</script>
+</body>
+</html>
