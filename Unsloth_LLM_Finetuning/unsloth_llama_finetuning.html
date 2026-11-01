@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine-Tuning LLMs, Visually — From Zero to Your Own PDF Model</title>
+<style>
+:root{
+  --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f6f7fb; --card:#ffffff;
+  --frozen:#94a3b8; --frozen-bg:#f1f5f9;
+  --train:#16a34a; --train-bg:#dcfce7;
+  --data:#ea580c; --data-bg:#ffedd5;
+  --quant:#7c3aed; --quant-bg:#ede9fe;
+  --model:#2563eb; --model-bg:#dbeafe;
+  --warn:#b45309; --warn-bg:#fef3c7;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;font-size:16.5px}
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--model),var(--train));z-index:50}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);max-width:1260px;margin:0 auto}
+nav.toc{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 14px 40px 20px;border-right:1px solid var(--line);background:#fff;font-size:14px}
+nav.toc .brand{font-weight:800;font-size:17px;margin-bottom:14px;line-height:1.3}
+nav.toc .brand small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+nav.toc h4{margin:16px 0 4px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+nav.toc a{display:block;padding:3px 10px;border-radius:8px;color:var(--ink);text-decoration:none;border-left:3px solid transparent}
+nav.toc a:hover{background:var(--frozen-bg)}
+nav.toc a.active{background:var(--model-bg);border-left-color:var(--model);font-weight:600}
+main{padding:28px 40px 80px;min-width:0}
+@media (max-width:980px){.layout{grid-template-columns:1fr}nav.toc{display:none}main{padding:20px 16px 60px}}
+
+/* hero */
+.hero{background:linear-gradient(135deg,#1e3a8a,#4c1d95);color:#fff;border-radius:22px;padding:38px 40px;position:relative;overflow:hidden}
+.hero h1{font-size:38px;line-height:1.15;margin:0 0 10px}
+.hero p{font-size:18px;opacity:.92;max-width:720px;margin:0 0 6px}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.hero .chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:4px 12px;border-radius:99px;font-size:13.5px}
+.source{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:18px 0}
+.source img{width:190px;border-radius:10px;flex-shrink:0}
+.source a{color:var(--model);font-weight:600}
+@media (max-width:640px){.source{flex-direction:column;align-items:flex-start}.source img{width:100%}}
+
+/* sections */
+section{scroll-margin-top:16px}
+.part{margin-top:56px}
+.part-label{display:inline-block;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:99px}
+h2{font-size:30px;margin:10px 0 6px;line-height:1.2}
+h3{font-size:22px;margin:0;line-height:1.3}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin:22px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.lead{font-size:18px;color:#374151}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+code.i{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:.9em;font-family:Consolas,"Cascadia Code",monospace}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--model);margin-bottom:4px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.legend span{display:flex;align-items:center;gap:8px;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 12px 4px 6px}
+.legend i{width:18px;height:18px;border-radius:6px;display:inline-block}
+
+/* callouts */
+.callout{border-radius:12px;padding:14px 18px;margin:16px 0;border-left:5px solid}
+.callout b.t{display:block;margin-bottom:2px}
+.callout.analogy{background:var(--data-bg);border-color:var(--data)}
+.callout.idea{background:var(--model-bg);border-color:var(--model)}
+.callout.tip{background:var(--train-bg);border-color:var(--train)}
+.callout.warn{background:var(--warn-bg);border-color:var(--warn)}
+.callout.def{background:var(--quant-bg);border-color:var(--quant)}
+
+/* flows */
+.flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:16px 0}
+.flow .node{flex:1 1 140px;border-radius:12px;padding:12px 14px;border:2px solid;font-size:14.5px;line-height:1.4;background:#fff}
+.flow .node b{display:block;font-size:15.5px;margin-bottom:2px}
+.flow .arr{display:flex;align-items:center;font-size:26px;color:var(--muted);font-weight:700}
+.n-data{border-color:var(--data)!important;background:var(--data-bg)!important}
+.n-model{border-color:var(--model)!important;background:var(--model-bg)!important}
+.n-train{border-color:var(--train)!important;background:var(--train-bg)!important}
+.n-frozen{border-color:var(--frozen)!important;background:var(--frozen-bg)!important}
+.n-quant{border-color:var(--quant)!important;background:var(--quant-bg)!important}
+a.node{text-decoration:none;color:inherit;transition:transform .15s}
+a.node:hover{transform:translateY(-3px)}
+.flow .node .sn{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;text-align:center;line-height:22px;margin-right:6px;font-weight:700}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff}
+.panel h4{margin:0 0 6px;font-size:16.5px}
+
+figure.diagram{margin:18px 0;background:#fbfcfe;border:1px dashed #cbd5e1;border-radius:14px;padding:14px}
+figure.diagram svg{width:100%;height:auto;display:block}
+figure.diagram figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:6px}
+
+/* chat bubbles */
+.q-bubble{background:var(--ink);color:#fff;border-radius:16px 16px 16px 4px;padding:12px 16px;display:inline-block;margin:6px 0 12px;max-width:560px}
+.answer{border-radius:12px;padding:12px 14px;font-size:14.5px;border:2px solid;background:#fff}
+.answer h5{margin:0 0 6px;font-size:14px;text-transform:uppercase;letter-spacing:.05em}
+
+/* tables */
+table.t{width:100%;border-collapse:collapse;font-size:14.5px;margin:12px 0}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.t th{background:#f8fafc;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#475569}
+table.t td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr.total td{font-weight:700;background:var(--train-bg)}
+
+/* code */
+figure.code{margin:16px 0;border-radius:12px;overflow:hidden;background:#0f172a;box-shadow:0 4px 18px rgba(15,23,42,.18)}
+figure.code figcaption{display:flex;align-items:center;gap:10px;background:#1e293b;color:#cbd5e1;padding:7px 12px;font-size:13px}
+figure.code .dots i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:#ef4444}
+figure.code .dots i:nth-child(2){background:#f59e0b}figure.code .dots i:nth-child(3){background:#22c55e}
+figure.code .ctitle{flex:1;font-weight:600}
+figure.code button.copy{background:#334155;color:#e2e8f0;border:0;border-radius:7px;padding:3px 10px;cursor:pointer;font-size:12.5px}
+figure.code button.copy:hover{background:#475569}
+figure.code pre{margin:0;padding:14px 16px;overflow:auto;color:#e2e8f0;font-family:Consolas,"Cascadia Code","Fira Code",monospace;font-size:13.8px;line-height:1.6}
+.t-c{color:#7dd3fc;font-style:italic}.t-s{color:#86efac}.t-n{color:#fca5a5}.t-k{color:#c4b5fd;font-weight:600}.t-f{color:#fde68a}.t-sh{color:#f9a8d4}
+figure.output{margin:12px 0;border-radius:12px;overflow:hidden;border:1px solid #d1d5db;background:#fff}
+figure.output figcaption{background:#f3f4f6;font-size:12.5px;font-weight:700;color:#4b5563;padding:5px 12px;letter-spacing:.04em;text-transform:uppercase}
+figure.output pre{margin:0;padding:12px 14px;white-space:pre-wrap;font-family:Consolas,monospace;font-size:13px;color:#111827}
+
+/* steps */
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px 28px;margin:22px 0;position:relative}
+.step-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.step-head .num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--model),var(--quant));color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.step-head .tag{margin-left:auto;font-size:12.5px;background:var(--frozen-bg);padding:3px 10px;border-radius:99px;color:#475569}
+.goal{font-weight:600;color:#374151;margin:10px 0}
+ul.what{padding-left:0;list-style:none;margin:10px 0}
+ul.what li{padding:6px 0 6px 30px;position:relative;border-bottom:1px dashed var(--line)}
+ul.what li:last-child{border-bottom:0}
+ul.what li::before{content:"";position:absolute;left:6px;top:13px;width:12px;height:12px;border-radius:4px;background:var(--model)}
+
+/* widgets */
+.widget{background:#fff;border:2px solid var(--model-bg);border-radius:14px;padding:16px 18px;margin:18px 0}
+.widget .wt{font-weight:700;font-size:14px;color:var(--model);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0 12px;font-size:14.5px}
+.controls label{display:flex;align-items:center;gap:8px}
+input[type=range]{accent-color:var(--model);width:170px}
+select{padding:4px 8px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px}
+.btn{background:var(--model);color:#fff;border:0;border-radius:9px;padding:8px 16px;font-size:14.5px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:#fff;color:var(--model);border:2px solid var(--model)}
+.btn.green{background:var(--train)}
+.seg{display:inline-flex;border:2px solid var(--model);border-radius:10px;overflow:hidden}
+.seg button{background:#fff;border:0;padding:6px 12px;font-size:14px;cursor:pointer;color:var(--model);font-weight:600}
+.seg button.on{background:var(--model);color:#fff}
+.bar-row{display:grid;grid-template-columns:150px 1fr 76px;gap:10px;align-items:center;font-size:14px;margin:4px 0}
+.bar-row code{font-family:Consolas,monospace;font-size:13.5px}
+.bar{height:16px;background:var(--frozen-bg);border-radius:8px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--model);border-radius:8px;transition:width .35s}
+.bar-row.top .bar span{background:var(--train)}
+.bar-row.cut{opacity:.35}
+.bar-row.cut b::after{content:" cut";font-weight:400;font-size:11px}
+.bar-row .badge{font-size:11px;background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:0 5px;margin-left:4px}
+#acText{font-size:20px;background:#f8fafc;border-radius:10px;padding:12px 14px;min-height:56px;margin-bottom:10px}
+#acText .prompt{color:var(--ink);font-weight:600}
+#acText .gen{color:var(--train);font-weight:700;background:var(--train-bg);border-radius:4px}
+.stat{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+.stat div{flex:1 1 160px;border-radius:12px;padding:10px 14px;background:var(--frozen-bg)}
+.stat div b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.stat div.g{background:var(--train-bg)}.stat div.g b{color:var(--train)}
+.stat div.p{background:var(--quant-bg)}.stat div.p b{color:var(--quant)}
+.mem-row{display:grid;grid-template-columns:170px 1fr 70px 120px;gap:10px;align-items:center;font-size:14px;margin:6px 0}
+.mem-row .bar span{background:var(--frozen)}
+.mem-row .bar.q span{background:var(--quant)}
+.mem-row em{font-style:normal;font-size:12.5px;padding:2px 8px;border-radius:99px;text-align:center}
+.mem-row em.ok{background:var(--train-bg);color:var(--train)}.mem-row em.no{background:#fee2e2;color:#b91c1c}
+@media (max-width:640px){.mem-row{grid-template-columns:110px 1fr 60px}.mem-row em{display:none}.bar-row{grid-template-columns:100px 1fr 48px}}
+
+/* matrices */
+.matrices{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+table.mx{border-collapse:separate;border-spacing:3px}
+table.mx td{width:34px;height:30px;text-align:center;border-radius:6px;font-weight:700;font-size:14px}
+table.mx.a td,table.mx.b td{background:var(--train-bg);color:var(--train);border:1.5px solid var(--train)}
+table.mx.dw td{background:#f0fdf4;color:#166534;border:1.5px dashed var(--train)}
+.mx-label{text-align:center;font-size:13px;color:var(--muted);margin-top:2px}
+.op{font-size:26px;font-weight:700;color:var(--muted)}
+
+/* chunks */
+#chunkBox{font-family:Consolas,monospace;font-size:13.5px;line-height:2;background:#f8fafc;border-radius:10px;padding:12px}
+.chunk{padding:2px 0;border-radius:4px}
+.chunk.c0{background:#fed7aa}.chunk.c1{background:#bfdbfe}.chunk.c2{background:#bbf7d0}.chunk.c3{background:#ddd6fe}.chunk.c4{background:#fbcfe8}
+.chunk.dropped{background:#e5e7eb;color:#9ca3af;text-decoration:line-through}
+
+/* svg classes */
+.edge{stroke-width:1.4}
+.e-weights{stroke:#94a3b8}
+.e-full{stroke:var(--data);stroke-dasharray:5 4;animation:flow 1.2s linear infinite}
+.e-peft{stroke:#cbd5e1}
+@keyframes flow{to{stroke-dashoffset:-18}}
+.node.n-weights{fill:var(--model-bg);stroke:var(--model);stroke-width:2}
+.node.n-full{fill:var(--data-bg);stroke:var(--data);stroke-width:2}
+.node.n-peft{fill:var(--frozen-bg);stroke:var(--frozen);stroke-width:2}
+.wlabel{fill:#fff;stroke:var(--model);stroke-width:1}
+.wtext{font-size:11px;font-weight:700;fill:var(--model);text-anchor:middle;font-family:Consolas,monospace}
+.adapter{fill:var(--train-bg);stroke:var(--train);stroke-width:2}
+.adapter-t{font-size:12px;font-weight:800;fill:var(--train);text-anchor:middle}
+.adapter-link{fill:none;stroke:var(--train);stroke-width:2;stroke-dasharray:4 3;animation:flow 1s linear infinite}
+svg text{font-family:"Segoe UI",system-ui,sans-serif}
+
+/* transformer block */
+.tblock{border:2px solid var(--frozen);border-radius:14px;padding:14px;background:var(--frozen-bg);position:relative}
+.tblock .x16{position:absolute;top:-12px;right:14px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;border-radius:99px;padding:2px 10px}
+.sub{border:1.5px solid #cbd5e1;border-radius:10px;padding:10px;background:#fff;margin:8px 0}
+.sub h5{margin:0 0 6px;font-size:14px}
+.mods{display:flex;flex-wrap:wrap;gap:8px}
+.mod{border:1.5px solid var(--frozen);background:#fff;border-radius:8px;padding:5px 10px;font-family:Consolas,monospace;font-size:13.5px;position:relative}
+.mod::after{content:"+LoRA";position:absolute;top:-9px;right:-8px;background:var(--train);color:#fff;font-size:10px;font-family:"Segoe UI",sans-serif;font-weight:700;border-radius:6px;padding:0 5px}
+
+/* tokens */
+.tokrow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:6px 0}
+.tokrow .lab{width:120px;font-size:13px;color:var(--muted);font-weight:600}
+.tok{font-family:Consolas,monospace;font-size:13.5px;padding:3px 8px;border-radius:6px;border:1.5px solid}
+.tok.in{border-color:var(--data);background:var(--data-bg)}
+.tok.tg{border-color:var(--train);background:var(--train-bg)}
+.tok.eos{border-color:var(--quant);background:var(--quant-bg);font-weight:700}
+
+/* batches */
+.batches{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mb{border:2px dashed var(--data);border-radius:10px;padding:6px;display:flex;gap:4px;flex-direction:column;align-items:center;font-size:11.5px;color:var(--data)}
+.mb .pg{width:46px;height:28px;border-radius:5px;background:var(--data-bg);border:1.5px solid var(--data)}
+.upd{border:2px solid var(--train);background:var(--train-bg);border-radius:12px;padding:10px 14px;font-weight:700;color:var(--train)}
+
+/* compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.compare{grid-template-columns:1fr}}
+.cmp{border-radius:14px;padding:16px;border:2px solid;background:#fff;font-size:15px;overflow-wrap:anywhere}
+.cmp h4{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.05em}
+.cmp.base{border-color:var(--frozen)}.cmp.base h4{color:#475569}
+.cmp.tuned{border-color:var(--train)}.cmp.tuned h4{color:var(--train)}
+.cmp .pr{font-weight:700;background:#f1f5f9;border-radius:6px;padding:0 4px}
+mark{background:#fef08a;border-radius:3px;padding:0 2px}
+mark.loop{background:#fecaca}
+mark.glue{background:#fde68a;text-decoration:underline wavy #b45309}
+
+/* quiz & glossary */
+details{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;background:#fff}
+details summary{cursor:pointer;font-weight:600}
+details[open] summary{margin-bottom:8px;color:var(--model)}
+dl.gloss{display:grid;grid-template-columns:200px 1fr;gap:8px 16px;margin:0}
+dl.gloss dt{font-weight:700}
+dl.gloss dd{margin:0;color:#374151}
+@media (max-width:640px){dl.gloss{grid-template-columns:1fr}}
+.runbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+footer{margin-top:60px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+
+<nav class="toc">
+  <div class="brand">Fine-Tuning LLMs, Visually<small>From "what is it?" to your own PDF model</small></div>
+  <a href="#start">Start here</a>
+  <h4>Part 1 · Concepts</h4>
+  <a href="#c-what">1. What is fine-tuning?</a>
+  <a href="#c-rag">2. RAG vs fine-tuning</a>
+  <a href="#c-base">3. Base vs instruct models</a>
+  <a href="#c-params">4. What is a "parameter"?</a>
+  <a href="#c-peft">5. Full fine-tuning vs PEFT</a>
+  <a href="#c-lora">6. LoRA</a>
+  <a href="#c-quant">7. Quantization</a>
+  <a href="#c-qlora">8. QLoRA</a>
+  <a href="#c-train">9. How training works</a>
+  <h4>Part 2 · Build it step by step</h4>
+  <a href="#pipeline">The pipeline at a glance</a>
+  <a href="#step-1">Step 1 · Get a GPU</a>
+  <a href="#step-2">Step 2 · Install Unsloth</a>
+  <a href="#step-3">Step 3 · Add your documents</a>
+  <a href="#step-4">Step 4 · Documents to dataset</a>
+  <a href="#step-5">Step 5 · Load model + LoRA</a>
+  <a href="#step-6">Step 6 · Prepare the trainer</a>
+  <a href="#step-7">Step 7 · Train</a>
+  <a href="#step-8">Step 8 · Train longer</a>
+  <a href="#step-9">Step 9 · Test it</a>
+  <a href="#step-10">Step 10 · Save the adapter</a>
+  <a href="#step-11">Step 11 · Back up to Drive</a>
+  <a href="#step-12">Step 12 · Better generation</a>
+  <h4>Part 3 · Your turn</h4>
+  <a href="#run">Run it on your PDF</a>
+  <a href="#results">Base vs fine-tuned</a>
+  <a href="#limits">Limits &amp; next steps</a>
+  <a href="#quiz">Check yourself</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+
+<main>
+
+<!-- ============================ HERO ============================ -->
+<section id="start">
+  <div class="hero">
+    <h1>Fine-Tuning LLMs, Visually</h1>
+    <p>A picture-first guide for beginners. Learn what fine-tuning, LoRA, quantization and QLoRA actually do, then build it step by step and fine-tune a real model on your own PDF in free Google Colab.</p>
+    <div class="chips"><span>No GPU at home needed</span><span>Free Colab T4</span><span>Llama-3.2-1B</span><span>Unsloth + LoRA/QLoRA</span><span>Base vs fine-tuned comparison</span></div>
+  </div>
+
+  <div class="source">
+    <a href="https://www.youtube.com/watch?v=IIvORO248Zs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/IIvORO248Zs/hqdefault.jpg" alt="LLM Fine Tuning Crash Course video thumbnail"></a>
+    <div>
+      <div class="kicker">Built from</div>
+      <div><a href="https://www.youtube.com/watch?v=IIvORO248Zs" target="_blank" rel="noopener">LLM Fine Tuning Crash Course</a> by codebasics, for the concepts in Part 1.</div>
+      <div><b>DocTune</b> (README + Colab notebook), for the hands-on code in Parts 2 and 3. The outputs shown here are real outputs from that notebook's run.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">How to read this page</div>
+    <p style="margin-top:0">Every diagram uses the same colours, so you can tell at a glance what changes during training and what doesn't:</p>
+    <div class="legend">
+      <span><i style="background:var(--frozen-bg);border:2px solid var(--frozen)"></i>Gray = frozen (never changes)</span>
+      <span><i style="background:var(--train-bg);border:2px solid var(--train)"></i>Green = trainable (what we learn)</span>
+      <span><i style="background:var(--data-bg);border:2px solid var(--data)"></i>Orange = your data</span>
+      <span><i style="background:var(--quant-bg);border:2px solid var(--quant)"></i>Purple = compressed (quantized)</span>
+      <span><i style="background:var(--model-bg);border:2px solid var(--model)"></i>Blue = model / computation</span>
+    </div>
+    <div class="flow">
+      <div class="node n-model"><b>Part 1 · Concepts</b>The ideas, in pictures, with small interactive demos.</div>
+      <div class="arr">→</div>
+      <div class="node n-data"><b>Part 2 · Build it</b>12 steps, each with a diagram, the code, and what happens.</div>
+      <div class="arr">→</div>
+      <div class="node n-train"><b>Part 3 · Your turn</b>One Colab notebook: your PDF in, a fine-tuned model out, compared with the base model.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 1 ============================ -->
+<div class="part"><span class="part-label">Part 1 · Concepts</span><h2>The ideas behind fine-tuning</h2><p class="lead">You can't fine-tune well until you can picture what is happening inside the model. These nine ideas are all you need.</p></div>
+
+<!-- 1.1 -->
+<section id="c-what" class="card">
+  <div class="kicker">Concept 1</div>
+  <h3>What is fine-tuning? Moving skills you already have to a new game</h3>
+  <p>The video starts with a story. Someone who grew up playing <b>cricket</b> moves to the US and is taken to play <b>baseball</b>. They are comfortable almost straight away, because both games need the same raw skills: watch the ball, swing the bat, run. They don't learn from zero. They <b>transfer</b> their skills and adjust a little.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Cricket skills transfer to baseball">
+      <rect x="20" y="30" width="200" height="170" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="120" y="58" text-anchor="middle" font-weight="800" font-size="18" fill="#1e3a8a">Cricket</text>
+      <rect x="86" y="80" width="22" height="90" rx="5" fill="#d6b588" stroke="#92400e" stroke-width="2" transform="rotate(-25 97 125)"/>
+      <rect x="93" y="62" width="8" height="26" rx="3" fill="#78350f" transform="rotate(-25 97 125)"/>
+      <circle cx="160" cy="150" r="13" fill="#dc2626"/><path d="M149 145 Q160 150 171 145" stroke="#fff" stroke-width="1.5" fill="none"/>
+      <text x="120" y="190" text-anchor="middle" font-size="13" fill="#1e3a8a">years of practice</text>
+
+      <rect x="500" y="30" width="200" height="170" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+      <text x="600" y="58" text-anchor="middle" font-weight="800" font-size="18" fill="#14532d">Baseball</text>
+      <path d="M560 165 L640 85" stroke="#a16207" stroke-width="12" stroke-linecap="round"/>
+      <path d="M560 165 L575 150" stroke="#422006" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="645" cy="150" r="13" fill="#fff" stroke="#9ca3af" stroke-width="1.5"/><path d="M637 142 Q645 150 637 158 M653 142 Q645 150 653 158" stroke="#dc2626" stroke-width="1.3" fill="none"/>
+      <text x="600" y="190" text-anchor="middle" font-size="13" fill="#14532d">a few days to adjust</text>
+
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#ea580c"/></marker></defs>
+      <path d="M230 115 L490 115" stroke="#ea580c" stroke-width="4" marker-end="url(#ah)"/>
+      <rect x="280" y="40" width="160" height="26" rx="13" fill="#ffedd5" stroke="#ea580c"/><text x="360" y="58" text-anchor="middle" font-size="13" fill="#9a3412">track the ball</text>
+      <rect x="280" y="128" width="160" height="26" rx="13" fill="#ffedd5" stroke="#ea580c"/><text x="360" y="146" text-anchor="middle" font-size="13" fill="#9a3412">swing the bat</text>
+      <rect x="280" y="164" width="160" height="26" rx="13" fill="#ffedd5" stroke="#ea580c"/><text x="360" y="182" text-anchor="middle" font-size="13" fill="#9a3412">run between bases</text>
+      <text x="360" y="104" text-anchor="middle" font-weight="700" font-size="14" fill="#9a3412">skills transfer</text>
+    </svg>
+    <figcaption>Transfer learning: re-use what you already know and only adjust for the new task.</figcaption>
+  </figure>
+  <p>LLMs work the same way. A model like Llama has already read a huge amount of internet text, so it knows grammar, facts and how to reason a little. Fine-tuning gives it a short extra round of training on <b>your</b> data so it picks up your topic, vocabulary, tone or answer format.</p>
+  <div class="flow">
+    <div class="node n-model"><b>Pre-trained LLM</b>Knows general language from huge internet datasets.</div>
+    <div class="arr">+</div>
+    <div class="node n-data"><b>Your data</b>A PDF, company documents, Q&amp;A pairs, chat logs…</div>
+    <div class="arr">→</div>
+    <div class="node n-train"><b>Fine-tuned LLM</b>Same model, now "speaks" your domain and style.</div>
+  </div>
+  <div class="callout def"><b class="t">Definition</b>Fine-tuning means taking a model that is already trained and training it a bit more on a specific dataset, task, tone or format.</div>
+</section>
+
+<!-- 1.2 -->
+<section id="c-rag" class="card">
+  <div class="kicker">Concept 2</div>
+  <h3>Why not just use the model as it is? RAG vs fine-tuning</h3>
+  <p>The video uses a made-up company called <b>Loki Phones</b>. You're building its customer-support chatbot. Its plans and policies are private, so they were never on the internet and the base model has never seen them.</p>
+  <div class="q-bubble">"My Loki Phone 12 screen is cracked. What are my options?"</div>
+  <div class="grid3">
+    <div class="answer" style="border-color:var(--frozen)"><h5 style="color:#475569">Plain LLM</h5>"You can take your phone to a repair shop or contact the manufacturer…"<p class="small muted" style="margin:6px 0 0">Generic. It doesn't know the LokiCare+ plan exists.</p></div>
+    <div class="answer" style="border-color:var(--model)"><h5 style="color:var(--model)">RAG (looks up your docs)</h5>"Per policy document 4.2: LokiCare+ covers screen replacement. Submit a claim."<p class="small muted" style="margin:6px 0 0">Correct facts, but robotic, and not in your brand's voice.</p></div>
+    <div class="answer" style="border-color:var(--train)"><h5 style="color:var(--train)">Fine-tuned</h5>"Oh no, sorry about your screen! Good news: if you have LokiCare+, a replacement is covered. Here's how to book it…"<p class="small muted" style="margin:6px 0 0">Brand tone, empathy, your preferred format.</p></div>
+  </div>
+  <p class="small muted">Illustrative answers. The idea comes from the video; the exact wording is made up.</p>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h4 style="color:var(--model)">RAG: Retrieval-Augmented Generation</h4>
+      <div class="flow" style="flex-direction:column">
+        <div class="node n-data">Question</div>
+        <div class="arr" style="justify-content:center">↓</div>
+        <div class="node n-data">Search your private documents and paste the best matches into the prompt</div>
+        <div class="arr" style="justify-content:center">↓</div>
+        <div class="node n-frozen"><b>LLM (weights unchanged)</b>reads the pasted text and answers</div>
+      </div>
+      <p class="small">The model is never retrained. It just gets extra reading material each time someone asks a question.</p>
+    </div>
+    <div class="panel">
+      <h4 style="color:var(--train)">Fine-tuning</h4>
+      <div class="flow" style="flex-direction:column">
+        <div class="node n-data">Your documents / examples</div>
+        <div class="arr" style="justify-content:center">↓</div>
+        <div class="node n-model">Training run on a GPU</div>
+        <div class="arr" style="justify-content:center">↓</div>
+        <div class="node n-train"><b>LLM (weights updated)</b>the knowledge and style now live inside the model</div>
+      </div>
+      <p class="small">The model itself changes, so tone, format and vocabulary come out naturally.</p>
+    </div>
+  </div>
+  <table class="t">
+    <tr><th></th><th>RAG</th><th>Fine-tuning</th></tr>
+    <tr><td><b>Cost</b></td><td>Low: no training</td><td>Higher: needs GPU time</td></tr>
+    <tr><td><b>Updating facts</b></td><td>Easy: edit the documents</td><td>Retrain to update</td></tr>
+    <tr><td><b>Tone, format, slang, emotion</b></td><td>Weak</td><td>Strong</td></tr>
+    <tr><td><b>Answer precision in your domain</b></td><td>Good</td><td>Often better</td></tr>
+  </table>
+  <div class="callout idea"><b class="t">In practice</b>Companies often <b>combine both</b>. They fine-tune for style and domain language, and use RAG for up-to-date facts.</div>
+</section>
+
+<!-- 1.3 -->
+<section id="c-base" class="card">
+  <div class="kicker">Concept 3</div>
+  <h3>Base models are autocomplete. Instruct models are chatbots.</h3>
+  <p>At its core, an LLM does one thing: <b>given some text, predict the next token</b> (a token is a word or a piece of a word). It adds that token to the text and repeats. Press the button to watch it.</p>
+  <div class="widget">
+    <div class="wt">Try it · next-token prediction</div>
+    <div id="acText"></div>
+    <div id="acBars"></div>
+    <div class="controls"><button class="btn" id="acNext">Predict next token</button><button class="btn ghost" id="acReset">Reset</button><span class="muted small">The green bar is the most likely next token, and that is the one it picks.</span></div>
+  </div>
+  <div class="grid2">
+    <div class="panel" style="border-color:var(--frozen)">
+      <h4>Base model · <code class="i">Llama-3.2-1B</code></h4>
+      <p class="small" style="margin:0">Pure autocomplete. Type <i>"The capital of India is"</i> and it continues: <i>"New Delhi. The capital of Pakistan is Islamabad. The capital of…"</i>. It just keeps writing.</p>
+    </div>
+    <div class="panel" style="border-color:var(--train)">
+      <h4>Instruct model · <code class="i">Llama-3.2-1B-Instruct</code></h4>
+      <p class="small" style="margin:0">The base model after Meta fine-tuned it on question → answer pairs. Ask <i>"Summarize this article"</i> and it gives a summary, like ChatGPT.</p>
+    </div>
+  </div>
+  <div class="callout idea"><b class="t">This matters for our project</b>The "Instruct" model is itself a fine-tuned model, so fine-tuning is how chatbots are made. In Part 2 we start from <code class="i">Llama-3.2-1B-Instruct</code> and fine-tune it again on <b>raw text from a PDF</b>. That teaches it to <b>continue text in the PDF's style</b>, so we test it with sentence starters rather than questions.</div>
+</section>
+
+<!-- 1.4 -->
+<section id="c-params" class="card">
+  <div class="kicker">Concept 4</div>
+  <h3>What is a "parameter"? The numbers on the wires</h3>
+  <p>An LLM is a giant neural network. Every connection (wire) between two neurons has a number called a <b>weight</b>. Those weights are the <b>parameters</b>. Training means nudging these numbers so the network's predictions get better.</p>
+  <figure class="diagram"><svg id="netWeights"></svg><figcaption>A toy network with 55 wires = 55 parameters. Llama-3.2-1B has about <b>1.24 billion</b>; big models have 70 billion or more.</figcaption></figure>
+  <div class="callout analogy"><b class="t">Picture it</b>Imagine a mixing desk with a billion tiny knobs. Training turns the knobs a little at a time until the music (the predictions) sounds right. Turning <i>every</i> knob is slow and needs a huge desk (GPU memory). That's the problem the next three ideas solve.</div>
+</section>
+
+<!-- 1.5 -->
+<section id="c-peft" class="card">
+  <div class="kicker">Concept 5</div>
+  <h3>Full fine-tuning vs Parameter-Efficient Fine-Tuning (PEFT)</h3>
+  <div class="grid2">
+    <figure class="diagram" style="margin:0"><svg id="netFull"></svg><figcaption><b style="color:var(--data)">Full fine-tuning</b>: every weight is updated. With 70B parameters that is very expensive.</figcaption></figure>
+    <figure class="diagram" style="margin:0"><svg id="netPeft"></svg><figcaption><b style="color:var(--train)">PEFT</b>: original weights are <b>frozen</b> (gray). Only small add-on pieces (green) are trained.</figcaption></figure>
+  </div>
+  <p>PEFT is like transfer learning in deep learning, where you freeze most layers and train only a few. The two most popular PEFT methods are <b>LoRA</b> and <b>QLoRA</b>, which are next.</p>
+</section>
+
+<!-- 1.6 -->
+<section id="c-lora" class="card">
+  <div class="kicker">Concept 6</div>
+  <h3>LoRA: Low-Rank Adaptation</h3>
+  <p>Inside a transformer, the trainable parts are big <b>matrices</b> (grids of numbers) such as W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>, W<sub>O</sub> in attention and the matrices in the feed-forward layer. Call any one of them <b>W</b>.</p>
+  <div class="flow">
+    <div class="node n-frozen"><b>1. Freeze W</b>Don't touch the original matrix at all.</div>
+    <div class="arr">→</div>
+    <div class="node n-train"><b>2. Add ΔW ("delta W")</b>A new matrix for the <i>change</i> we want to learn.</div>
+    <div class="arr">→</div>
+    <div class="node n-train"><b>3. The trick: ΔW = B × A</b>Build ΔW from two thin matrices, which is far fewer numbers.</div>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 660 330" role="img" aria-label="LoRA diagram">
+      <text x="320" y="20" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2937">output  h = W·x + B·A·x</text>
+      <circle cx="320" cy="48" r="15" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="320" y="54" text-anchor="middle" font-size="20" font-weight="700">+</text>
+      <path d="M180 95 L180 48 L305 48" fill="none" stroke="#64748b" stroke-width="2.5"/>
+      <path d="M470 95 L470 48 L335 48" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+      <rect x="70" y="95" width="220" height="160" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.5"/>
+      <text x="180" y="170" text-anchor="middle" font-size="40" font-weight="800" fill="#64748b">W</text>
+      <text x="180" y="198" text-anchor="middle" font-size="14" fill="#475569">d × d  ·  frozen</text>
+      <g transform="translate(252,104)"><rect x="0" y="9" width="22" height="17" rx="3" fill="#94a3b8"/><path d="M4 10 V5 a7 7 0 0 1 14 0 V10" fill="none" stroke="#94a3b8" stroke-width="3"/></g>
+      <polygon id="loraB" points="447,160 493,160 580,95 360,95" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+      <polygon id="loraA" points="360,255 580,255 493,190 447,190" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+      <path d="M470 190 L470 160" stroke="#16a34a" stroke-width="2.5"/>
+      <text x="470" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#166534">B</text>
+      <text x="470" y="236" text-anchor="middle" font-size="18" font-weight="800" fill="#166534">A</text>
+      <text id="rLabel" x="505" y="180" font-size="14" font-weight="700" fill="#16a34a">r = 8</text>
+      <text x="592" y="130" font-size="13" fill="#166534">B: d × r</text>
+      <text x="592" y="230" font-size="13" fill="#166534">A: r × d</text>
+      <text x="592" y="182" font-size="12" fill="#166534" font-weight="700">trainable</text>
+      <path d="M180 285 L180 255 M470 285 L470 255" stroke="#ea580c" stroke-width="2.5"/>
+      <rect x="120" y="285" width="410" height="32" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
+      <text x="325" y="306" text-anchor="middle" font-size="14" fill="#9a3412" font-weight="600">input x (one token's vector of d numbers)</text>
+    </svg>
+    <figcaption>The input goes through both paths. The frozen W path stays as it was. The green B·A path learns the adjustment. The narrow "waist" in the middle is the <b>rank r</b>.</figcaption>
+  </figure>
+
+  <h4 style="margin-bottom:4px">Why two thin matrices save so much</h4>
+  <p style="margin-top:0">Here is a tiny example with <b>rank 1</b>. A 4×1 column (B) times a 1×4 row (A) gives a full 4×4 grid. You store <b>8</b> numbers and get <b>16</b> back.</p>
+  <div class="matrices">
+    <div><table class="mx b"><tr><td>1</td></tr><tr><td>2</td></tr><tr><td>3</td></tr><tr><td>4</td></tr></table><div class="mx-label">B (4×1)</div></div>
+    <div class="op">×</div>
+    <div><table class="mx a"><tr><td>1</td><td>0</td><td>2</td><td>1</td></tr></table><div class="mx-label">A (1×4)</div></div>
+    <div class="op">=</div>
+    <div><table class="mx dw"><tr><td>1</td><td>0</td><td>2</td><td>1</td></tr><tr><td>2</td><td>0</td><td>4</td><td>2</td></tr><tr><td>3</td><td>0</td><td>6</td><td>3</td></tr><tr><td>4</td><td>0</td><td>8</td><td>4</td></tr></table><div class="mx-label">ΔW (4×4)</div></div>
+  </div>
+  <p>With real sizes the saving is huge. The video's example uses d = 512 and r = 8. Updating ΔW directly would mean <b>262,144</b> numbers, while A and B together have only <b>8,192</b>. Try other sizes:</p>
+  <div class="widget">
+    <div class="wt">Try it · LoRA parameter calculator</div>
+    <div class="controls">
+      <label>Matrix size d <select id="selD"><option>256</option><option selected>512</option><option>1024</option><option>2048</option><option>4096</option></select></label>
+      <label>Rank r <input type="range" id="rngR" min="1" max="64" value="8"><b id="rVal">8</b></label>
+    </div>
+    <div class="stat">
+      <div><span class="small">Full ΔW (d × d)</span><b id="outFull">262,144</b></div>
+      <div class="g"><span class="small">LoRA A + B (2 × d × r)</span><b id="outLora">8,192</b></div>
+      <div class="g"><span class="small">Trainable share</span><b id="outPct">3.13%</b></div>
+    </div>
+    <div class="bar-row"><span>Full ΔW</span><div class="bar"><span style="width:100%;background:var(--data)"></span></div><b>100%</b></div>
+    <div class="bar-row top"><span>LoRA</span><div class="bar"><span id="barLora" style="width:3%"></span></div><b id="barPct">3%</b></div>
+    <p class="small muted" style="margin-bottom:0">Moving the rank slider also changes the waist of the green A/B shape in the diagram above. Common ranks are 8 or 16; higher means more capacity but more memory.</p>
+  </div>
+
+  <h4 style="margin-bottom:4px">Two more knobs: <code class="i">lora_alpha</code> and <code class="i">target_modules</code></h4>
+  <p style="margin-top:0"><b>lora_alpha</b> controls how loudly the adapter "speaks". The real formula is <b>h = W·x + (α / r)·B·A·x</b>. With α = 16 and r = 16 (our settings) the scale is 1, so the adapter's change is added at normal strength.</p>
+  <p><b>target_modules</b> chooses <i>which</i> matrices get an adapter. Llama has 16 identical layers, and each one contains these 7 matrices. We add LoRA to all of them:</p>
+  <div class="tblock">
+    <span class="x16">× 16 layers</span>
+    <div class="small muted" style="font-weight:600">One Llama decoder layer (gray = frozen, green tag = LoRA adapter added)</div>
+    <div class="sub"><h5>Attention: "which earlier words should I look at?"</h5><div class="mods"><span class="mod">q_proj</span><span class="mod">k_proj</span><span class="mod">v_proj</span><span class="mod">o_proj</span></div><div class="small muted" style="margin-top:6px">Query, Key, Value and Output matrices (W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>, W<sub>O</sub>).</div></div>
+    <div class="sub"><h5>Feed-forward (MLP): "now think about what I found"</h5><div class="mods"><span class="mod">gate_proj</span><span class="mod">up_proj</span><span class="mod">down_proj</span></div></div>
+  </div>
+  <p class="small muted">If you leave a module out of <code class="i">target_modules</code>, that matrix stays fully frozen with no adapter.</p>
+</section>
+
+<!-- 1.7 -->
+<section id="c-quant" class="card">
+  <div class="kicker">Concept 7</div>
+  <h3>Quantization: storing each number with fewer bits</h3>
+  <p>Every parameter is a number, and numbers take memory. Normally each one uses <b>32 bits (4 bytes)</b>, so a 7-billion-parameter model needs about 28 GB just to load. <b>Quantization</b> stores each number with fewer bits: 8 bits needs a quarter of the memory, and 4 bits needs an eighth.</p>
+  <div class="widget">
+    <div class="wt">Try it · how much memory does a model need?</div>
+    <div class="controls"><span>Model size:</span><div class="seg" id="memSeg"><button data-p="1.24" class="on">1.24B (our Llama-3.2-1B)</button><button data-p="7">7B</button><button data-p="70">70B</button></div></div>
+    <div id="memBars"></div>
+    <p class="small muted" style="margin-bottom:0">Weights only. Training needs extra room for activations and optimizer state, which is another reason to keep the model small.</p>
+  </div>
+
+  <h4 style="margin-bottom:4px">How it works: map floats onto a small set of integers</h4>
+  <p style="margin-top:0">Weights are usually small decimals between −1 and 1. To store them as 8-bit integers (−128 … 127), we stretch the range onto the integers:</p>
+  <div class="grid2">
+    <div class="panel n-quant" style="border:2px solid var(--quant)"><b>1. Find the scale</b><br><code class="i">scale = (x_max − x_min) / (q_max − q_min)</code><br><span class="small">= (1 − (−1)) / (127 − (−128)) = 0.0078</span></div>
+    <div class="panel n-quant" style="border:2px solid var(--quant)"><b>2. Quantize, and later dequantize</b><br><code class="i">q = round(x / scale)</code> → −0.91 becomes <b>−116</b><br><code class="i">x ≈ q × scale</code> → −116 × 0.0078 = <b>−0.9098</b></div>
+  </div>
+  <p>You get back <i>almost</i> the original number. It's like zipping and unzipping a photo: a little detail is lost, but a lot of space is saved.</p>
+  <div class="widget">
+    <div class="wt">Try it · quantize six real-looking weights</div>
+    <div class="controls"><span>Bits per number:</span><div class="seg" id="qSeg"><button data-b="8" class="on">8-bit</button><button data-b="4">4-bit</button><button data-b="2">2-bit</button></div><span class="small">scale = <b id="qScale"></b> · <b id="qLevels"></b> possible values</span></div>
+    <svg id="qLine" viewBox="0 0 640 96" style="width:100%;height:auto"></svg>
+    <table class="t" id="qTable"></table>
+    <p class="small muted" style="margin:0">Orange dots are the original weights and purple dots are where they land after quantization. The fewer the bits, the bigger the jump, and the bigger the error.</p>
+  </div>
+
+  <h4 style="margin-bottom:4px">NF4: smarter 4-bit bins for bell-shaped weights</h4>
+  <p style="margin-top:0">4 bits give 16 possible values. If we make 16 <b>equal-width</b> bins, there's a problem: neural-network weights follow a <b>bell curve</b> (normal distribution), with most of them crowded near zero. A few middle bins would hold most of the weights, and those weights would get lumped together. <b>NormalFloat-4 (NF4)</b> instead makes bins that each hold the <b>same share of weights</b> (1/16 = 6.25%). The bins are narrow in the crowded middle and wide at the empty edges.</p>
+  <div class="widget">
+    <div class="wt">Try it · equal-width bins vs NF4 bins</div>
+    <div class="controls"><div class="seg" id="nfSeg"><button data-m="uni" class="on">Equal-width int4</button><button data-m="nf4">NF4 (equal share)</button></div></div>
+    <svg id="nfSvg" viewBox="0 0 640 250" style="width:100%;height:auto"></svg>
+    <p id="nfNote" class="small" style="margin:0"></p>
+  </div>
+</section>
+
+<!-- 1.8 -->
+<section id="c-qlora" class="card">
+  <div class="kicker">Concept 8</div>
+  <h3>QLoRA = Quantized base model + LoRA adapters</h3>
+  <p>QLoRA combines the two ideas. It <b>compresses the frozen base model to 4 bits</b> so it fits in memory, then <b>trains small LoRA adapters</b> on top of it. The QLoRA paper fine-tuned a <b>65-billion</b>-parameter model on a <b>single 48 GB GPU</b>. In 32-bit that model would need about 260 GB.</p>
+  <div class="flow">
+    <div class="node n-frozen"><b>65B model, 32-bit</b>≈ 260 GB</div>
+    <div class="arr">→</div>
+    <div class="node n-quant"><b>Quantize to NF4</b>≈ 32.5 GB, frozen</div>
+    <div class="arr">→</div>
+    <div class="node n-train"><b>+ LoRA adapters</b>small, trainable, kept in higher precision</div>
+    <div class="arr">→</div>
+    <div class="node n-model"><b>Fine-tune</b>on one GPU</div>
+  </div>
+  <p>The paper uses three tricks:</p>
+  <div class="grid3">
+    <div class="panel" style="border-top:5px solid var(--quant)"><h4>1 · 4-bit NF4</h4><p class="small" style="margin:0">The bell-curve-friendly 4-bit format from the previous section.</p></div>
+    <div class="panel" style="border-top:5px solid var(--quant)"><h4>2 · Double quantization</h4>
+      <svg viewBox="0 0 240 110" style="width:100%">
+        <g font-size="10" text-anchor="middle">
+          <rect x="5" y="8" width="50" height="22" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="30" y="23">64 weights</text>
+          <rect x="65" y="8" width="50" height="22" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="90" y="23">64 weights</text>
+          <rect x="125" y="8" width="50" height="22" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="150" y="23">64 weights</text>
+          <text x="205" y="23" font-size="14">…</text>
+          <circle cx="30" cy="52" r="10" fill="#fff" stroke="#ea580c"/><text x="30" y="56">s1</text>
+          <circle cx="90" cy="52" r="10" fill="#fff" stroke="#ea580c"/><text x="90" y="56">s2</text>
+          <circle cx="150" cy="52" r="10" fill="#fff" stroke="#ea580c"/><text x="150" y="56">s3</text>
+          <path d="M30 62 L90 88 M90 62 L90 88 M150 62 L90 88" stroke="#ea580c"/>
+          <rect x="40" y="88" width="100" height="18" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="90" y="101">scales quantized too</text>
+        </g>
+      </svg>
+      <p class="small" style="margin:0">Weights are quantized in blocks of 64, and each block keeps its own scale. That's millions of scales, so the scales get quantized as well, like zipping a zip file.</p></div>
+    <div class="panel" style="border-top:5px solid var(--quant)"><h4>3 · Paged optimizers</h4>
+      <div class="flow" style="margin:6px 0"><div class="node n-model" style="flex-basis:80px;padding:6px;font-size:13px"><b>GPU</b>memory full</div><div class="arr" style="font-size:18px">⇄</div><div class="node n-frozen" style="flex-basis:80px;padding:6px;font-size:13px"><b>CPU RAM</b>overflow</div></div>
+      <p class="small" style="margin:0">When the GPU runs out of memory, some data is moved out to normal RAM and back when needed, like paging in an operating system. This prevents out-of-memory crashes.</p></div>
+  </div>
+  <div class="callout tip"><b class="t">In our project</b><code class="i">load_in_4bit=True</code> loads Llama-3.2-1B in 4-bit (the "Q"), and <code class="i">get_peft_model(...)</code> adds the LoRA adapters. That's QLoRA, and it runs on a free 15 GB Colab T4.</div>
+</section>
+
+<!-- 1.9 -->
+<section id="c-train" class="card">
+  <div class="kicker">Concept 9</div>
+  <h3>How training actually works</h3>
+  <p>When we train on raw text, every chunk becomes many small "guess the next token" quizzes. The target is simply the input shifted one token to the left:</p>
+  <div class="panel" style="background:#fbfcfe">
+    <div class="tokrow"><span class="lab">Model sees →</span><span class="tok in">The</span><span class="tok in">5</span><span class="tok in">layers</span><span class="tok in">above</span><span class="tok in">the</span><span class="tok in">model</span></div>
+    <div class="tokrow"><span class="lab">Must predict →</span><span class="tok tg">5</span><span class="tok tg">layers</span><span class="tok tg">above</span><span class="tok tg">the</span><span class="tok tg">model</span><span class="tok tg">are</span></div>
+  </div>
+  <div class="flow">
+    <div class="node n-data"><b>1. Batch of chunks</b>8 pieces of your PDF</div><div class="arr">→</div>
+    <div class="node n-model"><b>2. Predict</b>guess every next token</div><div class="arr">→</div>
+    <div class="node n-model"><b>3. Loss</b>how wrong were the guesses?</div><div class="arr">→</div>
+    <div class="node n-train"><b>4. Update A &amp; B only</b>nudge adapter numbers to be less wrong</div><div class="arr">↻</div>
+  </div>
+  <p>One trip around this loop is one <b>step</b>. One full pass over all your chunks is one <b>epoch</b>.</p>
+  <div class="callout idea"><b class="t">What does "loss" mean?</b>Loss measures how surprised the model is by the real next token, and lower is better. In our run it fell from <b>5.25 to about 2.5</b>. Roughly speaking, the model went from being as unsure as if it were picking among <b>~190</b> words (e<sup>5.25</sup>) to only <b>~12</b> (e<sup>2.5</sup>).</div>
+  <div class="callout warn"><b class="t">Don't chase zero</b>A loss of 0 would mean the model memorised your PDF word for word. We want it to learn the style and vocabulary, not to copy the text.</div>
+</section>
+
+<!-- ============================ PART 2 ============================ -->
+<div class="part"><span class="part-label">Part 2 · Build it step by step</span><h2>DocTune: fine-tune Llama on your documents</h2><p class="lead">Now the concepts become code. Each step shows a diagram, the exact code from the DocTune notebook, what happens, and the real output from its run.</p></div>
+
+<section id="pipeline" class="card">
+  <div class="kicker">The pipeline at a glance</div>
+  <h3>From a PDF to a fine-tuned model (click a box to jump to its step)</h3>
+  <div class="flow">
+    <a class="node n-data" href="#step-3"><span class="sn">3</span><b>Documents</b>PDF / DOCX / TXT / CSV</a><div class="arr">→</div>
+    <a class="node n-data" href="#step-4"><span class="sn">4</span><b>Parse + chunk</b>~1000-char pieces</a><div class="arr">→</div>
+    <a class="node n-data" href="#step-4"><span class="sn">4</span><b>Dataset</b>{"text", "source"} rows</a><div class="arr">→</div>
+    <a class="node n-quant" href="#step-5"><span class="sn">5</span><b>4-bit Llama</b>frozen base model</a>
+  </div>
+  <div class="flow">
+    <a class="node n-train" href="#step-5"><span class="sn">5</span><b>+ LoRA</b>11.27M trainable params</a><div class="arr">→</div>
+    <a class="node n-data" href="#step-6"><span class="sn">6</span><b>Add EOS + trainer</b>settings for training</a><div class="arr">→</div>
+    <a class="node n-model" href="#step-7"><span class="sn">7</span><b>Train</b>60 then 200 steps</a><div class="arr">→</div>
+    <a class="node n-train" href="#step-10"><span class="sn">10</span><b>Save adapter</b>small file → Drive</a><div class="arr">→</div>
+    <a class="node n-model" href="#step-12"><span class="sn">12</span><b>Compare</b>base vs fine-tuned</a>
+  </div>
+</section>
+
+<!-- STEP 1 -->
+<section id="step-1" class="step">
+  <div class="step-head"><span class="num">1</span><h3>Get a free GPU in Google Colab</h3><span class="tag">~1 min</span></div>
+  <p class="goal">Goal: confirm a GPU is attached, because training needs one.</p>
+  <div class="flow"><div class="node n-frozen"><b>colab.research.google.com</b>New notebook</div><div class="arr">→</div><div class="node n-model"><b>Runtime → Change runtime type</b>pick <b>T4 GPU</b></div><div class="arr">→</div><div class="node n-train"><b>Run <code class="i">!nvidia-smi</code></b>see "Tesla T4"</div></div>
+<script type="text/plain" data-code data-title="Cell · check the GPU">
+!nvidia-smi
+</script>
+<script type="text/plain" data-output data-title="Output (trimmed)">
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   50C    P8             11W /   70W |       0MiB /  15360MiB |      0%      Default |
+</script>
+  <ul class="what">
+    <li>The <code class="i">!</code> at the start runs a terminal command from inside the notebook.</li>
+    <li>You should see a <b>Tesla T4</b> with about <b>15 GB</b> of memory. That's enough because the model will be 4-bit (QLoRA).</li>
+  </ul>
+</section>
+
+<!-- STEP 2 -->
+<section id="step-2" class="step">
+  <div class="step-head"><span class="num">2</span><h3>Install Unsloth</h3><span class="tag">several minutes, once per session</span></div>
+  <p class="goal">Goal: install the library that makes LoRA/QLoRA training about 2× faster and lighter on memory.</p>
+<script type="text/plain" data-code data-title="Cell · install + import">
+!pip install -q unsloth
+import unsloth
+print("Unsloth OK")
+</script>
+<script type="text/plain" data-output data-title="Output">
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+Unsloth: xformers is installed but cannot load with torch 2.11.0+cu130 ... so PyTorch attention is used instead.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+Unsloth OK
+</script>
+  <ul class="what">
+    <li><code class="i">-q</code> means "quiet", so you see fewer install messages. Installing also pulls in PyTorch, Transformers, PEFT and TRL.</li>
+    <li><code class="i">import unsloth</code> patches the model code for speed. Import it <b>before</b> other training libraries.</li>
+    <li>The <b>xformers warning is harmless</b>: Unsloth falls back to PyTorch's built-in attention.</li>
+    <li>Colab starts fresh every session, so you reinstall each time you reconnect.</li>
+  </ul>
+</section>
+
+<!-- STEP 3 -->
+<section id="step-3" class="step">
+  <div class="step-head"><span class="num">3</span><h3>Install the file readers and add your documents</h3><span class="tag">~30 s</span></div>
+  <p class="goal">Goal: put your PDF where the code can find it, in a folder called <code class="i">docs</code>.</p>
+<script type="text/plain" data-code data-title="Cell · file parsers">
+!pip install -q pypdf python-docx pandas datasets
+</script>
+  <div class="grid2">
+    <div class="panel">
+      <h4>Add files (sidebar method)</h4>
+      <ol class="small" style="margin:0;padding-left:18px">
+        <li>Click the <b>folder icon</b> in Colab's left sidebar.</li>
+        <li>Right-click → <b>New folder</b> → name it <code class="i">docs</code>.</li>
+        <li>Drag your <code class="i">.pdf</code> (or .docx / .txt / .csv) into it.</li>
+      </ol>
+    </div>
+    <div class="panel" style="font-family:Consolas,monospace;font-size:14px;background:#fbfcfe">
+      /content/<br>
+      └── <b style="color:var(--data)">docs/</b><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;└── <span style="background:var(--data-bg);padding:0 6px;border-radius:4px">details.pdf</span>
+    </div>
+  </div>
+  <ul class="what">
+    <li>Each file type needs its own reader: <b>pypdf</b> for PDFs, <b>python-docx</b> for Word, <b>pandas</b> for CSV. <b>datasets</b> is Hugging Face's dataset format.</li>
+    <li>The sidebar upload is more reliable than <code class="i">files.upload()</code> for big files. Part 3 offers both.</li>
+  </ul>
+</section>
+
+<!-- STEP 4 -->
+<section id="step-4" class="step">
+  <div class="step-head"><span class="num">4</span><h3>Turn documents into a training dataset</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: PDF → clean text → bite-sized chunks → a table of training examples.</p>
+  <figure class="diagram" style="background:#fff">
+    <div class="small muted" style="font-weight:700;margin-bottom:6px">read_file() picks a reader based on the file extension</div>
+    <div class="flow" style="margin:6px 0"><div class="node n-data" style="flex:0 0 90px"><b>.pdf</b></div><div class="arr">→</div><div class="node n-model">pypdf</div><div class="arr">→</div><div class="node n-frozen">one text <b style="display:inline">per page</b></div></div>
+    <div class="flow" style="margin:6px 0"><div class="node n-data" style="flex:0 0 90px"><b>.docx</b></div><div class="arr">→</div><div class="node n-model">python-docx</div><div class="arr">→</div><div class="node n-frozen">all paragraphs joined into <b style="display:inline">one text</b></div></div>
+    <div class="flow" style="margin:6px 0"><div class="node n-data" style="flex:0 0 90px"><b>.txt</b></div><div class="arr">→</div><div class="node n-model">open().read()</div><div class="arr">→</div><div class="node n-frozen">the <b style="display:inline">whole file</b> as one text</div></div>
+    <div class="flow" style="margin:6px 0"><div class="node n-data" style="flex:0 0 90px"><b>.csv</b></div><div class="arr">→</div><div class="node n-model">pandas</div><div class="arr">→</div><div class="node n-frozen">one text <b style="display:inline">per row</b>: "col: value | col: value"</div></div>
+  </figure>
+<script type="text/plain" data-code data-title="Cell · documents → dataset">
+import os
+from pypdf import PdfReader
+from docx import Document
+import pandas as pd
+from datasets import Dataset
+
+def read_file(path):
+    ext = path.split(".")[-1].lower()
+    if ext == "pdf":
+        reader = PdfReader(path)
+        return [p.extract_text() or "" for p in reader.pages]
+    if ext == "docx":
+        doc = Document(path)
+        return ["\n".join(p.text for p in doc.paragraphs if p.text)]
+    if ext == "txt":
+        return [open(path, encoding="utf-8", errors="ignore").read()]
+    if ext == "csv":
+        df = pd.read_csv(path).fillna("")
+        return [" | ".join(f"{c}: {r[c]}" for c in df.columns) for _, r in df.iterrows()]
+    return []
+
+def chunk(text, size=1000):
+    text = " ".join(text.split())
+    return [text[i:i+size] for i in range(0, len(text), size) if len(text[i:i+size]) > 100]
+
+rows = []
+for fname in os.listdir("docs"):
+    for part in read_file(f"docs/{fname}"):
+        for c in chunk(part):
+            rows.append({"text": c, "source": fname})
+
+dataset = Dataset.from_list(rows)
+print("Files:", os.listdir("docs"))
+print("Training chunks:", len(dataset))
+print("\nSample:\n", dataset[0]["text"][:300])
+</script>
+  <div class="widget">
+    <div class="wt">Try it · what chunking does to text</div>
+    <div class="controls"><label>Chunk size <input type="range" id="chunkSize" min="60" max="240" step="10" value="120"><b id="chunkVal">120</b> chars</label><span class="small muted">Pieces shorter than size ÷ 10 are dropped (the real code uses 1000 and 100).</span></div>
+    <div id="chunkBox"></div>
+    <p id="chunkStat" class="small" style="margin:8px 0 0"></p>
+  </div>
+  <ul class="what">
+    <li><b>read_file</b> returns a <i>list</i> of text pieces. Pages that contain only images give <code class="i">""</code>, thanks to <code class="i">or ""</code>.</li>
+    <li><b>chunk</b>: <code class="i">" ".join(text.split())</code> squashes all line breaks and extra spaces into single spaces. The text is then cut every 1000 characters, and any piece of 100 characters or fewer is thrown away.</li>
+    <li>Chunks keep training examples short enough to fit in GPU memory. 1000 characters is roughly 200–250 tokens.</li>
+    <li>Each chunk becomes a row <code class="i">{"text": ..., "source": filename}</code>, and <code class="i">Dataset.from_list</code> turns the rows into a Hugging Face dataset.</li>
+    <li>Folders such as <code class="i">.ipynb_checkpoints</code> have no known extension, so <code class="i">read_file</code> returns <code class="i">[]</code> and they're skipped.</li>
+  </ul>
+<script type="text/plain" data-output data-title="Output from the real run">
+Files: ['.ipynb_checkpoints', 'details.pdf']
+Training chunks: 751
+
+Sample:
+ Cracking the AI System Design Interview An Insider's Guide to AI System Design Interviews, with 10 Real-World Use Cases ...
+</script>
+</section>
+
+<!-- STEP 5 -->
+<section id="step-5" class="step">
+  <div class="step-head"><span class="num">5</span><h3>Load the 4-bit model and attach LoRA adapters (QLoRA!)</h3><span class="tag">~1 min</span></div>
+  <p class="goal">Goal: put a compressed, frozen Llama on the GPU and add small trainable adapters to it.</p>
+  <div class="flow">
+    <div class="node n-quant"><b>from_pretrained(load_in_4bit=True)</b>Download Llama-3.2-1B-Instruct, pre-quantized to 4-bit → <b>frozen</b></div>
+    <div class="arr">→</div>
+    <div class="node n-train"><b>get_peft_model(r=16, …)</b>Add B·A adapters to the 7 matrices × 16 layers → <b>trainable</b></div>
+  </div>
+<script type="text/plain" data-code data-title="Cell · load model + attach LoRA">
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Llama-3.2-1B-Instruct-bnb-4bit",
+    max_seq_length = 1024,
+    dtype = None,
+    load_in_4bit = True,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 16,
+    lora_dropout = 0,
+    bias = "none",
+    use_gradient_checkpointing = "unsloth",
+    random_state = 3407,
+)
+
+model.print_trainable_parameters()
+</script>
+<script type="text/plain" data-output data-title="Output from the real run">
+Unsloth 2026.10.7 patched 16 layers with 16 QKV layers, 16 O layers and 16 MLP layers.
+trainable params: 11,272,192 || all params: 1,247,086,592 || trainable%: 0.9039
+</script>
+  <table class="t">
+    <tr><th>Setting</th><th>Plain meaning</th><th>Concept</th></tr>
+    <tr><td><code class="i">model_name</code></td><td>Llama-3.2-1B-Instruct, already saved in 4-bit (<code class="i">bnb-4bit</code> = bitsandbytes 4-bit)</td><td><a href="#c-base">Instruct model</a></td></tr>
+    <tr><td><code class="i">max_seq_length = 1024</code></td><td>The longest piece of text (in tokens) the model handles at once, i.e. the context window</td><td></td></tr>
+    <tr><td><code class="i">dtype = None</code></td><td>Let Unsloth pick the best number format for this GPU (fp16 on a T4)</td><td></td></tr>
+    <tr><td><code class="i">load_in_4bit = True</code></td><td>Keep the frozen weights in 4-bit to save memory</td><td><a href="#c-quant">Quantization</a></td></tr>
+    <tr><td><code class="i">r = 16</code></td><td>LoRA rank: the width of the "waist" between A and B</td><td><a href="#c-lora">LoRA</a></td></tr>
+    <tr><td><code class="i">target_modules</code></td><td>Which matrices get an adapter (here, all 7 in every layer)</td><td><a href="#c-lora">LoRA</a></td></tr>
+    <tr><td><code class="i">lora_alpha = 16</code></td><td>Adapter strength; α/r = 1 means normal strength</td><td><a href="#c-lora">LoRA</a></td></tr>
+    <tr><td><code class="i">lora_dropout = 0</code>, <code class="i">bias = "none"</code></td><td>No randomly switched-off neurons and no extra bias terms, which keeps training simple and fast</td><td></td></tr>
+    <tr><td><code class="i">use_gradient_checkpointing</code></td><td>Saves memory by recomputing some values during training instead of storing them</td><td></td></tr>
+    <tr><td><code class="i">random_state = 3407</code></td><td>Fixed random seed so results are repeatable</td><td></td></tr>
+  </table>
+  <h4 style="margin-bottom:4px">Where do the 11,272,192 trainable parameters come from?</h4>
+  <p class="small" style="margin-top:0">Each adapter has r × (inputs + outputs) numbers. Llama-3.2-1B's hidden size is 2048, its feed-forward size is 8192, and k/v output 512 (it shares keys and values across heads).</p>
+  <table class="t">
+    <tr><th>Matrix</th><th>Shape (in → out)</th><th class="num">LoRA numbers = 16 × (in + out)</th></tr>
+    <tr><td>q_proj, o_proj</td><td>2048 → 2048</td><td class="num">65,536 each</td></tr>
+    <tr><td>k_proj, v_proj</td><td>2048 → 512</td><td class="num">40,960 each</td></tr>
+    <tr><td>gate_proj, up_proj</td><td>2048 → 8192</td><td class="num">163,840 each</td></tr>
+    <tr><td>down_proj</td><td>8192 → 2048</td><td class="num">163,840</td></tr>
+    <tr><td>One layer total</td><td></td><td class="num">704,512</td></tr>
+    <tr class="total"><td>× 16 layers</td><td></td><td class="num">11,272,192 (0.90%)</td></tr>
+  </table>
+  <div class="callout tip"><b class="t">The big picture</b>We train less than <b>1%</b> of the model. The other 99% (gray, 4-bit) never changes.</div>
+</section>
+
+<!-- STEP 6 -->
+<section id="step-6" class="step">
+  <div class="step-head"><span class="num">6</span><h3>Mark where each chunk ends, then configure the trainer</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: teach the model where a piece of text stops, and set the training settings.</p>
+  <div class="panel" style="background:#fbfcfe">
+    <div class="tokrow"><span class="lab">Chunk + EOS</span><span class="tok in">…and</span><span class="tok in">that</span><span class="tok in">is</span><span class="tok in">why</span><span class="tok in">evals</span><span class="tok in">matter.</span><span class="tok eos">&lt;|eot_id|&gt;</span></div>
+    <p class="small muted" style="margin:6px 0 0">EOS = "end of sequence". It's a special token that means <i>stop here</i>. (The exact symbol comes from the tokenizer.)</p>
+  </div>
+<script type="text/plain" data-code data-title="Cell · EOS + trainer">
+import torch
+from trl import SFTTrainer, SFTConfig
+
+EOS = tokenizer.eos_token
+dataset = dataset.map(lambda x: {"text": x["text"] + EOS})
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    args = SFTConfig(
+        dataset_text_field = "text",
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 60,
+        learning_rate = 2e-4,
+        fp16 = True,
+        bf16 = False,
+        logging_steps = 5,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        report_to = "none",
+    ),
+)
+print("Trainer ready")
+</script>
+  <h4 style="margin-bottom:6px">Batch size × gradient accumulation = examples per update</h4>
+  <div class="batches">
+    <div class="mb"><div class="pg"></div><div class="pg"></div>mini-batch 1</div>
+    <div class="mb"><div class="pg"></div><div class="pg"></div>mini-batch 2</div>
+    <div class="mb"><div class="pg"></div><div class="pg"></div>mini-batch 3</div>
+    <div class="mb"><div class="pg"></div><div class="pg"></div>mini-batch 4</div>
+    <div class="op">→</div>
+    <div class="upd">1 update (step) learned from 8 chunks</div>
+  </div>
+  <p class="small">The GPU holds only 2 chunks at a time. We add up what was learned over 4 mini-batches, then update once. The result is the same as a batch of 8, using a quarter of the memory.</p>
+  <div class="grid2">
+    <div>
+      <h4 style="margin:6px 0">Learning-rate schedule</h4>
+      <svg viewBox="0 0 300 130" style="width:100%">
+        <line x1="30" y1="105" x2="290" y2="105" stroke="#94a3b8"/><line x1="30" y1="10" x2="30" y2="105" stroke="#94a3b8"/>
+        <polyline points="30,105 52,22 290,105" fill="none" stroke="#2563eb" stroke-width="3"/>
+        <text x="52" y="16" font-size="11" text-anchor="middle" fill="#2563eb">2e-4</text>
+        <text x="41" y="122" font-size="10" text-anchor="middle" fill="#6b7280">warm-up (5 steps)</text>
+        <text x="190" y="60" font-size="11" fill="#6b7280">linear decay to 0</text>
+        <text x="285" y="122" font-size="10" text-anchor="end" fill="#6b7280">last step</text>
+      </svg>
+      <p class="small muted" style="margin:0">Start gently, take the biggest steps early, then take smaller and smaller steps as the model gets closer.</p>
+    </div>
+    <table class="t" style="margin-top:0">
+      <tr><th>Setting</th><th>Plain meaning</th></tr>
+      <tr><td><code class="i">dataset_text_field</code></td><td>Which column holds the training text</td></tr>
+      <tr><td><code class="i">max_steps = 60</code></td><td>Short first run to check that everything works</td></tr>
+      <tr><td><code class="i">learning_rate = 2e-4</code></td><td>Step size; 0.0002 is a standard value for LoRA</td></tr>
+      <tr><td><code class="i">fp16=True, bf16=False</code></td><td>The T4 doesn't support bfloat16, so we use float16</td></tr>
+      <tr><td><code class="i">optim = "adamw_8bit"</code></td><td>The Adam optimizer, storing its own bookkeeping in 8-bit to save memory</td></tr>
+      <tr><td><code class="i">weight_decay = 0.01</code></td><td>Gently keeps adapter numbers small, which helps prevent overfitting</td></tr>
+      <tr><td><code class="i">logging_steps = 5</code></td><td>Print the loss every 5 steps</td></tr>
+      <tr><td><code class="i">report_to = "none"</code></td><td>Don't send logs to tracking websites</td></tr>
+    </table>
+  </div>
+  <p class="small muted">SFT = Supervised Fine-Tuning. <code class="i">SFTTrainer</code> comes from Hugging Face's TRL library and runs the training loop from <a href="#c-train">Concept 9</a> for you.</p>
+</section>
+
+<!-- STEP 7 -->
+<section id="step-7" class="step">
+  <div class="step-head"><span class="num">7</span><h3>Train (a first, short run)</h3><span class="tag">~1.4 min</span></div>
+  <p class="goal">Goal: run the predict → loss → update loop 60 times.</p>
+<script type="text/plain" data-code data-title="Cell · train">
+trainer_stats = trainer.train()
+print("Done in", round(trainer_stats.metrics["train_runtime"] / 60, 1), "minutes")
+</script>
+<script type="text/plain" data-output data-title="Output from the real run">
+==((====))==  Unsloth - 2x faster free finetuning | Num GPUs used = 1
+   \\   /|    Num examples = 751 | Num Epochs = 1 | Total steps = 60
+O^O/ \_/ \    Batch size per device = 2 | Gradient accumulation steps = 4
+\        /    Data Parallel GPUs = 1 | Total batch size (2 x 4 x 1) = 8
+ "-____-"     Trainable parameters = 11,272,192 of 1,247,086,592 (0.90% trained)
+Done in 1.4 minutes
+</script>
+  <ul class="what">
+    <li>Each step reads 8 chunks and updates <b>only</b> the green A/B adapter numbers.</li>
+    <li>60 steps × 8 = 480 chunks, so about 64% of the 751 chunks are seen once.</li>
+    <li>Loss went from <b>5.25 → 3.96</b>. It's learning.</li>
+  </ul>
+</section>
+
+<!-- STEP 8 -->
+<section id="step-8" class="step">
+  <div class="step-head"><span class="num">8</span><h3>Train longer</h3><span class="tag">~3.3 min</span></div>
+  <p class="goal">Goal: give the adapter more practice so it really picks up the document's language.</p>
+<script type="text/plain" data-code data-title="Cell · train for 200 more steps">
+trainer.args.max_steps = 200
+trainer_stats = trainer.train()
+print("Done in", round(trainer_stats.metrics["train_runtime"] / 60, 1), "minutes")
+</script>
+<script type="text/plain" data-output data-title="Output from the real run">
+Num examples = 751 | Num Epochs = 3 | Total steps = 200
+Total batch size (2 x 4 x 1) = 8
+Done in 3.3 minutes
+</script>
+  <figure class="diagram"><svg id="lossSvg"></svg><figcaption>Training loss across both rounds. The start and end values are from the real run; the shape between them is illustrative.</figcaption></figure>
+  <ul class="what">
+    <li>Calling <code class="i">train()</code> again starts a new 200-step round, continuing from the adapter that's already partly trained.</li>
+    <li>200 steps × 8 = 1,600 chunks, which is about <b>2 passes</b> over the data. The log says "Num Epochs = 3" because it rounds up.</li>
+    <li>Loss fell from about 3.9 to <b>about 2.5</b>. That's good: low enough to have learned the style, but far from 0, so it hasn't memorised the text.</li>
+  </ul>
+</section>
+
+<!-- STEP 9 -->
+<section id="step-9" class="step">
+  <div class="step-head"><span class="num">9</span><h3>Test the fine-tuned model</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: give it the start of a sentence and see how it continues.</p>
+  <div class="flow"><div class="node n-data"><b>Prompt text</b></div><div class="arr">→</div><div class="node n-model"><b>tokenizer</b>text → token IDs on the GPU</div><div class="arr">→</div><div class="node n-train"><b>model.generate</b>predicts up to 120 new tokens</div><div class="arr">→</div><div class="node n-model"><b>batch_decode</b>token IDs → text</div></div>
+<script type="text/plain" data-code data-title="Cell · first test">
+from unsloth import FastLanguageModel
+
+FastLanguageModel.for_inference(model)
+
+prompt = "In an AI system design interview, the first step is to"
+inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+outputs = model.generate(**inputs, max_new_tokens=120, use_cache=True)
+print(tokenizer.batch_decode(outputs, skip_special_tokens=True)[0])
+</script>
+  <figure class="output"><figcaption>Output from the real run</figcaption><pre>In an AI system design interview, the first step is to state the problem and then name the 5 layers above the model. <mark class="loop">The 5 layers are the structure of the design, and the 4 layers that matter most are the model, the optimizer, the gates, and the evals.</mark> Each layer is a decision you make about the problem, and the wrong one will ship in the walls you cannot engineer out. <mark class="loop">The 5 layers are the structure of the design, and the 4 that matter most are the model, the optimizer, the gates, and the evals.</mark> <mark class="loop">The 5 layers are the structure of the design, and the</mark> …</pre></figure>
+  <ul class="what">
+    <li><code class="i">for_inference</code> switches Unsloth into fast generation mode.</li>
+    <li>It already uses the book's vocabulary ("5 layers", "evals", "gates").</li>
+    <li>But look at the <mark class="loop">red highlights</mark>: it <b>repeats itself</b>. By default it always picks the single most likely token, which can get stuck in a loop. Step 12 fixes this.</li>
+  </ul>
+</section>
+
+<!-- STEP 10 -->
+<section id="step-10" class="step">
+  <div class="step-head"><span class="num">10</span><h3>Save only the adapter</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: save what was learned, which is just the small A/B matrices and not the whole model.</p>
+  <div class="grid2">
+    <div class="panel" style="text-align:center">
+      <svg viewBox="0 0 260 140" style="width:100%;max-width:300px">
+        <rect x="30" y="20" width="150" height="110" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+        <text x="105" y="70" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">Base model</text>
+        <text x="105" y="90" text-anchor="middle" font-size="12" fill="#64748b">1.24B params (shared,</text>
+        <text x="105" y="105" text-anchor="middle" font-size="12" fill="#64748b">re-downloaded anytime)</text>
+        <rect x="150" y="8" width="90" height="56" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="2" transform="rotate(6 195 36)"/>
+        <text x="195" y="34" text-anchor="middle" font-size="13" font-weight="800" fill="#166534" transform="rotate(6 195 36)">LoRA adapter</text>
+        <text x="195" y="50" text-anchor="middle" font-size="11" fill="#166534" transform="rotate(6 195 36)">11.27M params</text>
+      </svg>
+    </div>
+    <div class="callout analogy" style="margin:0"><b class="t">Sticky notes on a textbook</b>The base model is the textbook and the adapter is your sticky notes. You share the notes, not the whole book. Anyone with the same base model can apply them.</div>
+  </div>
+<script type="text/plain" data-code data-title="Cell · save adapter">
+model.save_pretrained("my_lora_adapter")
+tokenizer.save_pretrained("my_lora_adapter")
+
+import os
+print(os.listdir("my_lora_adapter"))
+</script>
+<script type="text/plain" data-output data-title="Output from the real run">
+['README.md', 'tokenizer_config.json', 'chat_template.jinja', 'adapter_config.json', 'adapter_model.safetensors', 'tokenizer.json']
+</script>
+  <ul class="what">
+    <li><code class="i">adapter_model.safetensors</code> holds the learned A/B numbers. It's tens of megabytes, not gigabytes.</li>
+    <li><code class="i">adapter_config.json</code> records which base model it belongs to plus r, alpha and the target modules.</li>
+    <li>The tokenizer files are saved too, so the folder is self-contained.</li>
+  </ul>
+</section>
+
+<!-- STEP 11 -->
+<section id="step-11" class="step">
+  <div class="step-head"><span class="num">11</span><h3>Back up to Google Drive</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: keep the adapter after the Colab session ends.</p>
+  <div class="flow"><div class="node n-frozen"><b>Colab machine</b>temporary, wiped when the session ends</div><div class="arr">→</div><div class="node n-train"><b>Google Drive</b>permanent: MyDrive/my_lora_adapter</div></div>
+<script type="text/plain" data-code data-title="Cell · copy to Drive">
+from google.colab import drive
+drive.mount("/content/drive")
+
+!cp -r my_lora_adapter /content/drive/MyDrive/my_lora_adapter
+!ls /content/drive/MyDrive/my_lora_adapter
+</script>
+  <ul class="what">
+    <li><code class="i">drive.mount</code> asks for permission, then shows your Drive as a folder.</li>
+    <li><code class="i">cp -r</code> copies the whole adapter folder there.</li>
+  </ul>
+</section>
+
+<!-- STEP 12 -->
+<section id="step-12" class="step">
+  <div class="step-head"><span class="num">12</span><h3>Fix repetition and compare base vs fine-tuned</h3><span class="tag">seconds</span></div>
+  <p class="goal">Goal: generate more natural text, then show the difference the adapter makes on the same prompt.</p>
+  <p>Instead of always taking the top token, we <b>sample</b>: pick randomly, but weighted by probability. Three settings shape that choice. Play with them:</p>
+  <div class="widget">
+    <div class="wt">Try it · next-token choices after "The most important thing to evaluate in an AI system is the …"</div>
+    <div class="controls">
+      <label>temperature <input type="range" id="temp" min="0.1" max="2" step="0.1" value="0.7"><b id="tVal">0.7</b></label>
+      <label>top_p <input type="range" id="topp" min="0.3" max="1" step="0.05" value="0.9"><b id="pVal">0.90</b></label>
+      <label><input type="checkbox" id="pen" checked> repetition_penalty = 1.2</label>
+    </div>
+    <div id="sampBars"></div>
+    <p class="small muted" style="margin:8px 0 0"><b>temperature</b>: low values make the top choice dominate (safe but repetitive), high values flatten the bars (creative but risky). <b>top_p</b>: keep only the smallest set of top tokens whose chances add up to p and cut the rest. <b>repetition_penalty</b>: shrink the score of tokens already used ("layers" here), which stops loops.</p>
+  </div>
+<script type="text/plain" data-code data-title="Cell · sampling settings">
+prompts = [
+    "In an AI system design interview, the first step is to",
+    "The most important thing to evaluate in an AI system is",
+]
+
+for p in prompts:
+    inputs = tokenizer(p, return_tensors="pt").to("cuda")
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=100,
+        use_cache=True,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+        repetition_penalty=1.2,
+    )
+    print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+    print("-" * 60)
+</script>
+  <p>Now the key comparison. The base model is still inside, untouched. <code class="i">model.disable_adapter()</code> temporarily switches the green B·A path off:</p>
+  <div class="flow">
+    <div class="node n-frozen"><b>with model.disable_adapter():</b>h = W·x → <b>base model</b></div>
+    <div class="arr">vs</div>
+    <div class="node n-train"><b>normal call</b>h = W·x + B·A·x → <b>fine-tuned</b></div>
+  </div>
+<script type="text/plain" data-code data-title="Cell · base vs fine-tuned">
+prompt = "The most important thing to evaluate in an AI system is"
+inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+gen = dict(max_new_tokens=80, do_sample=True, temperature=0.7, top_p=0.9, repetition_penalty=1.2)
+
+with model.disable_adapter():
+    base = model.generate(**inputs, **gen)
+print("BASE MODEL:\n", tokenizer.decode(base[0], skip_special_tokens=True))
+
+tuned = model.generate(**inputs, **gen)
+print("\nFINE-TUNED:\n", tokenizer.decode(tuned[0], skip_special_tokens=True))
+</script>
+  <p>The results are in <a href="#results">Base vs fine-tuned</a> below. Before that, Part 3 puts all of these steps into one notebook you can run on your own PDF.</p>
+</section>
+
+<!-- ============================ PART 3 ============================ -->
+<div class="part"><span class="part-label">Part 3 · Your turn</span><h2>Fine-tune on your own PDF in Google Colab</h2><p class="lead">These are the same steps, tidied into one notebook. It adds a PDF upload, a loss chart, and a side-by-side base vs fine-tuned display.</p></div>
+
+<section id="run" class="card">
+  <div class="kicker">Run it yourself</div>
+  <h3>One notebook, top to bottom (about 10–15 minutes on a free T4)</h3>
+  <div class="runbar">
+    <button class="btn green" id="dlNb">Download Colab notebook (.ipynb)</button>
+    <button class="btn ghost" id="copyAll">Copy all code</button>
+  </div>
+  <div class="flow">
+    <div class="node n-frozen"><span class="sn">1</span><b>Open Colab</b>colab.research.google.com</div><div class="arr">→</div>
+    <div class="node n-frozen"><span class="sn">2</span><b>File → Upload notebook</b>choose the downloaded .ipynb</div><div class="arr">→</div>
+    <div class="node n-model"><span class="sn">3</span><b>Runtime → T4 GPU</b></div><div class="arr">→</div>
+    <div class="node n-train"><span class="sn">4</span><b>Runtime → Run all</b>upload your PDF when asked</div>
+  </div>
+  <div class="callout warn"><b class="t">Pick a text-based PDF</b>Scanned PDFs are images, so pypdf finds almost no text in them and you'll get very few chunks. A PDF with at least 20–30 pages of real text works best. Only use documents you have the right to use.</div>
+
+<script type="text/plain" data-code data-cell data-title="1 · Check the GPU">
+!nvidia-smi
+</script>
+<script type="text/plain" data-code data-cell data-title="2 · Install libraries (takes a few minutes)">
+!pip install -q unsloth
+!pip install -q pypdf python-docx pandas datasets
+</script>
+<script type="text/plain" data-code data-cell data-title="3 · Import Unsloth first">
+import unsloth  # must be imported before transformers / trl
+import os, torch
+from unsloth import FastLanguageModel
+print("Unsloth OK")
+</script>
+<script type="text/plain" data-code data-cell data-title="4 · Upload your PDF into docs/">
+from google.colab import files
+
+os.makedirs("docs", exist_ok=True)
+uploaded = files.upload()  # if this is slow, drag files into docs/ in the left sidebar instead
+for name, data in uploaded.items():
+    with open(os.path.join("docs", name), "wb") as f:
+        f.write(data)
+print("Files in docs/:", os.listdir("docs"))
+</script>
+<script type="text/plain" data-code data-cell data-title="5 · Turn documents into a training dataset">
+from pypdf import PdfReader
+from docx import Document
+import pandas as pd
+from datasets import Dataset
+
+def read_file(path):
+    ext = path.split(".")[-1].lower()
+    if ext == "pdf":
+        reader = PdfReader(path)
+        return [p.extract_text() or "" for p in reader.pages]
+    if ext == "docx":
+        doc = Document(path)
+        return ["\n".join(p.text for p in doc.paragraphs if p.text)]
+    if ext == "txt":
+        return [open(path, encoding="utf-8", errors="ignore").read()]
+    if ext == "csv":
+        df = pd.read_csv(path).fillna("")
+        return [" | ".join(f"{c}: {r[c]}" for c in df.columns) for _, r in df.iterrows()]
+    return []
+
+def chunk(text, size=1000):
+    text = " ".join(text.split())
+    return [text[i:i+size] for i in range(0, len(text), size) if len(text[i:i+size]) > 100]
+
+rows = []
+for fname in os.listdir("docs"):
+    for part in read_file(f"docs/{fname}"):
+        for c in chunk(part):
+            rows.append({"text": c, "source": fname})
+
+dataset = Dataset.from_list(rows)
+print("Training chunks:", len(dataset))
+print("\nSample:\n", dataset[0]["text"][:300])
+</script>
+<script type="text/plain" data-code data-cell data-title="6 · Load the 4-bit model and attach LoRA (QLoRA)">
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Llama-3.2-1B-Instruct-bnb-4bit",
+    max_seq_length = 1024,
+    dtype = None,
+    load_in_4bit = True,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 16,
+    lora_dropout = 0,
+    bias = "none",
+    use_gradient_checkpointing = "unsloth",
+    random_state = 3407,
+)
+model.print_trainable_parameters()
+</script>
+<script type="text/plain" data-code data-cell data-title="7 · Add EOS and set up the trainer">
+from trl import SFTTrainer, SFTConfig
+
+EOS = tokenizer.eos_token
+dataset = dataset.map(lambda x: {"text": x["text"] + EOS})
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    args = SFTConfig(
+        dataset_text_field = "text",
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 200,
+        learning_rate = 2e-4,
+        fp16 = True,
+        bf16 = False,
+        logging_steps = 5,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        report_to = "none",
+    ),
+)
+print("Trainer ready")
+</script>
+<script type="text/plain" data-code data-cell data-title="8 · Train (about 3–4 minutes)">
+trainer_stats = trainer.train()
+print("Done in", round(trainer_stats.metrics["train_runtime"] / 60, 1), "minutes")
+</script>
+<script type="text/plain" data-code data-cell data-title="9 · Plot the loss curve">
+import matplotlib.pyplot as plt
+
+logs = [r for r in trainer.state.log_history if "loss" in r]
+plt.figure(figsize=(7, 3.5))
+plt.plot([r["step"] for r in logs], [r["loss"] for r in logs], marker="o", color="#16a34a")
+plt.xlabel("training step")
+plt.ylabel("loss")
+plt.title("Training loss: lower = less surprised by your document")
+plt.grid(alpha=0.3)
+plt.show()
+</script>
+<script type="text/plain" data-code data-cell data-title="10 · Save the adapter and back it up to Google Drive">
+model.save_pretrained("my_lora_adapter")
+tokenizer.save_pretrained("my_lora_adapter")
+
+from google.colab import drive
+drive.mount("/content/drive")
+!cp -r my_lora_adapter /content/drive/MyDrive/my_lora_adapter
+!ls /content/drive/MyDrive/my_lora_adapter
+</script>
+<script type="text/plain" data-code data-cell data-title="11 · Compare base model vs fine-tuned model side by side">
+import html
+from IPython.display import HTML, display
+
+FastLanguageModel.for_inference(model)
+gen = dict(max_new_tokens=100, use_cache=True, do_sample=True,
+           temperature=0.7, top_p=0.9, repetition_penalty=1.2)
+
+def generate(prompt, use_adapter, seed=3407):
+    inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+    torch.manual_seed(seed)
+    if use_adapter:
+        out = model.generate(**inputs, **gen)
+    else:
+        with model.disable_adapter():
+            out = model.generate(**inputs, **gen)
+    return tokenizer.decode(out[0], skip_special_tokens=True)
+
+def card(title, color, text):
+    return (f"<div style='flex:1;border:2px solid {color};border-radius:10px;padding:12px'>"
+            f"<b style='color:{color}'>{title}</b>"
+            f"<p style='white-space:pre-wrap'>{html.escape(text)}</p></div>")
+
+# Replace these with sentence starters that sound like YOUR document
+prompts = [
+    "In an AI system design interview, the first step is to",
+    "The most important thing to evaluate in an AI system is",
+]
+
+for p in prompts:
+    base = generate(p, use_adapter=False)
+    tuned = generate(p, use_adapter=True)
+    display(HTML(f"<h4>Prompt: {html.escape(p)}</h4>"
+                 f"<div style='display:flex;gap:12px'>"
+                 f"{card('BASE MODEL (adapter off)', '#6b7280', base)}"
+                 f"{card('FINE-TUNED (adapter on)', '#16a34a', tuned)}</div>"))
+</script>
+<script type="text/plain" data-code data-cell data-title="12 · (Later) Reload your fine-tuned model in a new session">
+# Run cells 2-3 first, then:
+from unsloth import FastLanguageModel
+from google.colab import drive
+drive.mount("/content/drive")
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "/content/drive/MyDrive/my_lora_adapter",
+    max_seq_length = 1024,
+    load_in_4bit = True,
+)
+FastLanguageModel.for_inference(model)
+</script>
+  <div class="callout tip"><b class="t">Tips for a clear difference</b>
+    <ul style="margin:4px 0 0;padding-left:18px">
+      <li>Write prompts as <b>unfinished sentences</b> that sound like your document, e.g. "The main risk of this policy is". The model was trained to <i>continue</i> text, not to answer questions.</li>
+      <li>Both models use the same random seed, so the difference you see comes from the adapter, not from luck.</li>
+      <li>Want to train more after testing? Call <code class="i">FastLanguageModel.for_training(model)</code>, raise <code class="i">trainer.args.max_steps</code>, and run cell 8 again.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="results" class="card">
+  <div class="kicker">The payoff</div>
+  <h3>Base model vs fine-tuned model: real outputs from the DocTune run</h3>
+  <p>Same prompt, same settings. The only difference is whether the green adapter is switched on. The training PDF was a book about AI system design interviews.</p>
+  <p><span class="cmp" style="display:inline;border:0;padding:0"><span class="pr">Prompt: "The most important thing to evaluate in an AI system is"</span></span></p>
+  <div class="compare">
+    <div class="cmp base"><h4>Base model (adapter off)</h4>The most important thing to evaluate in an AI system is the <b>consistency</b> of its outputs. The goal is not just to make predictions, but also to ensure that they are consistent and fair.<br><br>For example: Imagine a chatbot designed for customer service. Its primary function should be to provide accurate information about products or services…<p class="small muted" style="margin:10px 0 0">Generic, textbook-style answer with a made-up chatbot example.</p></div>
+    <div class="cmp tuned"><h4>Fine-tuned (adapter on)</h4>The most important thing to evaluate in an AI system is the <mark>latency and cost per request</mark>, because that is how users experience it. The metrics you watch are the number of requests a customer has to wait for your answer before asking another one, which is what turns "answer" into an expensive round trip rather than a single reply. • <mark>Reliability</mark>: <mark class="glue">thepercentageofquestionswhoseanswersarecorrectandtimely</mark>…<p class="small muted" style="margin:10px 0 0">Talks like the book: latency, cost per request, reliability, user experience.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="callout tip" style="margin:0"><b class="t">What changed</b>The fine-tuned model picked up the book's <b>vocabulary, priorities and style</b> after only about 4 minutes of training, with less than 1% of the weights changed.</div>
+    <div class="callout warn" style="margin:0"><b class="t">Spot the glued words</b>The <mark class="glue">wavy-underlined text</mark> has no spaces. pypdf sometimes loses spaces when it extracts text, and the model faithfully learned that too. <b>The model is only as clean as its data.</b></div>
+  </div>
+</section>
+
+<section id="limits" class="card">
+  <div class="kicker">Be honest about what you built</div>
+  <h3>Limits and where to go next</h3>
+  <div class="grid2">
+    <div class="panel">
+      <h4>Limits of this approach</h4>
+      <ul class="small" style="padding-left:18px;margin:0">
+        <li><b>Raw-text training gives a text continuer, not a Q&amp;A bot.</b> It writes in the document's style rather than answering questions.</li>
+        <li><b>PDF extraction is imperfect</b>: glued words, headers and footers end up in the training text.</li>
+        <li><b>Small model, short training.</b> It learns style and vocabulary, but its facts are not reliable.</li>
+        <li><b>No formal evaluation.</b> Results were checked by reading outputs, not measured with a benchmark.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Next steps</h4>
+      <ul class="small" style="padding-left:18px;margin:0">
+        <li>Turn chunks into <b>question → answer pairs</b> (instruction fine-tuning). This is what the video does with a reasoning dataset.</li>
+        <li>Clean the PDF text: fix glued words, remove headers and footers.</li>
+        <li>Hold back some chunks as a <b>validation set</b> and watch validation loss.</li>
+        <li>Combine with <b>RAG</b> for up-to-date facts.</li>
+        <li>Try a bigger model (Llama-3.2-3B) or export to GGUF to run locally.</li>
+      </ul>
+    </div>
+  </div>
+  <h4 style="margin-bottom:4px">Preview: instruction format</h4>
+  <p class="small" style="margin-top:0">In the video's demo, each training row is a filled-in prompt template (problem, reasoning, solution), so the model learns to <i>answer</i> in that format. Here's the same idea with your own Q&amp;A pairs and Llama's chat template:</p>
+  <div class="flow">
+    <div class="node n-data"><b>Q&amp;A pair</b>question: "What are the 5 layers?" · answer: "…"</div><div class="arr">→</div>
+    <div class="node n-model"><b>chat template</b>wraps it in user / assistant markers</div><div class="arr">→</div>
+    <div class="node n-train"><b>train as before</b>model learns to reply like an assistant</div>
+  </div>
+<script type="text/plain" data-code data-title="Sketch · instruction-style dataset">
+qa_rows = [
+    {"question": "What is the first step in an AI system design interview?",
+     "answer": "State the problem clearly, then walk through the layers above the model."},
+    # ... more pairs written by you, or generated from your chunks by a bigger LLM
+]
+
+def to_chat(example):
+    messages = [
+        {"role": "user", "content": example["question"]},
+        {"role": "assistant", "content": example["answer"]},
+    ]
+    return {"text": tokenizer.apply_chat_template(messages, tokenize=False)}
+
+qa_dataset = Dataset.from_list(qa_rows).map(to_chat)
+# then pass qa_dataset to SFTTrainer exactly like in step 7 of the notebook
+</script>
+</section>
+
+<section id="quiz" class="card">
+  <div class="kicker">Check yourself</div>
+  <h3>Six quick questions (click to reveal)</h3>
+  <details><summary>1. During LoRA training, which numbers actually change?</summary>Only the small adapter matrices <b>A and B</b> (green). The original weights W stay frozen (gray).</details>
+  <details><summary>2. With d = 512 and rank r = 8, how many numbers does LoRA train instead of 262,144?</summary>2 × 512 × 8 = <b>8,192</b>, about 3% of the full ΔW.</details>
+  <details><summary>3. What does the "Q" in QLoRA do for us on a free T4?</summary>It stores the frozen base model in <b>4-bit (NF4)</b>, which cuts its memory about 8× compared with 32-bit, so model and training fit in 15 GB.</details>
+  <details><summary>4. Why does our fine-tuned model continue sentences instead of answering questions?</summary>It was trained on <b>raw text chunks</b>, so it learned "given text from this book, continue it", which is autocomplete. For Q&amp;A behaviour, train on question → answer pairs.</details>
+  <details><summary>5. Loss went from 5.25 to 2.5. Should we keep training until it's 0?</summary><b>No.</b> Loss near 0 means memorisation. We want the model to learn the style and ideas, not to copy the text word for word.</details>
+  <details><summary>6. How do we get the base model's answer without loading a second model?</summary><code class="i">with model.disable_adapter():</code> temporarily switches off the B·A path, leaving only the original W·x.</details>
+</section>
+
+<section id="glossary" class="card">
+  <div class="kicker">Glossary</div>
+  <h3>Words used on this page</h3>
+  <dl class="gloss">
+    <dt>Token</dt><dd>A word or a piece of a word. Models read and write tokens.</dd>
+    <dt>Parameter / weight</dt><dd>One number inside the network that training can adjust.</dd>
+    <dt>Base model</dt><dd>A model that only autocompletes text.</dd>
+    <dt>Instruct model</dt><dd>A base model fine-tuned to follow instructions and chat.</dd>
+    <dt>Fine-tuning</dt><dd>Extra training of a pre-trained model on your own data.</dd>
+    <dt>RAG</dt><dd>Retrieval-Augmented Generation: look up documents and paste them into the prompt, without retraining.</dd>
+    <dt>PEFT</dt><dd>Parameter-Efficient Fine-Tuning: freeze the model and train a small add-on.</dd>
+    <dt>LoRA</dt><dd>Low-Rank Adaptation: learn the change ΔW as two thin matrices, B × A.</dd>
+    <dt>Rank (r)</dt><dd>The width of the thin "waist" between A and B. Bigger means more capacity.</dd>
+    <dt>lora_alpha</dt><dd>Scales how strongly the adapter affects the output (α / r).</dd>
+    <dt>Quantization</dt><dd>Storing numbers with fewer bits (for example 4 instead of 32) to save memory.</dd>
+    <dt>NF4</dt><dd>4-bit NormalFloat, with bins shaped for bell-curve weights.</dd>
+    <dt>QLoRA</dt><dd>A 4-bit quantized frozen model with LoRA adapters trained on top.</dd>
+    <dt>Adapter</dt><dd>The saved LoRA weights: a small file that sits on top of the base model.</dd>
+    <dt>EOS token</dt><dd>A special "end of sequence" token that marks where text stops.</dd>
+    <dt>Step / epoch</dt><dd>A step is one weight update; an epoch is one full pass over the dataset.</dd>
+    <dt>Batch / gradient accumulation</dt><dd>Examples processed together, and adding up several small batches before one update.</dd>
+    <dt>Loss</dt><dd>How wrong (surprised) the model's predictions are. Lower is better.</dd>
+    <dt>Learning rate</dt><dd>How big each update step is.</dd>
+    <dt>Temperature / top_p</dt><dd>Generation settings that control how random or focused the next-token choice is.</dd>
+    <dt>Unsloth</dt><dd>A library that makes LoRA/QLoRA fine-tuning faster and lighter on memory.</dd>
+    <dt>SFTTrainer</dt><dd>Supervised Fine-Tuning trainer from Hugging Face TRL. It runs the training loop.</dd>
+  </dl>
+</section>
+
+<footer>
+  Concepts adapted from <a href="https://www.youtube.com/watch?v=IIvORO248Zs" target="_blank" rel="noopener">LLM Fine Tuning Crash Course (codebasics)</a>. Code and real outputs from the DocTune project (Unsloth + Llama-3.2-1B on free Colab). Built on <a href="https://github.com/unslothai/unsloth" target="_blank" rel="noopener">Unsloth</a>, Hugging Face Transformers / TRL / PEFT / Datasets, and Meta's Llama 3.2.
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const NS="http://www.w3.org/2000/svg";
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function svgEl(parent,tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;parent.appendChild(e);return e;}
+
+/* ---------- code blocks ---------- */
+const KW="def|return|for|in|if|else|elif|import|from|as|with|not|and|or|True|False|None|lambda|while|try|except|print";
+const RE=new RegExp(String.raw`(#[^\n]*)|([rf]?"(?:\\.|[^"\\\n])*"|[rf]?'(?:\\.|[^'\\\n])*')|(^[ \t]*![^\n]*)|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b|\b(${KW})\b|\b([A-Za-z_]\w*)(?=\()`,"gm");
+function highlight(code){
+  let out="",last=0,m;RE.lastIndex=0;
+  while((m=RE.exec(code))){
+    if(m[0]===""){RE.lastIndex++;continue;}
+    out+=esc(code.slice(last,m.index));
+    const cls=m[1]?"c":m[2]?"s":m[3]?"sh":m[4]?"n":m[5]?"k":"f";
+    out+=`<span class="t-${cls}">${esc(m[0])}</span>`;
+    last=m.index+m[0].length;
+  }
+  return out+esc(code.slice(last));
+}
+function dedent(s){
+  s=s.replace(/^\s*\n/,"").replace(/\s+$/,"");
+  const lines=s.split("\n");
+  const ind=Math.min(...lines.filter(l=>l.trim()).map(l=>l.match(/^ */)[0].length));
+  return lines.map(l=>l.slice(ind)).join("\n");
+}
+function copyText(text,btn){
+  const done=()=>{const o=btn.textContent;btn.textContent="Copied!";setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(done,()=>fallback());}else fallback();
+  function fallback(){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch(e){}ta.remove();}
+}
+$$('script[type="text/plain"]').forEach(s=>{
+  const isOut=s.hasAttribute("data-output");
+  const code=dedent(s.textContent);
+  const fig=document.createElement("figure");
+  if(isOut){
+    fig.className="output";
+    fig.innerHTML="<figcaption></figcaption><pre></pre>";
+    fig.querySelector("figcaption").textContent=s.dataset.title||"Output";
+    fig.querySelector("pre").textContent=code;
+  }else{
+    fig.className="code";
+    fig.innerHTML='<figcaption><span class="dots"><i></i><i></i><i></i></span><span class="ctitle"></span><button class="copy">Copy</button></figcaption><pre><code></code></pre>';
+    fig.querySelector(".ctitle").textContent=s.dataset.title||"Python";
+    fig.querySelector("code").innerHTML=highlight(code);
+    const btn=fig.querySelector(".copy");btn.onclick=()=>copyText(code,btn);
+    if(s.hasAttribute("data-cell")){fig.dataset.cell="1";fig.dataset.title=s.dataset.title||"";}
+    fig._code=code;
+  }
+  s.replaceWith(fig);
+});
+
+/* ---------- nav + progress ---------- */
+const links=$$("nav.toc a"),map=new Map(links.map(a=>[a.getAttribute("href").slice(1),a]));
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove("active"));const a=map.get(e.target.id);if(a){a.classList.add("active");a.scrollIntoView({block:"nearest"});}}}),{rootMargin:"-15% 0px -75% 0px"});
+map.forEach((a,id)=>{const t=document.getElementById(id);if(t)obs.observe(t);});
+window.addEventListener("scroll",()=>{const h=document.documentElement;$("#progress").style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%";},{passive:true});
+
+/* ---------- networks ---------- */
+function drawNet(svg,mode){
+  const W=400,H=250,layers=[3,5,5,3],cy=mode==="peft"?145:125;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const xs=layers.map((_,i)=>45+i*(W-90)/(layers.length-1));
+  const pos=layers.map((n,i)=>Array.from({length:n},(_,j)=>[xs[i],cy+(j-(n-1)/2)*40]));
+  const edges=[];
+  for(let i=0;i<layers.length-1;i++)for(const a of pos[i])for(const b of pos[i+1])edges.push([a,b]);
+  edges.forEach(([a,b])=>svgEl(svg,"line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],class:"edge e-"+mode}));
+  if(mode==="weights"){
+    [[0,"0.8"],[7,"0.7"],[18,"-0.3"],[27,"0.5"],[33,"-0.9"],[44,"0.2"],[52,"0.6"]].forEach(([k,w])=>{
+      const [a,b]=edges[k],t=0.45,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;
+      svgEl(svg,"rect",{x:x-16,y:y-9,width:32,height:17,rx:4,class:"wlabel"});
+      svgEl(svg,"text",{x,y:y+4,class:"wtext"},w);
+    });
+  }
+  pos.flat().forEach(([x,y])=>svgEl(svg,"circle",{cx:x,cy:y,r:11,class:"node n-"+mode}));
+  if(mode==="peft"){
+    for(let i=0;i<layers.length-1;i++){
+      const mx=(xs[i]+xs[i+1])/2,a=pos[i][0],b=pos[i+1][0];
+      svgEl(svg,"path",{d:`M${a[0]} ${a[1]-11} Q ${mx} 12 ${b[0]} ${b[1]-11}`,class:"adapter-link"});
+      svgEl(svg,"rect",{x:mx-22,y:6,width:44,height:24,rx:6,class:"adapter"});
+      svgEl(svg,"text",{x:mx,y:22,class:"adapter-t"},"A·B");
+    }
+    svgEl(svg,"text",{x:W/2,y:H-6,"text-anchor":"middle","font-size":12,fill:"#64748b"},"gray wires: frozen  ·  green: trainable adapters");
+  }
+  if(mode==="full")svgEl(svg,"text",{x:W/2,y:H-6,"text-anchor":"middle","font-size":12,fill:"#c2410c"},"every wire is updated");
+}
+drawNet($("#netWeights"),"weights");drawNet($("#netFull"),"full");drawNet($("#netPeft"),"peft");
+
+/* ---------- autocomplete ---------- */
+const AC=[
+  [[" New",.62],[" Delhi",.2],[" a",.08],[" located",.05],[" the",.05]],
+  [[" Delhi",.93],[" York",.03],[" Mumbai",.02],[" India",.02]],
+  [[".",.71],[",",.18],[" and",.07],[" which",.04]],
+  [[" It",.44],[" The",.31],[" Delhi",.15],["\n",.10]],
+  [[" is",.66],[" has",.2],[" was",.14]],
+  [[" home",.4],[" a",.35],[" the",.25]]
+];
+let acStep=0;
+function renderAC(){
+  $("#acText").innerHTML='<span class="prompt">The capital of India is</span>'+AC.slice(0,acStep).map(c=>`<span class="gen">${esc(c[0][0])}</span>`).join("");
+  if(acStep>=AC.length){$("#acBars").innerHTML='<p class="muted small">…and it would keep going forever. A base model never stops to "answer"; it just keeps predicting the next token.</p>';$("#acNext").disabled=true;return;}
+  $("#acNext").disabled=false;
+  $("#acBars").innerHTML=AC[acStep].map(([t,p],i)=>`<div class="bar-row ${i===0?"top":""}"><code>${esc(JSON.stringify(t))}</code><div class="bar"><span style="width:${p*100}%"></span></div><b>${Math.round(p*100)}%</b></div>`).join("");
+}
+$("#acNext").onclick=()=>{acStep++;renderAC();};$("#acReset").onclick=()=>{acStep=0;renderAC();};renderAC();
+
+/* ---------- LoRA ---------- */
+function updateLoRA(){
+  const d=+$("#selD").value,r=+$("#rngR").value,full=d*d,lora=2*d*r,pct=lora/full*100;
+  $("#rVal").textContent=r;
+  $("#outFull").textContent=full.toLocaleString();
+  $("#outLora").textContent=lora.toLocaleString();
+  $("#outPct").textContent=(pct<1?pct.toFixed(2):pct.toFixed(1))+"%";
+  $("#barLora").style.width=Math.min(100,Math.max(pct,0.6))+"%";
+  $("#barPct").textContent=(pct<1?pct.toFixed(2):pct.toFixed(1))+"%";
+  const hw=4+r*1.5;
+  $("#loraA").setAttribute("points",`360,255 580,255 ${470+hw},190 ${470-hw},190`);
+  $("#loraB").setAttribute("points",`${470-hw},160 ${470+hw},160 580,95 360,95`);
+  $("#rLabel").setAttribute("x",470+hw+8);
+  $("#rLabel").textContent="r = "+r;
+}
+$("#selD").onchange=updateLoRA;$("#rngR").oninput=updateLoRA;updateLoRA();
+
+/* ---------- memory ---------- */
+const MEM=[["32-bit float (fp32)",32],["16-bit float (fp16)",16],["8-bit integer (int8)",8],["4-bit (NF4)",4]];
+function renderMem(p){
+  const max=p*4;
+  $("#memBars").innerHTML=MEM.map(([n,b])=>{const gb=p*b/8,fits=gb<=15;
+    return `<div class="mem-row"><span>${n}</span><div class="bar ${b===4?"q":""}"><span style="width:${gb/max*100}%"></span></div><b>${gb<10?gb.toFixed(1):Math.round(gb)} GB</b><em class="${fits?"ok":"no"}">${fits?"fits a free T4":"too big for a T4"}</em></div>`;}).join("");
+}
+$$("#memSeg button").forEach(b=>b.onclick=()=>{$$("#memSeg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderMem(+b.dataset.p);});
+renderMem(1.24);
+
+/* ---------- quantization playground ---------- */
+const QW=[-0.91,-0.78,-0.39,0.05,0.28,0.87];
+function renderQuant(bits){
+  const qmin=-(2**(bits-1)),qmax=2**(bits-1)-1,scale=2/(qmax-qmin);
+  $("#qScale").textContent=scale.toFixed(4);$("#qLevels").textContent=(qmax-qmin+1);
+  const svg=$("#qLine");svg.innerHTML="";
+  const X=v=>30+(v+1.4)/2.8*580;
+  svgEl(svg,"line",{x1:30,y1:48,x2:610,y2:48,stroke:"#cbd5e1","stroke-width":2});
+  for(let q=qmin;q<=qmax;q++){const v=q*scale;if(Math.abs(v)<=1.4)svgEl(svg,"line",{x1:X(v),y1:40,x2:X(v),y2:56,stroke:"#7c3aed","stroke-width":bits===8?0.6:2,opacity:bits===8?0.5:0.9});}
+  [-1,0,1].forEach(v=>svgEl(svg,"text",{x:X(v),y:90,"text-anchor":"middle","font-size":12,fill:"#6b7280"},v));
+  svgEl(svg,"text",{x:30,y:14,"font-size":11,fill:"#ea580c"},"original");
+  svgEl(svg,"text",{x:30,y:76,"font-size":11,fill:"#7c3aed"},"quantized");
+  let rows='<tr><th>Original x</th><th>x ÷ scale</th><th>Stored integer q</th><th>Back to float (q × scale)</th><th>Error</th></tr>';
+  QW.forEach(x=>{
+    const raw=x/scale,q=Math.max(qmin,Math.min(qmax,Math.round(raw))),dq=q*scale,err=Math.abs(dq-x);
+    svgEl(svg,"line",{x1:X(x),y1:22,x2:X(dq),y2:62,stroke:"#94a3b8","stroke-dasharray":"3 2"});
+    svgEl(svg,"circle",{cx:X(x),cy:22,r:6,fill:"#ea580c"});
+    svgEl(svg,"circle",{cx:X(dq),cy:62,r:6,fill:"#7c3aed"});
+    rows+=`<tr><td>${x.toFixed(2)}</td><td>${raw.toFixed(2)}</td><td><b style="color:#7c3aed">${q}</b></td><td>${dq.toFixed(4)}</td><td style="color:${err>0.05?"#b91c1c":"#15803d"}">${err.toFixed(4)}</td></tr>`;
+  });
+  $("#qTable").innerHTML=rows;
+}
+$$("#qSeg button").forEach(b=>b.onclick=()=>{$$("#qSeg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderQuant(+b.dataset.b);});
+renderQuant(8);
+
+/* ---------- NF4 ---------- */
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+const SIG=0.35,Phi=z=>0.5*(1+erf(z/Math.SQRT2)),Z=Phi(1/SIG)-Phi(-1/SIG);
+const cdf=v=>(Phi(v/SIG)-Phi(-1/SIG))/Z;
+function invCdf(p){let lo=-1,hi=1;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(cdf(m)<p)lo=m;else hi=m;}return (lo+hi)/2;}
+function renderNF4(mode){
+  const svg=$("#nfSvg");svg.innerHTML="";
+  const edges=mode==="uni"?Array.from({length:17},(_,i)=>-1+i*2/16):Array.from({length:17},(_,i)=>i===0?-1:i===16?1:invCdf(i/16));
+  const X=v=>40+(v+1)/2*560,pdf=v=>Math.exp(-v*v/(2*SIG*SIG)),Y=v=>200-pdf(v)*160;
+  const masses=[];
+  for(let i=0;i<16;i++){
+    const a=edges[i],b=edges[i+1],pts=[];
+    for(let k=0;k<=12;k++){const v=a+(b-a)*k/12;pts.push(`${X(v).toFixed(1)},${Y(v).toFixed(1)}`);}
+    pts.push(`${X(b)},200`,`${X(a)},200`);
+    svgEl(svg,"polygon",{points:pts.join(" "),fill:i%2?"#c4b5fd":"#ede9fe",stroke:"#7c3aed","stroke-width":0.8});
+    masses.push(cdf(b)-cdf(a));
+    if(mode==="uni")svgEl(svg,"text",{x:(X(a)+X(b))/2,y:218,"text-anchor":"middle","font-size":9.5,fill:"#4c1d95"},(masses[i]*100).toFixed(1)+"%");
+  }
+  let d="";for(let k=0;k<=200;k++){const v=-1+2*k/200;d+=(k?"L":"M")+X(v).toFixed(1)+" "+Y(v).toFixed(1);}
+  svgEl(svg,"path",{d,fill:"none",stroke:"#1f2937","stroke-width":2});
+  svgEl(svg,"line",{x1:40,y1:200,x2:600,y2:200,stroke:"#1f2937"});
+  edges.forEach(v=>svgEl(svg,"line",{x1:X(v),y1:200,x2:X(v),y2:206,stroke:"#7c3aed"}));
+  [-1,-0.5,0,0.5,1].forEach(v=>svgEl(svg,"text",{x:X(v),y:240,"text-anchor":"middle","font-size":11,fill:"#6b7280"},v));
+  svgEl(svg,"text",{x:320,y:22,"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#1f2937"},mode==="uni"?"16 equal-width bins: the middle ones are overcrowded":"16 NF4 bins: every bin holds the same 6.25% of weights");
+  svgEl(svg,"text",{x:320,y:40,"text-anchor":"middle","font-size":11,fill:"#6b7280"},"bell curve = how many weights have each value (most are near 0)");
+  const mx=Math.max(...masses)*100,mn=Math.min(...masses)*100;
+  $("#nfNote").innerHTML=mode==="uni"
+    ?`The fullest bin holds <b>${mx.toFixed(1)}%</b> of all weights and the emptiest only <b>${mn.toFixed(1)}%</b>. Bins are wasted at the edges, and the middle loses detail.`
+    :`Every bin holds <b>6.25%</b> of the weights. The bins are <b>narrow where weights are crowded</b>, giving fine detail exactly where most weights live.`;
+}
+$$("#nfSeg button").forEach(b=>b.onclick=()=>{$$("#nfSeg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderNF4(b.dataset.m);});
+renderNF4("uni");
+
+/* ---------- chunking ---------- */
+const CT="Fine-tuning teaches a model the words and style of your documents. First we read every page of the PDF and turn it into plain text. Then we cut that text into equal-sized pieces called chunks, so each training example fits in GPU memory. Tiny leftover pieces are thrown away because they carry too little meaning to learn from. Every chunk becomes one row in a dataset with two columns: the text itself and the name of the file it came from. Notice that cuts can land in the middle of a word.";
+function renderChunks(){
+  const size=+$("#chunkSize").value,min=Math.round(size/10);$("#chunkVal").textContent=size;
+  const parts=[];for(let i=0;i<CT.length;i+=size)parts.push(CT.slice(i,i+size));
+  const kept=parts.filter(p=>p.length>min).length;
+  $("#chunkBox").innerHTML=parts.map((p,i)=>`<span class="chunk c${i%5} ${p.length>min?"":"dropped"}" title="chunk ${i+1}: ${p.length} chars">${esc(p)}</span>`).join("");
+  $("#chunkStat").innerHTML=`<b>${kept}</b> chunks kept${parts.length>kept?`, <b>${parts.length-kept}</b> dropped (≤ ${min} chars, shown crossed out)`:""}. Each coloured block becomes one training example.`;
+}
+$("#chunkSize").oninput=renderChunks;renderChunks();
+
+/* ---------- sampling ---------- */
+const SC=[["latency",2.2],["cost",1.9],["accuracy",1.8],["consistency",1.5],["reliability",1.3],["layers",2.4,true],["user",0.7],["banana",-1.5]];
+function renderSampling(){
+  const T=+$("#temp").value,P=+$("#topp").value,pen=$("#pen").checked;
+  $("#tVal").textContent=T.toFixed(1);$("#pVal").textContent=P.toFixed(2);
+  const ls=SC.map(([t,l,rep])=>({t,rep,l:rep&&pen?(l>0?l/1.2:l*1.2):l}));
+  const mx=Math.max(...ls.map(o=>o.l/T));ls.forEach(o=>o.e=Math.exp(o.l/T-mx));
+  const s=ls.reduce((a,o)=>a+o.e,0);ls.forEach(o=>o.p=o.e/s);
+  ls.sort((a,b)=>b.p-a.p);let c=0;ls.forEach(o=>{o.keep=c<P;c+=o.p;});
+  $("#sampBars").innerHTML=ls.map((o,i)=>`<div class="bar-row ${i===0?"top":""} ${o.keep?"":"cut"}"><code>"${o.t}"${o.rep?'<span class="badge">used 3×</span>':""}</code><div class="bar"><span style="width:${o.p*100}%"></span></div><b>${(o.p*100).toFixed(1)}%</b></div>`).join("");
+}
+["temp","topp"].forEach(id=>$("#"+id).oninput=renderSampling);$("#pen").onchange=renderSampling;renderSampling();
+
+/* ---------- loss curve ---------- */
+(function(){
+  const svg=$("#lossSvg"),W=640,H=280,L=50,R=20,T=24,B=44;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const X=s=>L+s/260*(W-L-R),Y=v=>T+(5.6-v)/(5.6-2)*(H-T-B);
+  for(let v=2;v<=5;v++){svgEl(svg,"line",{x1:L,y1:Y(v),x2:W-R,y2:Y(v),stroke:"#e5e7eb"});svgEl(svg,"text",{x:L-8,y:Y(v)+4,"text-anchor":"end","font-size":11,fill:"#6b7280"},v);}
+  [0,60,100,160,220,260].forEach(s=>svgEl(svg,"text",{x:X(s),y:H-B+16,"text-anchor":"middle","font-size":11,fill:"#6b7280"},s));
+  svgEl(svg,"text",{x:(L+W-R)/2,y:H-6,"text-anchor":"middle","font-size":12,fill:"#374151"},"total training steps (round 1: 60 steps, round 2: 200 steps)");
+  svgEl(svg,"text",{x:14,y:T+(H-T-B)/2,"text-anchor":"middle","font-size":12,fill:"#374151",transform:`rotate(-90 14 ${T+(H-T-B)/2})`},"loss");
+  const r1=[],r2=[];
+  for(let s=5;s<=60;s+=5){const w=(s===5||s===60)?0:0.06*Math.sin(s*1.7);r1.push([s,3.714+1.536*Math.exp(-(s-5)/30)+w]);}
+  for(let s=5;s<=200;s+=5){const w=(s===5||s===200)?0:0.06*Math.sin(s*1.3);r2.push([60+s,2.366+1.534*Math.exp(-(s-5)/80)+w]);}
+  svgEl(svg,"line",{x1:X(60),y1:T,x2:X(60),y2:H-B,stroke:"#94a3b8","stroke-dasharray":"4 4"});
+  svgEl(svg,"text",{x:X(60)+6,y:T+12,"font-size":11,fill:"#475569"},"round 2 starts");
+  const path=pts=>pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join("");
+  svgEl(svg,"path",{d:path(r1),fill:"none",stroke:"#2563eb","stroke-width":3});
+  svgEl(svg,"path",{d:path(r2),fill:"none",stroke:"#16a34a","stroke-width":3});
+  [[r1[0],"5.25"],[r1[r1.length-1],"3.96"],[r2[r2.length-1],"≈ 2.5"]].forEach(([p,t])=>{svgEl(svg,"circle",{cx:X(p[0]),cy:Y(p[1]),r:5,fill:"#1f2937"});svgEl(svg,"text",{x:X(p[0])+8,y:Y(p[1])-8,"font-size":13,"font-weight":700,fill:"#1f2937"},t);});
+})();
+
+/* ---------- notebook download / copy all ---------- */
+const toLines=s=>s.split("\n").map((l,i,a)=>i<a.length-1?l+"\n":l);
+function notebookCells(){return $$("#run figure.code[data-cell]");}
+function buildNotebook(){
+  const cells=[{cell_type:"markdown",metadata:{},source:toLines("# Fine-tune Llama-3.2-1B on your own PDF (QLoRA with Unsloth)\n\n1. **Runtime → Change runtime type → T4 GPU**\n2. Run the cells from top to bottom. Cell 4 asks you to upload your PDF.\n3. Cell 11 shows the base model and the fine-tuned model side by side.")}];
+  notebookCells().forEach(f=>{
+    cells.push({cell_type:"markdown",metadata:{},source:toLines("### "+f.dataset.title)});
+    cells.push({cell_type:"code",execution_count:null,metadata:{},outputs:[],source:toLines(f._code)});
+  });
+  return {nbformat:4,nbformat_minor:0,metadata:{colab:{provenance:[],gpuType:"T4"},accelerator:"GPU",kernelspec:{name:"python3",display_name:"Python 3"},language_info:{name:"python"}},cells};
+}
+$("#dlNb").onclick=()=>{
+  const blob=new Blob([JSON.stringify(buildNotebook(),null,1)],{type:"application/x-ipynb+json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="DocTune_finetune_your_pdf.ipynb";
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+};
+$("#copyAll").onclick=e=>copyText(notebookCells().map(f=>"# "+f.dataset.title+"\n"+f._code).join("\n\n"),e.target);
+})();
+</script>
+</body>
+</html>
