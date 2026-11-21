@@ -1,3 +1,34 @@
+#### google colab #######
+
+import os
+from openai import OpenAI
+from google.colab import userdata
+
+
+# Initialize the OpenAI client pointing to OpenRouter
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key = userdata.get("OPENROUTER_API_KEY")
+)
+
+# Request a completion using an OpenRouter model slug
+# Example uses a free model; you can change this to any slug from openrouter.ai/models
+response = client.chat.completions.create(
+    model="anthropic/claude-opus-5.5",
+    messages=[
+        {
+            "role": "user",
+            "content": "Give me a quick 2-sentence explanation of quantum computing."
+        }
+    ]
+)
+
+# Print the response text
+print(response.choices[0].message.content)
+
+
+
+### VS Code #############
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
