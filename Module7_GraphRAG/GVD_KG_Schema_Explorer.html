@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GVD Evidence Graph: Schema Explorer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f7f9fb; color: #1c2833; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 10px 18px; background: #fff; border-bottom: 1px solid #dde3ea; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  header h1 { font-size: 15px; font-weight: 600; margin-right: 8px; }
+  .qbtn { border: 1px solid #c7d0da; background: #fff; border-radius: 16px; padding: 5px 13px; font-size: 12.5px; cursor: pointer; color: #34495e; }
+  .qbtn:hover { background: #eef3f8; }
+  .qbtn.active { background: #2E86C1; border-color: #2E86C1; color: #fff; }
+  #main { flex: 1; display: flex; min-height: 0; }
+  #canvasWrap { flex: 1; position: relative; min-width: 0; }
+  svg { width: 100%; height: 100%; display: block; cursor: grab; }
+  svg.panning { cursor: grabbing; }
+  #panel { width: 400px; border-left: 1px solid #dde3ea; background: #fff; overflow-y: auto; padding: 18px; }
+  #panel h2 { font-size: 15px; margin-bottom: 4px; }
+  #panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #7f8c8d; margin: 16px 0 6px; }
+  #panel p { font-size: 13px; line-height: 1.55; margin-bottom: 8px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 10px; margin-bottom: 8px; }
+  .tag.ref { background: #D6EAF8; color: #1a5276; }
+  .tag.proj { background: #FDEBD0; color: #935116; }
+  .tag.meta { background: #EAECEE; color: #566573; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  td { padding: 4px 6px; border-bottom: 1px solid #eef1f4; vertical-align: top; }
+  td.k { font-family: Consolas, monospace; color: #1a5276; white-space: nowrap; }
+  td.req { color: #C0392B; font-weight: 600; }
+  pre { background: #1c2833; color: #d5e8f7; font-family: Consolas, monospace; font-size: 11.5px; line-height: 1.5; padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre; margin: 6px 0 10px; }
+  pre .kw { color: #85c1e9; }
+  ol.steps { font-size: 12.5px; line-height: 1.5; padding-left: 18px; }
+  ol.steps li { margin-bottom: 6px; }
+  .hint { font-size: 11.5px; color: #7f8c8d; font-style: italic; }
+  .legend { display: flex; gap: 14px; margin-left: auto; font-size: 11.5px; color: #566573; align-items: center; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: -1px; }
+  /* graph styling */
+  .node circle { stroke-width: 2.5; cursor: pointer; transition: opacity .25s; }
+  .node text { font-size: 12px; font-weight: 600; pointer-events: none; transition: opacity .25s; }
+  .node.ref circle { fill: #D6EAF8; stroke: #2E86C1; }
+  .node.proj circle { fill: #FDEBD0; stroke: #CA6F1E; }
+  .node.selected circle { stroke-width: 5; }
+  .edge path { fill: none; stroke-width: 2; transition: opacity .25s; }
+  .edge .lbl { font-size: 9.5px; font-family: Consolas, monospace; fill: #566573; cursor: pointer; transition: opacity .25s; }
+  .edge .lblbg { fill: #f7f9fb; opacity: .92; cursor: pointer; }
+  .edge.selected path { stroke-width: 4; }
+  .edge.selected .lbl { font-weight: 700; fill: #1c2833; }
+  .dimmed { opacity: 0.12; }
+  .glow path { stroke-width: 3.5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GVD Evidence Graph</h1>
+  <button class="qbtn active" data-q="overview">Overview</button>
+  <button class="qbtn" data-q="q1">1 · Update impact</button>
+  <button class="qbtn" data-q="q1b">1b · Diff since version</button>
+  <button class="qbtn" data-q="q2">2 · Provenance</button>
+  <button class="qbtn" data-q="q3">3 · VM coverage</button>
+  <button class="qbtn" data-q="q4">4 · Consistency</button>
+  <div class="legend">
+    <span><span class="dot" style="background:#D6EAF8;border:2px solid #2E86C1"></span>Reference layer</span>
+    <span><span class="dot" style="background:#FDEBD0;border:2px solid #CA6F1E"></span>Project layer</span>
+    <span class="hint">drag nodes · scroll to zoom · drag background to pan</span>
+  </div>
+</header>
+<div id="main">
+  <div id="canvasWrap"><svg id="svg" viewBox="0 0 1500 980"></svg></div>
+  <div id="panel"></div>
+</div>
+
+<script>
+const NODES = [
+ {id:'product', x:120, y:300, layer:'ref', cap:'Product',
+  desc:'A drug or intervention, including comparators and standard of care. There is no separate Comparator label: being a comparator is a role in a study (see EVALUATES), not a kind of thing.',
+  props:[['name','string',1],['isClientProduct','boolean',1],['innCode','string',0],['atcCode','string',0],['manufacturer','string',0]]},
+ {id:'indication', x:120, y:640, layer:'ref', cap:'Indication',
+  desc:'Disease or condition. Ontology codes are plain properties, populated when the extractor finds them (pragmatic alignment, no ontology nodes).',
+  props:[['name','string',1],['snomedCode','string',0],['meddraCode','string',0],['icd10Code','string',0]]},
+ {id:'study', x:300, y:470, layer:'ref', cap:'Study',
+  desc:'Any evidence-generating activity: RCT, RWE, SLR, registry. An ITC/NMA is also a Study (its outputs are Results with DERIVED_FROM lineage).',
+  props:[['name','string',1],['studyType','RCT|RWE|SLR|ITC|NMA|registry',1],['nctId','string',0],['phase','string',0],['status','ongoing|completed|published',0],['readoutDate','date',0]]},
+ {id:'endpoint', x:300, y:180, layer:'ref', cap:'Endpoint',
+  desc:'A measured outcome definition, independent of any particular result.',
+  props:[['name','string',1],['endpointType','efficacy|safety|HRQoL|economic',0],['unit','string',0],['definition','string',0]]},
+ {id:'result', x:580, y:470, layer:'ref', cap:'Result',
+  desc:'The canonical figure node, the heart of the schema. Exactly one node per (study, endpoint, population, timepoint, comparator) tuple, so a figure like RR 0.32 exists once and is referenced everywhere. Consistency falls out for free.',
+  props:[['value','number',1],['effectMeasure','rate ratio|HR|OR|MD|absolute',0],['ciLow / ciHigh','number',0],['ciLevel','number (default 0.95)',0],['pValue','number',0],['timepoint','string',0],['dataCutDate','date',0],['isCurrent','boolean',1],['narrativeForm','string (rendered fragment for drafting)',0]]},
+ {id:'population', x:580, y:760, layer:'ref', cap:'Population',
+  desc:'Analysis population or subgroup. A node (not a Result property) because coverage and relevance queries land on it, and subgroups nest via SUBGROUP_OF.',
+  props:[['name','string',1],['analysisSet','ITT|PP|safety|mITT',0],['definition','string',0]]},
+ {id:'locator', x:880, y:560, layer:'ref', cap:'Locator',
+  desc:'A resolvable pointer into a SourceDocument: the click-to-highlight primitive. A node because many claims/results cite the same passage, and locators have their own lifecycle (snippet enables re-anchoring if offsets shift).',
+  props:[['snippet','string (quoted passage)',1],['pageNumber','int',0],['tableRef','string',0],['charSpanStart / End','int',0],['locatorType','passage|table cell|figure',0]]},
+ {id:'sourcedoc', x:1170, y:620, layer:'ref', cap:'SourceDocument',
+  desc:'A physical artefact in the document store: CSR, publication, SLR report, CEM output. Immutable per version; hash-deduplicated.',
+  props:[['title','string',1],['docType','string',1],['documentStoreUri','uri',1],['hash','string (unique)',1],['publicationDate','date',0],['doi','string',0],['version','string',0]]},
+ {id:'market', x:900, y:840, layer:'ref', cap:'Market',
+  desc:'A jurisdiction or HTA body; one label with bodyType since queries treat them alike.',
+  props:[['name','string',1],['bodyType','HTA|payer|regulator',0],['code','NICE|G-BA|HAS|ICER|...',0]]},
+ {id:'valuemessage', x:620, y:160, layer:'proj', cap:'ValueMessage',
+  desc:'One message from the Payer Value Story (e.g. VM4). The anchor of the red thread.',
+  props:[['projectId','string',1],['code','string (e.g. VM4)',1],['text','string',1],['category','burden|unmet need|clinical|economic|humanistic',0],['priority','int',0]]},
+ {id:'claim', x:900, y:320, layer:'proj', cap:'Claim',
+  desc:'A reified statement: one assertive sentence that will appear in dossier text. First-class node because three of the four flagship capability queries land on or pass through it (impact worklists, placements via APPEARS_IN, review status and staleness).',
+  props:[['projectId','string',1],['text','string',1],['claimType','efficacy|safety|burden|economic|comparative',0],['status','draft|in_review|approved',0],['staleness','fresh|affected|stale (set by update agent)',0]]},
+ {id:'section', x:1190, y:260, layer:'proj', cap:'Section',
+  desc:'A section of a dossier template instance, e.g. "4.2 Comparative efficacy".',
+  props:[['projectId','string',1],['number','string',1],['title','string',1],['templateSectionId','string',0]]},
+ {id:'dossier', x:1400, y:420, layer:'proj', cap:'Dossier',
+  desc:'The dossier as a whole.',
+  props:[['projectId','string',1],['name','string',1]]},
+ {id:'dossierversion', x:1230, y:80, layer:'proj', cap:'DossierVersion',
+  desc:'A published snapshot. INCLUDES pins the exact claims a version contained, which is what makes "what changed since v2.1" answerable.',
+  props:[['projectId','string',1],['versionLabel','string',1],['publishedAt','datetime',1],['status','string',0]]}
+];
+
+const EDGES = [
+ {id:'reports', from:'study', to:'result', type:'REPORTS', curve:0, card:'1..* per Study', props:[], why:'Which study produced a figure.'},
+ {id:'measures', from:'result', to:'endpoint', type:'MEASURES', curve:0, card:'exactly 1', props:[], why:'What the figure measures.'},
+ {id:'for_population', from:'result', to:'population', type:'FOR_POPULATION', curve:0, card:'exactly 1', props:[], why:'Analysis set / subgroup of the figure.'},
+ {id:'evaluates', from:'study', to:'product', type:'EVALUATES', curve:0, card:'1..*', props:[['role','intervention|comparator (req)']], why:'Study arms; comparator is a role here, not a node type.'},
+ {id:'versus', from:'result', to:'product', type:'VERSUS', curve:70, card:'0..1', props:[], why:'Comparator arm of a comparative figure.'},
+ {id:'derived_from', from:'result', to:'result', type:'DERIVED_FROM', self:150, card:'0..*', props:[['method','ITC|NMA|meta-analysis|model input']], why:'Analytic lineage; lets update tracing flow through ITC/CEM outputs.'},
+ {id:'sup_result', from:'result', to:'result', type:'SUPERSEDES', self:30, color:'#C0392B', card:'0..1 outgoing', props:[['reason','new data cut|correction|LTE readout'],['createdAt','datetime (req)']], why:'The update-tracing backbone. Proposed by ingestion, confirmed by an SME: superseding is an editorial act.'},
+ {id:'sup_claim', from:'claim', to:'claim', type:'SUPERSEDES', self:60, color:'#C0392B', card:'0..1 outgoing', props:[['reason','string'],['createdAt','datetime (req)']], why:'Claim revision lineage after an update.'},
+ {id:'extracted_from', from:'result', to:'locator', type:'EXTRACTED_FROM', curve:0, card:'1..*', props:[], why:'Where the figure was read from.'},
+ {id:'based_on', from:'claim', to:'result', type:'BASED_ON', curve:0, card:'1..* (0..* for burden/narrative claims)', props:[['role','primary|supporting']], why:'Which canonical figures substantiate a claim. Separate from CITES: evidential basis and rendered citation are different things.'},
+ {id:'cites', from:'claim', to:'locator', type:'CITES', curve:0, card:'1..*', props:[['citationKey','string']], why:'The rendered citation; resolves via LOCATES.'},
+ {id:'locates', from:'locator', to:'sourcedoc', type:'LOCATES', curve:0, card:'exactly 1', props:[], why:'Pointer into the document store.'},
+ {id:'supports_claim', from:'claim', to:'valuemessage', type:'SUPPORTS', curve:0, color:'#1E8449', card:'0..*', props:[['strength','direct|partial|contextual']], why:'The red thread: claim to value message.'},
+ {id:'supports_result', from:'result', to:'valuemessage', type:'SUPPORTS', curve:0, color:'#1E8449', card:'0..*', props:[['strength','direct|partial|contextual']], why:'Result-level SUPPORTS enables coverage scoring at planning time, before any claim is drafted.'},
+ {id:'appears_in', from:'claim', to:'section', type:'APPEARS_IN', curve:0, card:'1..*', props:[['orderHint','int']], why:'Where a claim is used; one claim can appear in exec summary and body.'},
+ {id:'part_of', from:'section', to:'dossier', type:'PART_OF', curve:0, card:'exactly 1', props:[], why:'Structure.'},
+ {id:'includes', from:'dossierversion', to:'claim', type:'INCLUDES', curve:0, card:'0..*', props:[['claimTextHash','string']], why:'Pins the exact claims a published version contained.'},
+ {id:'version_of', from:'dossierversion', to:'dossier', type:'VERSION_OF', curve:0, card:'exactly 1', props:[], why:'Version lineage.'},
+ {id:'in_ind_study', from:'study', to:'indication', type:'IN_INDICATION', curve:0, card:'1..*', props:[], why:'Therapy-area anchoring; drives cross-project reuse discovery.'},
+ {id:'in_ind_product', from:'product', to:'indication', type:'IN_INDICATION', curve:0, card:'1..*', props:[], why:'Therapy-area anchoring.'},
+ {id:'subgroup_of', from:'population', to:'population', type:'SUBGROUP_OF', self:0, card:'0..1', props:[], why:'Subgroup nesting.'},
+ {id:'relevant_vm', from:'valuemessage', to:'market', type:'RELEVANT_TO', curve:-160, card:'0..*', props:[['requirement','required|preferred|not accepted']], why:'Market-specific evidence expectations.'},
+ {id:'relevant_result', from:'result', to:'market', type:'RELEVANT_TO', curve:40, card:'0..*', props:[['requirement','required|preferred|not accepted']], why:'e.g. an ITC result marked "not accepted" for G-BA surfaces at planning, not at submission.'},
+ {id:'relevant_claim', from:'claim', to:'market', type:'RELEVANT_TO', curve:-60, card:'0..*', props:[['requirement','required|preferred|not accepted']], why:'Market relevance of a drafted claim.'}
+];
+
+const PROV = {desc:'Common provenance block carried by every node and edge an ingestion agent creates. Confidence is the extractor’s self-assessment (orders the SME review queue); validation is a human fact. A 0.99-confidence unvalidated result is still unvalidated.',
+ props:[['extractionConfidence','0.0 - 1.0',1],['validationStatus','extracted|sme_validated|rejected|superseded',1],['validatedBy / validatedAt','string / datetime',0],['extractedBy','agent name + version',1],['extractionRunId','string',1],['createdAt','datetime',1]]};
+
+const QUERIES = {
+ q1: {title:'Capability 1 · Update impact tracing', nodes:['result','claim','section','valuemessage'], edges:['sup_result','derived_from','based_on','appears_in','supports_claim'],
+  desc:'The differentiator. When a confirmed SUPERSEDES edge lands (e.g. the 104-week LTE result replacing the 52-week RR 0.32), one traversal produces the revision worklist: affected claims, the sections they appear in, the value messages they support, and the derivation chain explaining why each item is on the list.',
+  steps:['Start at the new Result, follow SUPERSEDES to the superseded Result.','Fan out through DERIVED_FROM (0..3 hops) to catch ITC/NMA/model outputs built on the old figure.','Follow incoming BASED_ON to the Claims resting on any affected Result.','Follow APPEARS_IN to Sections and SUPPORTS to ValueMessages.','Write staleness = "affected" back onto the returned Claims so drafting agents see the flag.'],
+  cypher:`MATCH (new:Result {id: $newResultId})-[:SUPERSEDES]->(old:Result)
+MATCH p = (old)<-[:DERIVED_FROM*0..3]-(affected:Result)
+MATCH (affected)<-[:BASED_ON]-(c:Claim)-[:APPEARS_IN]->(s:Section)
+OPTIONAL MATCH (c)-[:SUPPORTS]->(vm:ValueMessage)
+RETURN c.id, c.text,
+       collect(DISTINCT s.number + ' ' + s.title) AS sections,
+       collect(DISTINCT vm.code)                  AS valueMessages,
+       [x IN nodes(p) | x.id]                     AS derivationChain`},
+ q1b: {title:'Capability 1b · What changed since v2.1', nodes:['dossierversion','claim','result'], edges:['includes','based_on','derived_from','sup_result'],
+  desc:'The dossier-version variant, aimed at the client’s 3-month update treadmill: take the claims pinned to a published version, and find every one whose evidential basis has since been superseded.',
+  steps:['Start at the DossierVersion, follow INCLUDES to its pinned Claims.','Follow BASED_ON (and DERIVED_FROM lineage) to the Results those claims rest on.','Find SUPERSEDES edges created after the version’s publishedAt.','Return claim, superseded result, new result, and reason.'],
+  cypher:`MATCH (dv:DossierVersion {versionLabel: $version})-[:INCLUDES]->(c:Claim)
+MATCH (c)-[:BASED_ON]->(:Result)<-[:DERIVED_FROM*0..3]-(old:Result)
+MATCH (new:Result)-[sup:SUPERSEDES]->(old)
+WHERE sup.createdAt > dv.publishedAt
+RETURN c.id, c.text, old.id AS supersededResult,
+       new.id AS newResult, sup.reason`},
+ q2: {title:'Capability 2 · Statement-level provenance', nodes:['claim','locator','sourcedoc','result'], edges:['cites','locates','based_on','extracted_from'],
+  desc:'Click-to-source for any claim: the rendered citation resolves through a Locator into a specific document version, and the claim’s canonical figures resolve to the exact table cells they were extracted from. The inverse query is the QC sweep that finds unreferenced claims dossier-wide in milliseconds.',
+  steps:['From the Claim, follow CITES to Locators and LOCATES to SourceDocuments (page, table, char span, snippet).','In parallel, follow BASED_ON to Results and EXTRACTED_FROM to their source locations.','The UI opens the document at documentStoreUri and highlights the span.'],
+  cypher:`MATCH (c:Claim {id: $claimId})-[:CITES]->(l:Locator)
+      -[:LOCATES]->(d:SourceDocument)
+OPTIONAL MATCH (c)-[:BASED_ON]->(r:Result)
+      -[:EXTRACTED_FROM]->(rl:Locator)
+RETURN d.title, d.documentStoreUri, l.pageNumber, l.tableRef,
+       l.charSpanStart, l.charSpanEnd, l.snippet,
+       r.value, r.narrativeForm, rl.tableRef AS resultLocation
+
+// QC sweep: unreferenced claims
+MATCH (c:Claim)
+WHERE NOT (c)-[:CITES]->(:Locator)-[:LOCATES]->(:SourceDocument)
+RETURN c`},
+ q3: {title:'Capability 3 · VM coverage scoring', nodes:['valuemessage','claim','result','market'], edges:['supports_claim','supports_result','relevant_vm','relevant_result'],
+  desc:'Red-thread health at planning time. Because SUPPORTS is allowed from Results as well as Claims, coverage can be scored before a single sentence is drafted. The market-qualified variant checks that supporting evidence is acceptable to the target HTA body.',
+  steps:['For each ValueMessage in the project, collect incoming SUPPORTS from validated Results and Claims.','Classify: no support = not evidenced; any direct = fully evidenced; otherwise partially evidenced.','Market variant: require the evidence itself to be RELEVANT_TO the target Market with requirement <> "not accepted".'],
+  cypher:`MATCH (vm:ValueMessage {projectId: $projectId})
+OPTIONAL MATCH (vm)<-[sup:SUPPORTS]-(ev)
+  WHERE (ev:Result OR ev:Claim)
+    AND ev.validationStatus = 'sme_validated'
+WITH vm, collect(sup.strength) AS strengths
+RETURN vm.code, vm.text,
+  CASE
+    WHEN size(strengths) = 0      THEN 'not evidenced'
+    WHEN 'direct' IN strengths    THEN 'fully evidenced'
+    ELSE 'partially evidenced'
+  END AS coverage`},
+ q4: {title:'Capability 4 · Cross-section figure consistency', nodes:['result','claim','section'], edges:['based_on','appears_in'],
+  desc:'Because figures are canonical Result nodes, there is structurally one 0.32 to be consistent with. The residual risk is drafted prose drifting from the node it is based on, so this query surfaces every rendering of a Result for an LLM QC agent to compare (a graph query cannot read prose; that is the correct division of labour).',
+  steps:['From the Result, follow incoming BASED_ON to every Claim that renders it.','Follow APPEARS_IN to see each placement.','LLM QC compares each claim text against value/ciLow/ciHigh and flags drift.','Second sweep: numerals in claims with no BASED_ON edge at all, the classic copy-paste hazard.'],
+  cypher:`MATCH (r:Result {id: $resultId})<-[:BASED_ON]-(c:Claim)
+      -[:APPEARS_IN]->(s:Section)
+RETURN r.narrativeForm, c.text, s.number, s.title`}
+};
+
+// ---------- rendering ----------
+const svg = document.getElementById('svg');
+const NS = 'http://www.w3.org/2000/svg';
+const R = 52;
+const nodeById = {}; NODES.forEach(n => nodeById[n.id] = n);
+const el = (t, attrs, parent) => { const e = document.createElementNS(NS, t); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+// defs: arrow markers per colour
+const defs = el('defs', {}, svg);
+const colors = {'#555555':'m0','#C0392B':'m1','#1E8449':'m2'};
+for (const c in colors) {
+  const m = el('marker', {id:colors[c], viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse'}, defs);
+  el('path', {d:'M 0 0 L 10 5 L 0 10 z', fill:c}, m);
+}
+const edgeLayer = el('g', {}, svg);
+const nodeLayer = el('g', {}, svg);
+const edgeEls = {}, nodeEls = {};
+
+function edgeGeom(e) {
+  const a = nodeById[e.from], b = nodeById[e.to];
+  if (e.from === e.to) { // self loop at angle e.self (degrees)
+    const ang = (e.self || 0) * Math.PI / 180;
+    const cx = a.x + Math.cos(ang) * R, cy = a.y + Math.sin(ang) * R;
+    const o = 62;
+    const p1x = a.x + Math.cos(ang - .5) * R, p1y = a.y + Math.sin(ang - .5) * R;
+    const p2x = a.x + Math.cos(ang + .5) * R, p2y = a.y + Math.sin(ang + .5) * R;
+    const c1x = a.x + Math.cos(ang - .6) * (R + o), c1y = a.y + Math.sin(ang - .6) * (R + o);
+    const c2x = a.x + Math.cos(ang + .6) * (R + o), c2y = a.y + Math.sin(ang + .6) * (R + o);
+    return { d:`M ${p1x} ${p1y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2x} ${p2y}`,
+             lx: a.x + Math.cos(ang) * (R + o + 8), ly: a.y + Math.sin(ang) * (R + o + 8) };
+  }
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  const nx = -dy / len, ny = dx / len, c = e.curve || 0;
+  const mx = (a.x + b.x) / 2 + nx * c, my = (a.y + b.y) / 2 + ny * c;
+  const t1 = R / len, sx = a.x + dx * t1 + nx * c * t1 * 2, sy = a.y + dy * t1 + ny * c * t1 * 2;
+  const ex = b.x - dx * t1 + nx * c * t1 * 2, ey = b.y - dy * t1 + ny * c * t1 * 2;
+  return { d:`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`, lx: mx * 0.5 + (sx + ex) * 0.25, ly: my * 0.5 + (sy + ey) * 0.25 };
+}
+
+EDGES.forEach(e => {
+  const g = el('g', {class:'edge', 'data-id':e.id}, edgeLayer);
+  const col = e.color || '#555555';
+  const path = el('path', {stroke:col, 'marker-end':`url(#${colors[col]})`}, g);
+  const bg = el('rect', {class:'lblbg', rx:3}, g);
+  const lbl = el('text', {class:'lbl', 'text-anchor':'middle'}, g);
+  lbl.textContent = e.type;
+  g.addEventListener('click', ev => { ev.stopPropagation(); select('edge', e.id); });
+  edgeEls[e.id] = {g, path, lbl, bg};
+});
+
+NODES.forEach(n => {
+  const g = el('g', {class:`node ${n.layer}`, 'data-id':n.id}, nodeLayer);
+  el('circle', {r:R}, g);
+  const t = el('text', {'text-anchor':'middle', dy:4}, g);
+  t.textContent = n.cap;
+  g.addEventListener('mousedown', ev => startDrag(ev, n));
+  g.addEventListener('click', ev => { ev.stopPropagation(); if (!dragMoved) select('node', n.id); });
+  nodeEls[n.id] = g;
+});
+
+function updatePositions() {
+  NODES.forEach(n => nodeEls[n.id].setAttribute('transform', `translate(${n.x},${n.y})`));
+  EDGES.forEach(e => {
+    const geo = edgeGeom(e), ee = edgeEls[e.id];
+    ee.path.setAttribute('d', geo.d);
+    ee.lbl.setAttribute('x', geo.lx); ee.lbl.setAttribute('y', geo.ly);
+    const bb = ee.lbl.getBBox();
+    ee.bg.setAttribute('x', bb.x - 3); ee.bg.setAttribute('y', bb.y - 1);
+    ee.bg.setAttribute('width', bb.width + 6); ee.bg.setAttribute('height', bb.height + 2);
+  });
+}
+
+// ---------- drag, pan, zoom ----------
+let drag = null, dragMoved = false, pan = null;
+let vb = {x:0, y:0, w:1500, h:980};
+const setVB = () => svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+const toSvg = ev => { const r = svg.getBoundingClientRect(); return { x: vb.x + (ev.clientX - r.left) / r.width * vb.w, y: vb.y + (ev.clientY - r.top) / r.height * vb.h }; };
+function startDrag(ev, n) { ev.stopPropagation(); const p = toSvg(ev); drag = {n, ox: n.x - p.x, oy: n.y - p.y}; dragMoved = false; }
+svg.addEventListener('mousedown', ev => { pan = {sx: ev.clientX, sy: ev.clientY, vx: vb.x, vy: vb.y}; svg.classList.add('panning'); });
+window.addEventListener('mousemove', ev => {
+  if (drag) { const p = toSvg(ev); drag.n.x = p.x + drag.ox; drag.n.y = p.y + drag.oy; dragMoved = true; updatePositions(); }
+  else if (pan) { const r = svg.getBoundingClientRect(); vb.x = pan.vx - (ev.clientX - pan.sx) / r.width * vb.w; vb.y = pan.vy - (ev.clientY - pan.sy) / r.height * vb.h; setVB(); }
+});
+window.addEventListener('mouseup', () => { drag = null; pan = null; svg.classList.remove('panning'); });
+svg.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  const p = toSvg(ev), f = ev.deltaY > 0 ? 1.12 : 1 / 1.12;
+  vb = { x: p.x - (p.x - vb.x) * f, y: p.y - (p.y - vb.y) * f, w: vb.w * f, h: vb.h * f };
+  setVB();
+}, {passive:false});
+svg.addEventListener('click', () => select(null));
+
+// ---------- panel + selection + query highlighting ----------
+const panel = document.getElementById('panel');
+let curQuery = 'overview';
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const propRows = props => props.map(p => `<tr><td class="k">${p[0]}</td><td>${esc(p[1])}${p[2] ? ' <span style="color:#C0392B;font-weight:600">req</span>' : ''}</td></tr>`).join('');
+
+function showOverview() {
+  panel.innerHTML = `<h2>Schema explorer</h2>
+  <p>The evidence knowledge graph for the agentic GVD platform: 14 node types, 24 edge types, designed backwards from four flagship capability queries.</p>
+  <p><span class="tag ref">Reference layer</span> entities true regardless of any dossier (studies, results, documents). <span class="tag proj">Project layer</span> entities that exist because a dossier project exists (claims, VMs, sections); all carry <code>projectId</code>. The split is the reuse mechanism: a new GVD links into existing reference evidence instead of copying it.</p>
+  <h3>How to use</h3>
+  <p>Click any node or edge label for its properties, cardinality, and rationale. Pick a query button above to light up the traversal path and see the Cypher. Drag nodes to rearrange, scroll to zoom, drag the background to pan.</p>
+  <h3>Common provenance block</h3>
+  <p>${PROV.desc}</p>
+  <table>${propRows(PROV.props)}</table>
+  <p class="hint" style="margin-top:10px">Full spec: KG_Schema_Specification.md · queries: Evidence_Memory_Architecture.md</p>`;
+}
+
+function showNode(id) {
+  const n = nodeById[id];
+  panel.innerHTML = `<h2>${n.cap}</h2>
+  <span class="tag ${n.layer === 'ref' ? 'ref' : 'proj'}">${n.layer === 'ref' ? 'Reference layer' : 'Project layer'}</span>
+  <p>${n.desc}</p>
+  <h3>Properties</h3><table>${propRows(n.props)}</table>
+  <h3>Plus provenance block</h3>
+  <p class="hint">If agent-created: ${PROV.props.map(p => p[0]).join(', ')}.</p>
+  <h3>Edges</h3>
+  <table>${EDGES.filter(e => e.from === id || e.to === id).map(e =>
+    `<tr><td class="k">${e.from === id ? '→ ' : '← '}${e.type}</td><td>${e.from === id ? nodeById[e.to].cap : nodeById[e.from].cap}</td></tr>`).join('')}</table>`;
+}
+
+function showEdge(id) {
+  const e = EDGES.find(x => x.id === id);
+  panel.innerHTML = `<h2>${e.type}</h2>
+  <p><b>${nodeById[e.from].cap}</b> → <b>${nodeById[e.to].cap}</b></p>
+  <h3>Cardinality</h3><p>${e.card}</p>
+  ${e.props.length ? `<h3>Properties</h3><table>${e.props.map(p => `<tr><td class="k">${p[0]}</td><td>${esc(p[1])}</td></tr>`).join('')}</table>` : ''}
+  <h3>Purpose</h3><p>${e.why}</p>`;
+}
+
+function showQuery(q) {
+  const Q = QUERIES[q];
+  panel.innerHTML = `<h2>${Q.title}</h2>
+  <p>${Q.desc}</p>
+  <h3>Traversal</h3><ol class="steps">${Q.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+  <h3>Cypher</h3><pre>${esc(Q.cypher).replace(/\b(MATCH|OPTIONAL|WHERE|WITH|RETURN|CASE|WHEN|THEN|ELSE|END|AS|IN|NOT|AND|OR|collect|size|nodes)\b/g, '<span class="kw">$1</span>')}</pre>
+  <p class="hint">All query templates filter validationStatus = 'sme_validated' unless includeUnvalidated is passed.</p>`;
+}
+
+function applyHighlight() {
+  const Q = QUERIES[curQuery];
+  NODES.forEach(n => nodeEls[n.id].classList.toggle('dimmed', !!Q && !Q.nodes.includes(n.id)));
+  EDGES.forEach(e => {
+    const on = !Q || Q.edges.includes(e.id);
+    edgeEls[e.id].g.classList.toggle('dimmed', !on);
+    edgeEls[e.id].g.classList.toggle('glow', !!Q && on);
+  });
+}
+
+function select(kind, id) {
+  document.querySelectorAll('.node.selected,.edge.selected').forEach(x => x.classList.remove('selected'));
+  if (kind === 'node') { nodeEls[id].classList.add('selected'); showNode(id); }
+  else if (kind === 'edge') { edgeEls[id].g.classList.add('selected'); showEdge(id); }
+  else if (curQuery !== 'overview') showQuery(curQuery);
+  else showOverview();
+}
+
+document.querySelectorAll('.qbtn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.qbtn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  curQuery = b.dataset.q;
+  applyHighlight();
+  if (curQuery === 'overview') showOverview(); else showQuery(curQuery);
+}));
+
+updatePositions(); setVB(); showOverview();
+</script>
+</body>
+</html>
