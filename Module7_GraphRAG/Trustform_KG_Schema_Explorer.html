@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trustform Security-QA Graph: Schema Explorer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f7f9fb; color: #1c2833; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 8px 18px; background: #fff; border-bottom: 1px solid #dde3ea; display: flex; flex-direction: column; gap: 6px; }
+  header .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  header h1 { font-size: 15px; font-weight: 600; margin-right: 6px; }
+  .rowlbl { font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
+  .qbtn { border: 1px solid #c7d0da; background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 12.5px; cursor: pointer; color: #34495e; }
+  .qbtn:hover { background: #eef3f8; }
+  .qbtn.active { background: #2E86C1; border-color: #2E86C1; color: #fff; }
+  .qbtn.info { border-style: dashed; }
+  .tog { font-size: 12px; color: #34495e; display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; cursor: pointer; user-select: none; }
+  .legend { display: flex; gap: 14px; margin-left: auto; font-size: 11.5px; color: #566573; align-items: center; flex-wrap: wrap; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: -1px; }
+  .dash { display: inline-block; width: 22px; border-top: 2px dashed #555; vertical-align: 3px; margin-right: 4px; }
+  .hint { font-size: 11.5px; color: #7f8c8d; font-style: italic; }
+  #main { flex: 1; display: flex; min-height: 0; }
+  #canvasWrap { flex: 1; position: relative; min-width: 0; }
+  svg { width: 100%; height: 100%; display: block; cursor: grab; }
+  svg.panning { cursor: grabbing; }
+  #panel { width: 440px; border-left: 1px solid #dde3ea; background: #fff; overflow-y: auto; padding: 18px; }
+  #panel h2 { font-size: 15px; margin-bottom: 6px; }
+  #panel h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: #7f8c8d; margin: 16px 0 6px; }
+  #panel p { font-size: 13px; line-height: 1.55; margin-bottom: 8px; }
+  #panel ul, #panel ol { font-size: 12.5px; line-height: 1.5; padding-left: 18px; margin-bottom: 8px; }
+  #panel li { margin-bottom: 4px; }
+  #panel code { font-family: Consolas, monospace; font-size: 11.5px; background: #eef1f5; padding: 0 4px; border-radius: 3px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 10px; margin: 0 4px 8px 0; }
+  .tag.ref { background: #D6EAF8; color: #1a5276; }
+  .tag.req { background: #FDEBD0; color: #935116; }
+  .tag.v1 { background: #E8F8F5; color: #117864; }
+  .tag.v2 { background: #F4ECF7; color: #6C3483; }
+  .tag.run { background: #FEF5E7; color: #9C640C; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 6px; }
+  td, th { padding: 4px 6px; border-bottom: 1px solid #eef1f4; vertical-align: top; text-align: left; }
+  th { font-size: 11px; color: #7f8c8d; font-weight: 600; }
+  td.k { font-family: Consolas, monospace; color: #1a5276; white-space: nowrap; }
+  td.n { text-align: right; white-space: nowrap; color: #566573; }
+  .reqb { color: #C0392B; font-weight: 600; font-size: 11px; }
+  .src { display: inline-block; font-size: 10.5px; color: #566573; background: #f2f4f6; border-radius: 8px; padding: 0 6px; white-space: nowrap; }
+  .facts { background: #f4f9fd; border: 1px solid #d6eaf8; border-radius: 8px; padding: 8px 10px 8px 26px !important; }
+  .example { background: #fbf7ee; border: 1px solid #f0dfb8; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; margin-bottom: 8px; }
+  pre { background: #1c2833; color: #d5e8f7; font-family: Consolas, monospace; font-size: 11.3px; line-height: 1.5; padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre; margin: 6px 0 10px; }
+  pre .kw { color: #85c1e9; }
+  pre .cm { color: #7f8c8d; font-style: italic; }
+  /* graph */
+  .layerbox { pointer-events: none; }
+  .node circle { stroke-width: 2.5; cursor: pointer; transition: opacity .25s; }
+  .node text { font-size: 12px; font-weight: 600; pointer-events: none; transition: opacity .25s; }
+  .node text.long { font-size: 11px; }
+  .node text.cnt { font-size: 10px; font-weight: 400; fill: #566573; }
+  .node.ref circle { fill: #D6EAF8; stroke: #2E86C1; }
+  .node.req circle { fill: #FDEBD0; stroke: #CA6F1E; }
+  .node.v2 circle { stroke-dasharray: 7 4; }
+  .node.selected circle { stroke-width: 5; }
+  .edge path { fill: none; stroke-width: 2; transition: opacity .25s; }
+  .edge.v2 path { stroke-dasharray: 7 4; }
+  .edge.bridge path { stroke-width: 3; }
+  .edge .lbl { font-size: 9.5px; font-family: Consolas, monospace; fill: #566573; cursor: pointer; transition: opacity .25s; }
+  .edge .lblbg { fill: #f7f9fb; opacity: .92; cursor: pointer; }
+  .edge.selected path { stroke-width: 4; }
+  .edge.selected .lbl { font-weight: 700; fill: #1c2833; }
+  .dimmed { opacity: 0.12; }
+  .glow path { stroke-width: 3.5; }
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>Trustform Security-QA Graph</h1>
+    <button class="qbtn active info" data-q="overview">Overview</button>
+    <button class="qbtn info" data-q="mapping">CSV &rarr; graph</button>
+    <button class="qbtn info" data-q="ddl">Database &amp; indexes</button>
+    <label class="tog"><input type="checkbox" id="togV2" checked> v2 enrichment</label>
+    <label class="tog"><input type="checkbox" id="togReq" checked> Request layer</label>
+    <div class="legend">
+      <span><span class="dot" style="background:#D6EAF8;border:2px solid #2E86C1"></span>Reference layer</span>
+      <span><span class="dot" style="background:#FDEBD0;border:2px solid #CA6F1E"></span>Request layer</span>
+      <span><span class="dash"></span>v2 enrichment</span>
+      <span class="hint">drag nodes &middot; scroll to zoom &middot; drag background to pan</span>
+    </div>
+  </div>
+  <div class="row">
+    <span class="rowlbl">Capability queries</span>
+    <button class="qbtn" data-q="q1">1 &middot; Graph RAG retrieval</button>
+    <button class="qbtn" data-q="q2">2 &middot; Follow-up context</button>
+    <button class="qbtn" data-q="q3">3 &middot; Answer consistency</button>
+    <button class="qbtn" data-q="q4">4 &middot; Provenance</button>
+    <button class="qbtn" data-q="q5">5 &middot; Coverage gaps</button>
+    <button class="qbtn" data-q="q6">6 &middot; Standards crosswalk</button>
+    <button class="qbtn" data-q="q7">7 &middot; Change impact</button>
+    <button class="qbtn" data-q="q8">8 &middot; Write-back &amp; audit</button>
+  </div>
+</header>
+<div id="main">
+  <div id="canvasWrap"><svg id="svg" viewBox="0 0 1500 980"></svg></div>
+  <div id="panel"></div>
+</div>
+
+<script type="text/plain" id="ddl-text">// Run in Neo4j Browser. Run the two :use lines on their own.
+:use system
+CREATE DATABASE trustform IF NOT EXISTS WAIT;
+:use trustform
+
+// 1) One uniqueness constraint per label (also makes MERGE by key fast)
+CREATE CONSTRAINT family_name      IF NOT EXISTS FOR (n:ProductFamily) REQUIRE n.name IS UNIQUE;
+CREATE CONSTRAINT model_key        IF NOT EXISTS FOR (n:ProductModel)  REQUIRE n.key IS UNIQUE;
+CREATE CONSTRAINT customer_name    IF NOT EXISTS FOR (n:Customer)      REQUIRE n.name IS UNIQUE;
+CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT question_id      IF NOT EXISTS FOR (n:Question)      REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT answer_id        IF NOT EXISTS FOR (n:Answer)        REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT topic_code       IF NOT EXISTS FOR (n:Topic)         REQUIRE n.code IS UNIQUE;
+CREATE CONSTRAINT source_sha       IF NOT EXISTS FOR (n:SourceFile)    REQUIRE n.sha256 IS UNIQUE;
+CREATE CONSTRAINT standard_name    IF NOT EXISTS FOR (n:Standard)      REQUIRE n.name IS UNIQUE;
+CREATE CONSTRAINT technology_name  IF NOT EXISTS FOR (n:Technology)    REQUIRE n.name IS UNIQUE;
+CREATE CONSTRAINT submission_id    IF NOT EXISTS FOR (n:Submission)    REQUIRE n.submissionId IS UNIQUE;
+CREATE CONSTRAINT draft_id         IF NOT EXISTS FOR (n:DraftAnswer)   REQUIRE n.id IS UNIQUE;
+
+// 2) The ONLY vector index: on Answer, with product scope and status as in-index filters
+//    (WITH [...] filter properties and SEARCH ... WHERE ... IN need Cypher 25 / Neo4j 2026.06+)
+CYPHER 25
+CREATE VECTOR INDEX answer_embedding IF NOT EXISTS
+FOR (a:Answer) ON a.embedding
+WITH [a.family, a.status]
+OPTIONS { indexConfig: {
+  `vector.dimensions`: 1536,
+  `vector.similarity_function`: 'cosine',
+  `vector.quantization.type`: 'none'
+}};
+// 1536 = EMBEDDING_DIMENSIONS of text-embedding-3-small; ~1,660 vectors, so no quantization needed
+
+// 3) Lexical leg for hybrid retrieval (the job tsvector does in pgvector's RETRIEVAL_MODE=hybrid)
+CREATE FULLTEXT INDEX answer_text IF NOT EXISTS
+FOR (a:Answer) ON EACH [a.text]
+OPTIONS { indexConfig: { `fulltext.analyzer`: 'english' } };
+
+// 4) Lookups the app does by key
+CREATE INDEX draft_submission IF NOT EXISTS FOR (d:DraftAnswer) ON (d.submissionId);
+CREATE INDEX question_row     IF NOT EXISTS FOR (q:Question)    ON (q.rowIndex);
+
+// 5) Check: everything ONLINE?
+SHOW INDEXES YIELD name, type, state, labelsOrTypes, properties;</script>
+
+<script type="text/plain" id="example-text">// Excel rows 676-678 of the datasheet (Ridgeview questionnaire, GeneXpert - GX16-16)
+(:SourceFile {fileName: 'Updated Security QA_Datasheet_MARCH_2025_CLEAN.csv'})
+(qn:Questionnaire {id: 'QN-13', rowStart: 634, rowEnd: 822, questionCount: 189, inferred: true})
+(qn)-[:FROM_CUSTOMER {matchedAlias: 'Ridgeview', method: 'rule'}]->(:Customer {name: 'Ridgeview'})
+(qn)-[:FOR_MODEL]->(:ProductModel {name: 'GeneXpert - GX16-16'})
+    -[:BELONGS_TO]->(:ProductFamily {name: 'GeneXpert - GX', uiLabel: 'GeneXpert - GX'})
+
+(q674:Question {id: 'Q-0674', rowIndex: 674, text: 'Do you currently have DLP tools installed?'})
+(q674)-[:PART_OF {position: 41}]->(qn)
+(q674)-[:ABOUT {method: 'rule'}]->(:Topic {code: 'PHI'})
+(q674)-[:HAS_ANSWER]->(a674:Answer {id: 'A-0674', verdict: 'no', response: 'No',
+    comment: 'No, Device is in customer network', stance: 'customer-responsibility',
+    family: 'GeneXpert - GX', status: 'current', embedding: [...1536 floats]})
+(a674)-[:EXTRACTED_FROM {excelRow: 676}]->(:SourceFile)
+
+(q675:Question {text: 'If yes, which DLP tools are you using?'})
+(q675)-[:FOLLOWS_UP {signal: 'if-yes'}]->(q674)     // no response, no comment: no Answer node
+
+(q676:Question {text: 'If no, are you planning on implementing a DLP tool in the next 12 months?'})
+(q676)-[:FOLLOWS_UP {signal: 'if-no'}]->(q674)      // parent = nearest earlier non-follow-up
+(q676)-[:HAS_ANSWER]->(:Answer {verdict: 'no', comment: 'Device is in customer network',
+    text: 'Question (follow-up to: Do you currently have DLP tools installed?): If no, ...'})</script>
+
+<script>
+// ------------------------------------------------------------------ data
+const NODES = [
+ {id:'customer', x:720, y:75, layer:'ref', phase:'v1', cap:'Customer', count:'16',
+  desc:`The organisation that sent a questionnaire. It is <b>not a CSV column</b>: it is detected from names inside question and comment text (&ldquo;Bozeman Health requires&hellip;&rdquo;, &ldquo;Is CRMC data segregated&hellip;&rdquo;). A node because it is shared by past questionnaires and new submissions, so Graph RAG can prefer what a customer has already been told.`,
+  data:[`16 customers found in 17 of the 31 questionnaires: Ridgeview, UPH (2), Bozeman Health, Montage Health, Optum, CommonSpirit, Froedtert Health, CRMC, Texas Health, Halifax Health, St. Luke's, ECH, SOI, MH, BILH, QHC`,
+        `A questionnaire takes the name that appears most often in its own rows; 14 have none and stay unlinked`,
+        `Names are replaced by <code>[CUSTOMER]</code> in the embedded text, so similarity is never driven by who asked`],
+  props:[['name','string, unique',1,'derived'],['aliases','list<string>  every spelling seen, e.g. [Bozeman, Bozeman Health]',0,'derived'],['detectedBy','rule | manual',0,'ingest']]},
+
+ {id:'questionnaire', x:380, y:210, layer:'ref', phase:'v1', cap:'Questionnaire', count:'31',
+  desc:`One past customer questionnaire: a contiguous block of rows answered for one product model. The CSV has no questionnaire column, so boundaries are <b>inferred</b> from runs of the same model (<code>inferred = true</code>). It gives every answer its context (who asked, for which model) and the row order that FOLLOWS_UP detection needs.`,
+  data:[`31 questionnaires, 1 to 189 questions each`,
+        `QN-04 = Bozeman Health, GeneXpert - GXXVI-12-D10C, Excel rows 120-177`,
+        `QN-13 = Ridgeview, GeneXpert - GX16-16, 189 questions (the largest)`],
+  props:[['id','string, unique  QN-01 ... QN-31 in file order',1,'computed'],['rowStart / rowEnd','int  (0-based data rows, same numbering as pgvector row_index)',1,'csv: row order'],['questionCount','int',1,'computed'],['inferred','boolean',1,'derived']]},
+
+ {id:'model', x:240, y:560, layer:'ref', phase:'v1', cap:'ProductModel', count:'23',
+  desc:`The SKU / variant from the <code>Product Name</code> column. A node rather than a text property because 85 raw spellings collapse to 23 real models, and questionnaires point at the model they were answered for.`,
+  data:[`85 raw values &rarr; 23 models after clean-up`,
+        `60 values &ldquo;GeneXpert - Xpress 6.4 &hellip; 6.63&rdquo; (Excel rows 178-237) are an Excel fill-series artifact of ONE questionnaire`,
+        `Spacing variants merge: &ldquo;GeneXpert- GXIV-4-L&rdquo; = &ldquo;GeneXpert - GXIV-4-L&rdquo;, &ldquo;GeneXpert -Infinity 48&rdquo; = &ldquo;GeneXpert - Infinity 48&rdquo;`,
+        `&ldquo;SN 806055&rdquo; (a serial number) and &ldquo;Cepheid Infra&rdquo; (corporate) both roll up to General`],
+  props:[['key','string, unique  (lower-case, hyphen spacing normalised)',1,'derived'],['name','string  (most common spelling)',1,'csv: Product Name'],['rawNames','list<string>  (every spelling seen)',0,'csv: Product Name'],['kind','instrument | software | serial number | corporate | cloud app',0,'derived']]},
+
+ {id:'family', x:560, y:880, layer:'ref', phase:'v1', cap:'ProductFamily', count:'5',
+  desc:`The rollup in the <code>product_name</code> column, and the unit retrieval is scoped by (today: the <code>product_rollup</code> filter in pgvector). The UI shows the &ldquo;GeneXpert&rdquo; rollup as <b>General</b>: company- and platform-wide answers.`,
+  data:[`GeneXpert - GX 939 rows &middot; General 359 &middot; Xpress 240 &middot; Infinity 192 &middot; C360 134`,
+        `Infinity is stored with a leading zero-width space (U+200B); <code>normalize_rollup()</code> already strips it`,
+        `124 answers say the device sits in the customer network and the customer is responsible: GX 75, Xpress 24, General 15, Infinity 10, C360 0. C360 is the cloud service.`],
+  props:[['name','string, unique  (rollup value)',1,'csv: product_name'],['uiLabel','General | C360 | GeneXpert - GX | GeneXpert - Xpress | GeneXpert - Infinity',1,'computed'],['deployment','on-prem device | cloud SaaS | company-wide',0,'derived']]},
+
+ {id:'question', x:640, y:330, layer:'ref', phase:'v1', cap:'Question', count:'1,864',
+  desc:`What a customer asked: one per CSV row. Kept separate from Answer because 204 questions were never answered (still useful for gap analysis), answers can be revised without losing the question, and follow-ups must point at their parent question.`,
+  data:[`1,864 rows but 1,840 distinct wordings: almost every customer phrases things differently, which is why Topic exists`,
+        `560 rows do not end with &ldquo;?&rdquo;: requirement statements and labels such as &ldquo;Data-at-rest&rdquo; or &ldquo;All default passwords must be changed&rdquo;`,
+        `82 multi-part questions (a. / b. / c.); 12 are longer than 500 characters (max 2,440)`,
+        `Same topic, different subject: &ldquo;Does the solution support MFA?&rdquo; (product: No) vs &ldquo;Do you require multi-factor authentication?&rdquo; (organisation: Yes)`],
+  props:[['id','string, unique  Q-0674',1,'computed'],['text','string  (mojibake fixed, zero-width chars removed)',1,'csv: question'],['maskedText','string  (customer names replaced by [CUSTOMER])',0,'derived'],['rowIndex','int  (= pgvector row_index; Excel row = rowIndex + 2)',1,'csv: row number'],['form','question | statement',0,'derived'],['partCount','int  (sub-parts a./b./c.)',0,'derived'],['subject','product | organization | service',0,'derived / llm']]},
+
+ {id:'answer', x:760, y:600, layer:'ref', phase:'v1', cap:'Answer', count:'1,660',
+  desc:`What Cepheid answered (response + comment): the evidence unit Graph RAG retrieves, and <b>the only node with an embedding</b>. Its text uses the same &ldquo;Question / Response / Additional Information&rdquo; format as the pgvector ingestion, so both RAG methods can be compared fairly with <code>scripts/eval</code>. Unanswered questions have no Answer, so they can never be retrieved as evidence.`,
+  data:[`1,660 answers: Yes 833 &middot; See Comment 386 &middot; No 295 &middot; comment only 86 &middot; free text 54 (&ldquo;AES-256&rdquo;, &ldquo;BeyondTrust&rdquo;, &ldquo;Windows 10 LTSC&rdquo;) &middot; NA 6`,
+        `758 comments, but only 581 distinct: 86 texts are reused across 263 rows (&ldquo;GeneXpert Device is deployed in customer environment.&rdquo; &times;25)`,
+        `Stance: 124 answers put responsibility on the customer, 30 decline as confidential`,
+        `Customer names are replaced by <code>[CUSTOMER]</code> in <code>text</code> before embedding; <code>response</code> and <code>comment</code> keep the original wording for citations`,
+        `Identical masked text from two questionnaires is dropped at retrieval, not at ingestion, so each row keeps its own provenance`],
+  index:`Vector index <code>answer_embedding</code> (1536-d, cosine) declares <code>family</code> and <code>status</code> as filter properties, so <code>SEARCH &hellip; WHERE a.family IN $families AND a.status = 'current'</code> filters <i>inside</i> the index instead of after it (IN needs Neo4j 2026.06+; your local instance is 2026.10 Enterprise). Full-text index <code>answer_text</code> is the lexical leg for hybrid retrieval.`,
+  props:[['id','string, unique  A-0674',1,'computed'],['verdict','yes | no | na | see_comment | comment_only | free_text',1,'csv: response'],['response','string  (cleaned)',0,'csv: response'],['comment','string',0,'csv: comment'],['text','string  (embedding input: customer names masked, parent question prefixed for if-yes / if-no follow-ups)',1,'derived'],['embedding','LIST<FLOAT> [1536]  (text-embedding-3-small via LiteLLM)',1,'embedding'],['embeddingHash','string  (sha1 of text: re-embeds only what changed)',0,'embedding'],['embeddingModel','string',0,'embedding'],['family','string  (copy of ProductFamily.name: vector-index filter)',1,'csv: product_name'],['status','current | superseded | needs_review  (vector-index filter; set on create only)',1,'ingest'],['stance','customer-responsibility | confidential | null',0,'derived'],['model','string  (copy of ProductModel.name, for citations)',0,'csv: Product Name'],['origin','datasheet | sme | app',1,'ingest']]},
+
+ {id:'topic', x:1000, y:290, layer:'ref', phase:'v1', cap:'Topic', count:'35',
+  desc:`A security control area from a fixed taxonomy: MDS2 sections for device controls plus vendor-risk domains for organisational ones. It groups differently worded questions so retrieval can add same-topic answers, and so consistency and coverage can be checked per topic.`,
+  data:[`35 topics in 9 domains (table below)`,
+        `2,824 ABOUT edges cover 1,844 of 1,864 questions (99%): keyword rules tag 1,503, an LLM pass (<code>scripts/classify_topics.py</code>) tags the other 341`,
+        `The 20 left out carry no security content: "Name of the application or service being provided", "Are there overage charges?"`,
+        `Every product family now spans 28-35 topics, so coverage gaps are real gaps rather than tagging holes`],
+  props:[['code','string, unique  (MFA, ENC, ...)',1,'computed'],['name','string',1,'computed'],['domain','string  (one of 9)',1,'computed'],['mds2Ref','string  (MDS2 section, where one exists)',0,'computed'],['pattern','string  (seed regex for the rule pass)',0,'computed']],
+  topics:true},
+
+ {id:'sourcefile', x:520, y:720, layer:'ref', phase:'v1', cap:'SourceFile', count:'1',
+  desc:`The datasheet file a batch of answers came from. Gives every answer a clickable locator (file + Excel row), and lets the next datasheet version supersede this one answer by answer.`,
+  data:[`Today: Updated Security QA_Datasheet_MARCH_2025_CLEAN.csv, 1,864 rows, 5 columns`],
+  props:[['sha256','string, unique  (re-ingesting the same file is a no-op)',1,'ingest'],['fileName','string',1,'ingest'],['version','string  MARCH_2025',0,'ingest'],['rowCount','int',0,'computed'],['ingestedAt','datetime',1,'ingest']]},
+
+ {id:'standard', x:440, y:520, layer:'ref', phase:'v2', cap:'Standard', count:'15',
+  desc:`A regulation, framework or certification named in a question or an answer. Makes &ldquo;what do we say when asked about X?&rdquo; a one-hop query, and exposes contradictory compliance claims.`,
+  data:[`115 MENTIONS from questions, 53 CITES from answers`,
+        `Asked about: HIPAA 29 &middot; PCI DSS 24 &middot; SOC 2 11 &middot; NIST 11 &middot; ISO 27001 6 &middot; SSAE 6 &middot; MDS2 6 &middot; FedRAMP 4 &middot; HITRUST 3`,
+        `Cited in answers: ISO 27001 30 &middot; HIPAA 5 &middot; NIST 4 &middot; PCI 3 &middot; OWASP 3`,
+        `Contradiction: Excel 1042 &ldquo;We do not have SOC2&hellip;&rdquo; vs Excel 103 &ldquo;SOC 2 Type II audit&hellip; conducted?&rdquo; Yes`],
+  props:[['name','string, unique',1,'derived'],['kind','regulation | certification | framework | disclosure form',0,'derived'],['aliases','list<string>  (SOC II, SOC2, ...)',0,'derived']]},
+
+ {id:'technology', x:1030, y:860, layer:'ref', phase:'v2', cap:'Technology', count:'19',
+  desc:`A concrete product, protocol or tool named in an answer: operating system, remote-access tool, cipher, directory. Lets the graph answer &ldquo;what does GX run?&rdquo; from facts, and flag a family that gives two different answers.`,
+  data:[`19 technologies, 175 MENTIONS from answers, aggregated into 53 USES facts`,
+        `In answers: LDAP 24 &middot; TLS 1.2+ 18 &middot; BeyondTrust 17 &middot; AES-256 11 &middot; AWS 11 &middot; LIS 11 &middot; Windows 10 LTSC 8 &middot; SQL Server 7 &middot; Xpertise 6 &middot; BitLocker 4 &middot; VMware 4`,
+        `Free-text responses are often a single technology: &ldquo;BeyondTrust&rdquo;, &ldquo;AES-256&rdquo;, &ldquo;TLS 1.2 or Higher&rdquo;`],
+  props:[['name','string, unique',1,'derived'],['category','operating system | remote access | encryption | directory | database | virtualization | cloud | interface | application',0,'derived / llm'],['aliases','list<string>  (AES256, AES-256, ...)',0,'derived']]},
+
+ {id:'draft', x:1180, y:590, layer:'req', phase:'run', cap:'DraftAnswer', count:'per question',
+  desc:`The generated answer for one uploaded question: one row of today's Responses table (Question, Answer, ROUGE-1, Citations, Product, Time to Respond, Grade). Its BASED_ON edges replace the <code>CITATION_SOURCE_n</code> extras with a queryable audit trail. <b>Shipped</b>, written by <code>question_responder()</code> through <code>Neo4jGraphStore.write_draft()</code>.`,
+  data:[`<code>topScore</code> makes thin evidence findable: a question outside the knowledge base ("quantum-resistant key exchange for ground station telemetry") still produced a confident answer from 0.44-scored rows`,
+        `Questions that retrieved nothing are recorded too, with no BASED_ON edges: those are the coverage gaps worth filling`],
+  props:[['id','string, unique  submissionId:position',1,'app'],['submissionId','string',1,'app'],['question','string  (incoming question)',1,'app'],['answer','string  (LLM output)',1,'app'],['status','draft | approved | edited | rejected',1,'app'],['topScore','float  (best evidence similarity; low = review)',0,'app'],['evidenceCount','int',0,'app'],['rouge1','float  (ROUGE-1 column)',0,'app'],['latencyMs','int',0,'app'],['model','string  (LLM_MODEL)',0,'app'],['grade','string  (Grade column)',0,'app'],['editedAnswer','string',0,'app'],['createdAt','datetime',1,'app']]},
+
+ {id:'submission', x:1340, y:300, layer:'req', phase:'run', cap:'Submission', count:'per upload',
+  desc:`One questionnaire a user uploads on the Submit Questions page and runs through Graph RAG. Every request-layer node carries its <code>submissionId</code>, so a submission can be reviewed, exported or deleted as a unit without touching the knowledge base. <b>Shipped:</b> opened by <code>question_answering_func()</code>, closed when the batch finishes.`,
+  props:[['submissionId','string, unique  SUB-<hex>',1,'app'],['productChoices','list<string>  UI labels, e.g. [General, GeneXpert - GX]',1,'app'],['families','list<string>  (rollups from rollups_for())',1,'app'],['questionCount','int',1,'app'],['customer','string  (optional, typed on upload)',0,'app'],['fileName','string',0,'app'],['submittedBy','string  (user e-mail, RBAC)',0,'app'],['submittedAt / completedAt','datetime',1,'app'],['retrieval','graph | pgvector  (for A/B runs)',1,'app'],['status','running | done | reviewed',1,'app']]}
+];
+
+const EDGES = [
+ {id:'belongs_to', from:'model', to:'family', type:'BELONGS_TO', phase:'v1', card:'exactly 1', props:[],
+  why:`Which rollup a model belongs to. In the data every one of the 85 raw names maps to exactly one product_name.`},
+ {id:'inherits_from', from:'family', to:'family', type:'INHERITS_FROM', phase:'v1', self:160, card:'0..1  (GX, Xpress, Infinity &rarr; General)', props:[],
+  why:`Platform-wide (General) answers also hold for GeneXpert instruments, so retrieval can widen the scope along this edge when a family has no good hit. Off by default, to match today's behaviour where the user ticks General explicitly. C360 (cloud) does not inherit.`},
+ {id:'for_model', from:'questionnaire', to:'model', type:'FOR_MODEL', phase:'v1', card:'exactly 1', props:[],
+  why:`The model a questionnaire was answered for.`},
+ {id:'from_customer_qn', from:'questionnaire', to:'customer', type:'FROM_CUSTOMER', phase:'v1', card:'0..1', props:[['matchedAlias','string'],['hits','int  (alias matches in the block)'],['method','rule | manual']],
+  why:`Who asked. Enables customer-aware retrieval and &ldquo;what did we tell Bozeman last time?&rdquo;.`},
+ {id:'part_of_q', from:'question', to:'questionnaire', type:'PART_OF', phase:'v1', card:'exactly 1', props:[['position','int  (1..n, order in the questionnaire)']],
+  why:`Keeps the question order, which follow-up detection and the UI (show neighbouring questions) need.`},
+ {id:'has_answer', from:'question', to:'answer', type:'HAS_ANSWER', phase:'v1', card:'0..*  (at most one with status = current)', props:[],
+  why:`Separates what was asked from what was said. 204 questions have none; revised answers hang off the same question.`},
+ {id:'follows_up', from:'question', to:'question', type:'FOLLOWS_UP', phase:'v1', self:-80, card:'0..1 outgoing  (child &rarr; parent)', props:[['signal','if-yes | if-no | pronoun | manual'],['confidence','0.0 - 1.0'],['method','rule | sme']],
+  why:`&ldquo;If yes, which DLP tools are you using?&rdquo; means nothing alone. Retrieval returns the parent with the child, and the child's embedding text includes the parent question. Parent = the nearest earlier question in the same questionnaire that is not itself a follow-up.`,
+  data:`55 in the data: 36 if-yes (0.9), 11 if-no (0.9), 8 pronoun (0.6). Only confidence &ge; 0.9 shapes embedded text and retrieval context, because a short pronoun question (&ldquo;How is it backed up?&rdquo;) often refers to something further back than the previous row.`},
+ {id:'about_q', from:'question', to:'topic', type:'ABOUT', phase:'v1', color:'#1E8449', card:'1..*  (2,824 edges over 1,844 questions)', props:[['method','rule | llm | sme'],['confidence','0.0 - 1.0  (0.7 rule, 0.6 llm)'],['primary','boolean  (first match / first code returned)']],
+  why:`1,840 wordings, 35 topics. Lets retrieval add same-topic answers, and lets QA check consistency and coverage per topic.`,
+  data:`Rule edges are rebuilt from the current keywords on every ingest; <code>method = 'llm'</code> and <code>'sme'</code> edges survive, so a correction is never overwritten by a re-run.`},
+ {id:'extracted_from', from:'answer', to:'sourcefile', type:'EXTRACTED_FROM', phase:'v1', card:'exactly 1  (0 for SME / app answers)', props:[['excelRow','int  (= rowIndex + 2)']],
+  why:`Click-to-source citation: file + Excel row. The locator lives on the edge, the way page/table did in the GVD course.`},
+ {id:'supersedes', from:'answer', to:'answer', type:'SUPERSEDES', phase:'v1', self:100, color:'#C0392B', card:'0..1 outgoing', props:[['reason','sme correction | new datasheet | policy change'],['date','date (req)'],['by','string']],
+  why:`Answer lineage. The old answer gets status = superseded and drops out of the vector-index filter; nothing is deleted. Empty after the first load, ready for corrections and the next datasheet.`},
+ {id:'mentions_std', from:'question', to:'standard', type:'MENTIONS', phase:'v2', card:'0..*', props:[['method','rule | llm']],
+  why:`The question asks about a framework (&ldquo;Do you have a SOC 2 Type II report?&rdquo;).`},
+ {id:'cites', from:'answer', to:'standard', type:'CITES', phase:'v2', card:'0..*', props:[['claim','certified | compliant | aligned | not held']],
+  why:`The answer asserts or cites a framework (&ldquo;ISO 27001 certified ISMS&rdquo;). With MENTIONS it gives the asked-vs-cited crosswalk.`},
+ {id:'mentions_tech', from:'answer', to:'technology', type:'MENTIONS', phase:'v2', card:'0..*', props:[['method','rule | llm']],
+  why:`A technology named in the response or comment.`},
+ {id:'uses', from:'family', to:'technology', type:'USES', phase:'v2', card:'0..*', props:[['role','operating system | remote access | encryption at rest | ...'],['evidence','list<string>  (Answer ids)'],['validated','boolean  (SME)']],
+  why:`A derived fact, aggregated from answers and confirmed by an SME: &ldquo;GX uses BeyondTrust for remote support&rdquo;. Answers factual questions directly and flags a family with two different OS answers.`},
+ {id:'part_of_d', from:'draft', to:'submission', type:'PART_OF', phase:'run', card:'exactly 1', props:[['position','int  (row in the uploaded file)']],
+  why:`Structure; same shape as Question PART_OF Questionnaire.`},
+ {id:'scoped_to', from:'submission', to:'family', type:'SCOPED_TO', phase:'run', curve:-120, card:'1..*', props:[],
+  why:`The product choices of the run. Every BASED_ON target should belong to one of these families: a checkable invariant.`},
+ {id:'from_customer_s', from:'submission', to:'customer', type:'FROM_CUSTOMER', phase:'run', card:'0..1', props:[],
+  why:`Optional: if the uploader names the customer, retrieval can boost answers already given to them, and the new submission joins that customer's history.`},
+ {id:'based_on', from:'draft', to:'answer', type:'BASED_ON', phase:'run', color:'#7D3C98', bridge:true, card:'1..*  (0 when nothing was retrieved)', props:[['rank','int  (1 = closest match)'],['score','float  (cosine similarity)'],['method','vector | follow-up-parent | topic-expansion'],['query','string  (question sent to the index)'],['inPrompt','boolean  (reached the LLM, i.e. rank <= CONTEXT_TOP_K)'],['linkedAt','datetime']],
+  why:`The bridge into the reference layer: exactly which historical answers the LLM saw, with scores and how each was found. Replaces CITATION_SOURCE_n, and makes "which datasheet rows do the most work?" a query (<code>evidence_reuse()</code>) instead of a guess.`},
+ {id:'about_d', from:'draft', to:'topic', type:'ABOUT', phase:'run', color:'#1E8449', card:'0..*', props:[['method','inherited | llm']],
+  why:`Topic of the incoming question, inherited from the rows that reached the prompt. Routes drafts to the right SME and summarises a submission by topic.`},
+ {id:'promoted_to', from:'draft', to:'answer', type:'PROMOTED_TO', phase:'v2', curve:70, card:'0..1', props:[['approvedBy','string'],['approvedAt','datetime']],
+  why:`Feedback loop: an approved draft becomes a new reference Answer (origin = app, with its own Question), so the knowledge base grows from use. Points request &rarr; reference like every cross-layer edge.`}
+];
+
+const TOPICS = [
+ ['Data protection','PHI','Sensitive data (PHI/PII) &amp; DLP','MPII',108],
+ ['Data protection','RESID','Data residency &amp; cross-border transfer','',12],
+ ['Data protection','ENC','Encryption at rest &amp; in transit','STCF, TXCF',125],
+ ['Data protection','INTEG','Data integrity','IGAU, TXIG',11],
+ ['Data protection','RET','Data retention &amp; disposal','',69],
+ ['Data protection','BKP','Backup &amp; disaster recovery','DTBK',58],
+ ['Identity &amp; access','PWD','Password &amp; lockout policy','PAUT',96],
+ ['Identity &amp; access','MFA','Multi-factor authentication','PAUT',25],
+ ['Identity &amp; access','SSO','Directory integration &amp; SSO (LDAP/AD)','PAUT, NAUT',32],
+ ['Identity &amp; access','ACCT','Accounts: service, default, lifecycle','AUTH',39],
+ ['Identity &amp; access','AUTHZ','Authorization, roles &amp; emergency access','AUTH, EMRG',62],
+ ['Identity &amp; access','ALOF','Automatic logoff &amp; session timeout','ALOF',11],
+ ['Logging &amp; monitoring','AUDT','Audit logging &amp; monitoring','AUDT',147],
+ ['Vulnerability &amp; patching','PATCH','Patching &amp; software updates','CSUP',80],
+ ['Vulnerability &amp; patching','VULN','Vulnerability scanning &amp; pen testing','',72],
+ ['Vulnerability &amp; patching','MLDP','Malware protection &amp; whitelisting','MLDP',34],
+ ['Vulnerability &amp; patching','HARD','System hardening &amp; removable media','SAHD',34],
+ ['Vulnerability &amp; patching','SBOM','SBOM &amp; third-party components','SBOM, RDMP',11],
+ ['Connectivity','CONN','Network, ports &amp; interfaces (LIS, HL7)','CONN',202],
+ ['Connectivity','RMOT','Remote access &amp; remote service','RMOT',74],
+ ['Infrastructure &amp; hosting','PLAT','OS, database &amp; virtualization','',177],
+ ['Infrastructure &amp; hosting','HOST','Hosting, cloud &amp; data center','',96],
+ ['Infrastructure &amp; hosting','PHYS','Physical security','PLOK',45],
+ ['Governance &amp; compliance','GOV','Security governance &amp; policies','',147],
+ ['Governance &amp; compliance','RISK','Risk assessment &amp; management','',30],
+ ['Governance &amp; compliance','COMP','Regulatory compliance &amp; certifications','',105],
+ ['Governance &amp; compliance','DOCS','Security documentation &amp; MDS2','SGUD',29],
+ ['Operations &amp; people','IR','Incident response &amp; breach notification','',78],
+ ['Operations &amp; people','HR','Personnel security &amp; training','',98],
+ ['Operations &amp; people','VEND','Third-party &amp; subcontractor management','',62],
+ ['Operations &amp; people','SDLC','Secure development lifecycle','',17],
+ ['Operations &amp; people','SUP','Support &amp; maintenance','',46],
+ ['Business','CORP','Company profile &amp; cyber insurance','',14],
+ ['Business','FUNC','Application functionality','',43],
+ ['Business','ESG','ESG &amp; corporate responsibility','',30]
+];
+
+const META = {
+ desc:`Every node written by ingestion carries run metadata, and every inferred relationship (FROM_CUSTOMER, FOLLOWS_UP, ABOUT, MENTIONS, CITES, USES) records how it was inferred. Re-runs stay idempotent (MERGE on keys) and anything a rule or an LLM guessed can be reviewed and corrected.`,
+ props:[['ingestRunId','string  (on nodes)',1,'ingest'],['createdAt / updatedAt','datetime  (on nodes)',1,'ingest'],['method','rule | llm | sme  (on inferred relationships)',1,'ingest'],['confidence','0.0 - 1.0  (on inferred relationships)',0,'ingest'],['validated','boolean  (set by SME review)',0,'app']]
+};
+
+const QUERIES = {
+ q1: {title:'Capability 1 · Graph RAG retrieval',
+  nodes:['answer','question','questionnaire','model','customer','topic','family'],
+  edges:['has_answer','part_of_q','for_model','from_customer_qn','follows_up','about_q','inherits_from'],
+  desc:`The Graph RAG version of <code>question_responder()</code>, live in <code>src/logic/neo4j_graph.py</code>. Vector search runs inside <code>answer_embedding</code> with the product scope as an in-index filter. Each hit is then expanded through the graph: who asked, for which model, and its parent if it is a conditional follow-up. <b>Shipped:</b> steps 1-4 and 6. <b>Step 5 was built and measured:</b> on 100 paraphrased questions it changed 0 results, because the index already returns the true top-k for 1,660 vectors and both hops rank by the same similarity. It ships behind <code>GRAPH_TOPIC_EXPANSION=off</code>.`,
+  steps:[`Map UI choices to rollups with <code>product_scope.rollups_for()</code> (optionally widen along INHERITS_FROM to General).`,
+         `Embed the incoming question with the same LiteLLM embedding model used at ingestion.`,
+         `SEARCH the index with <code>WHERE a.family IN $families AND a.status = 'current'</code>, over-fetching so parents and duplicates do not cost a slot.`,
+         `Expand each hit: Question, Questionnaire &rarr; Customer / Model, Topics, and the FOLLOWS_UP parent's answer when confidence &ge; 0.9.`,
+         `Topic expansion (off by default): same-topic answers in scope, re-scored with <code>vector.similarity.cosine()</code> and merged by score.`,
+         `Return in the pgvector result shape, and record the draft with its BASED_ON evidence (capability 8).`],
+  example:`Asked &ldquo;Are you planning to implement a DLP tool in the next 12 months?&rdquo; for GeneXpert - GX, the graph returns Excel 678 (score 1.000) <i>and</i> its premise Excel 676 &ldquo;Do you currently have DLP tools installed?&rdquo; &rarr; No, &ldquo;Device is in customer network&rdquo;. The LLM answered &ldquo;No. Device is in customer network.&rdquo;`,
+  cypher:`CYPHER 25
+// 1) vector search, product scope filtered INSIDE the index
+MATCH (a:Answer)
+  SEARCH a IN (
+    VECTOR INDEX answer_embedding
+    FOR $qvec
+    WHERE a.family IN $families AND a.status = 'current'
+    LIMIT $k
+  ) SCORE AS score
+// 2) graph context for every hit
+MATCH (q:Question)-[:HAS_ANSWER]->(a),
+      (q)-[:PART_OF]->(qn:Questionnaire)-[:FOR_MODEL]->(m:ProductModel)
+OPTIONAL MATCH (qn)-[:FROM_CUSTOMER]->(c:Customer)
+OPTIONAL MATCH (q)-[:FOLLOWS_UP]->(p:Question)
+OPTIONAL MATCH (p)-[:HAS_ANSWER]->(pa:Answer {status: 'current'})
+RETURN a.id AS id, round(score, 3) AS score, q.text AS question, q.subject AS subject,
+       a.verdict AS verdict, a.response AS response, a.comment AS comment,
+       a.stance AS stance, m.name AS model, c.name AS customer,
+       p.text AS parentQuestion, pa.response AS parentAnswer,
+       COLLECT { MATCH (q)-[:ABOUT]->(t:Topic) RETURN t.code } AS topics
+ORDER BY score DESC
+
+// 3) topic expansion: same topic and scope, re-ranked against the question
+MATCH (hit:Answer)<-[:HAS_ANSWER]-(:Question)-[:ABOUT]->(t:Topic)
+WHERE hit.id IN $hitIds
+MATCH (t)<-[:ABOUT]-(:Question)-[:HAS_ANSWER]->(sib:Answer)
+WHERE sib.family IN $families AND sib.status = 'current' AND NOT sib.id IN $hitIds
+WITH DISTINCT sib, vector.similarity.cosine(sib.embedding, $qvec) AS sim
+WHERE sim >= $minSim
+RETURN sib.id AS id, round(sim, 3) AS sim
+ORDER BY sim DESC LIMIT $extra`},
+
+ q2: {title:'Capability 2 · Follow-up context',
+  nodes:['question','answer','questionnaire'],
+  edges:['follows_up','has_answer','part_of_q'],
+  desc:`55 questions only make sense with the one before them (&ldquo;If yes, which DLP tools&hellip;&rdquo;, &ldquo;When is it backed up?&rdquo;). In a flat vector store they are noise. The graph links each to its parent, so retrieval returns the pair, and the follow-up's embedding text carries the parent question. <b>Shipped.</b>`,
+  steps:[`At ingestion: detect follow-ups (&ldquo;If yes / If no / If so&rdquo; at 0.9, short pronoun-only questions at 0.6) and link each to the nearest earlier non-follow-up in the same questionnaire.`,
+         `Prefix the parent question in the follow-up's Answer.text before embedding, for links of confidence &ge; 0.9 only.`,
+         `At retrieval: when a hit is a follow-up, also return its parent's answer, scored against the same question vector.`],
+  example:`Excel 677 &ldquo;If yes, which DLP tools are you using?&rdquo; (unanswered) &rarr; parent Excel 676 &ldquo;Do you currently have DLP tools installed?&rdquo; No, &ldquo;Device is in customer network&rdquo;; sibling Excel 678 &ldquo;If no, are you planning on implementing a DLP tool in the next 12 months?&rdquo; No.`,
+  cypher:`// a follow-up travels with its parent (and the parent with its follow-ups)
+MATCH (q:Question {id: $questionId})
+OPTIONAL MATCH (q)-[f:FOLLOWS_UP]->(parent:Question)
+OPTIONAL MATCH (parent)-[:HAS_ANSWER]->(pa:Answer {status: 'current'})
+RETURN q.text AS question, f.signal AS signal,
+       parent.text AS parentQuestion, pa.verdict AS parentVerdict,
+       pa.comment AS parentComment,
+       COLLECT {
+         MATCH (child:Question)-[:FOLLOWS_UP]->(q)
+         OPTIONAL MATCH (child)-[:HAS_ANSWER]->(ca:Answer {status: 'current'})
+         RETURN {question: child.text, verdict: ca.verdict, comment: ca.comment}
+       } AS followUps
+
+// ingestion side: the text that gets embedded for a follow-up
+MATCH (child:Question)-[:FOLLOWS_UP]->(parent:Question),
+      (child)-[:HAS_ANSWER]->(a:Answer)
+RETURN a.id, 'Question (follow-up to: ' + parent.text + '): ' + child.text AS embeddedQuestion`},
+
+ q3: {title:'Capability 3 · Answer consistency',
+  nodes:['topic','question','answer','questionnaire','customer'],
+  edges:['about_q','has_answer','part_of_q','from_customer_qn'],
+  desc:`Customers ask the same thing in different words, and the datasheet sometimes answers differently. Grouping Yes/No answers by topic and subject surfaces contradictions as a review worklist. Organisation-level answers must agree across <i>all</i> families; product-level ones only within a family. A graph query cannot read prose, so the output goes to an SME (or an LLM QC pass) to reconcile.`,
+  steps:[`Group current Yes/No answers by topic and question subject; product-level groups also split by family.`,
+         `Keep groups that contain both Yes and No.`,
+         `Show the wording, customer and Excel row of each side.`,
+         `The SME supersedes the wrong answer (capability 7).`],
+  example:`MFA, organisation level, GeneXpert - GX: Excel 715 &ldquo;Is Multi-Factor Authentication used?&rdquo; Yes and 741 &ldquo;Do you require multi-factor authentication?&rdquo; Yes, vs 1832 &ldquo;Are employees / contractors with elevated permissions required to use MFA&hellip;?&rdquo; No.<br>SOC 2: Excel 103 &ldquo;Has a SOC 2 Type II&hellip; audit been conducted&hellip;?&rdquo; Yes, vs 1547 &ldquo;SOC 2 Type 1&rdquo; No and 1042 &ldquo;We do not have SOC2&hellip;&rdquo;.`,
+  cypher:`MATCH (t:Topic)<-[:ABOUT]-(q:Question)-[:HAS_ANSWER]->(a:Answer {status: 'current'})
+WHERE a.verdict IN ['yes', 'no']
+WITH t, q.subject AS subject,
+     CASE q.subject WHEN 'organization' THEN 'all families' ELSE a.family END AS scope,
+     collect(DISTINCT a.verdict) AS verdicts,
+     collect({excelRow: q.rowIndex + 2, verdict: a.verdict, question: q.text}) AS evidence
+WHERE size(verdicts) > 1
+RETURN t.name AS topic, subject, scope, evidence
+ORDER BY topic, scope`},
+
+ q4: {title:'Capability 4 · Provenance',
+  nodes:['answer','question','questionnaire','customer','model','family','sourcefile'],
+  edges:['has_answer','part_of_q','from_customer_qn','for_model','belongs_to','extracted_from'],
+  desc:`Every citation resolves to who asked, for which model, and the exact Excel row, instead of today's &ldquo;Security QA Database - GeneXpert - GX&rdquo;. The inverse sweep lists questionnaires whose customer is still unknown, for clean-up.`,
+  steps:[`From the Answer, walk to its Question, Questionnaire (position), Customer and Model &rarr; Family.`,
+         `EXTRACTED_FROM gives the file and Excel row: the UI can open the row directly.`],
+  example:`A-0674 &rarr; asked by Ridgeview in QN-13 (question 41 of 189) for GeneXpert - GX16-16 &middot; Updated Security QA_Datasheet_MARCH_2025_CLEAN.csv, Excel row 676.`,
+  cypher:`MATCH (q:Question)-[:HAS_ANSWER]->(a:Answer {id: $answerId}),
+      (q)-[p:PART_OF]->(qn:Questionnaire)-[:FOR_MODEL]->(m:ProductModel)
+        -[:BELONGS_TO]->(f:ProductFamily),
+      (a)-[x:EXTRACTED_FROM]->(src:SourceFile)
+OPTIONAL MATCH (qn)-[:FROM_CUSTOMER]->(c:Customer)
+RETURN q.text AS question, a.response AS response, a.comment AS comment,
+       c.name AS askedBy, qn.id AS questionnaire, p.position AS position,
+       qn.questionCount AS questionsInQuestionnaire, m.name AS model,
+       f.uiLabel AS product, src.fileName AS file, x.excelRow AS excelRow
+
+// clean-up sweep: questionnaires with no known customer
+MATCH (qn:Questionnaire)
+WHERE NOT EXISTS { (qn)-[:FROM_CUSTOMER]->(:Customer) }
+RETURN qn.id, qn.rowStart + 2 AS firstExcelRow, qn.questionCount
+ORDER BY qn.rowStart`},
+
+ q5: {title:'Capability 5 · Coverage gaps',
+  nodes:['topic','question','answer','family','draft'],
+  edges:['about_q','has_answer','based_on'],
+  desc:`Three kinds of gap: topics a family has never answered (Graph RAG will have to widen scope or say &ldquo;insufficient information&rdquo;), questions that were asked but never answered, and &mdash; now that answers are written back &mdash; the questions real customers asked that nothing in the datasheet supported. Use it to plan which answers the SMEs write next.`,
+  steps:[`Cross every Topic with every ProductFamily.`,
+         `Keep the pairs with no current Answer in that family.`,
+         `Separately, count questions per topic that have no Answer at all.`,
+         `Third: drafts with no BASED_ON edge, or a <code>topScore</code> too low to trust.`],
+  example:`After the LLM topic pass every family spans 28-35 of the 35 topics, so a gap is now a real evidence gap rather than an untagged question. 204 datasheet questions still have no answer at all.`,
+  cypher:`// topics a product family has never answered
+MATCH (t:Topic), (f:ProductFamily)
+WHERE NOT EXISTS {
+  MATCH (t)<-[:ABOUT]-(:Question)-[:HAS_ANSWER]->(a:Answer)
+  WHERE a.family = f.name AND a.status = 'current'
+}
+RETURN f.uiLabel AS product, collect(t.name) AS topicsWithoutAnswers
+ORDER BY product
+
+// asked, never answered
+MATCH (q:Question)-[:ABOUT]->(t:Topic)
+WHERE NOT EXISTS { (q)-[:HAS_ANSWER]->(:Answer) }
+RETURN t.name AS topic, count(q) AS unanswered
+ORDER BY unanswered DESC
+
+// what customers asked that we could not support
+MATCH (d:DraftAnswer)
+WHERE d.evidenceCount = 0 OR d.topScore < 0.5
+RETURN d.question, d.answer, d.topScore, d.submissionId
+ORDER BY coalesce(d.topScore, 0.0)`},
+
+ q6: {title:'Capability 6 · Standards crosswalk (v2)',
+  nodes:['standard','question','answer'],
+  edges:['mentions_std','has_answer','cites'],
+  desc:`When a customer asks for certification X, what have we answered and cited? Turns scattered compliance answers into one view, and shows where the datasheet contradicts itself.`,
+  steps:[`From the Standard, follow incoming MENTIONS to the questions that asked about it.`,
+         `Follow HAS_ANSWER to the answers, and CITES to what each answer actually claims.`],
+  example:`Asked about SOC 2 (11 questions): most answers cite ISO 27001 instead (Excel 415, 1042, 1430), but Excel 103 says Yes to a SOC 2 Type II audit and Excel 1547 says No to SOC 2 Type 1.`,
+  cypher:`MATCH (s:Standard {name: $standard})<-[:MENTIONS]-(q:Question)
+      -[:HAS_ANSWER]->(a:Answer {status: 'current'})
+RETURN q.rowIndex + 2 AS excelRow, a.family AS product, q.text AS asked,
+       a.verdict AS verdict, a.comment AS comment,
+       COLLECT { MATCH (a)-[:CITES]->(c:Standard) RETURN c.name } AS cited
+ORDER BY excelRow
+
+// what we cite when asked about each standard
+MATCH (s:Standard)<-[:MENTIONS]-(:Question)-[:HAS_ANSWER]->(:Answer)-[:CITES]->(c:Standard)
+RETURN s.name AS askedAbout, c.name AS weCite, count(*) AS times
+ORDER BY askedAbout, times DESC`},
+
+ q7: {title:'Capability 7 · Change impact',
+  nodes:['answer','question','topic','draft','submission'],
+  edges:['supersedes','has_answer','about_q','based_on','part_of_d'],
+  desc:`When a policy or product changes (say Infinity gains MFA), an SME records a new Answer that SUPERSEDES the old one. The old answer leaves the vector-index filter immediately. One traversal then gives the review worklist: same-topic answers in the same family that may now be stale, and every submission whose drafts relied on the outdated answer.`,
+  steps:[`Create the new Answer on the same Question, link SUPERSEDES, set the old status to superseded, then embed the new text.`,
+         `From the old answer, follow ABOUT to its topics and back to same-family answers.`,
+         `Follow incoming BASED_ON to drafts, and PART_OF to their submissions.`],
+  example:`A new answer SUPERSEDES Excel 239 &ldquo;Does the system support / require MFA for access?&rdquo; (Infinity, No) &rarr; review the other Infinity MFA answers, and every submission whose drafts cited row 239.`,
+  cypher:`// an SME records the corrected answer; the old one stops being retrievable
+MATCH (q:Question)-[:HAS_ANSWER]->(old:Answer {id: $oldId})
+CREATE (new:Answer {id: $newId, verdict: $verdict, response: $response,
+                    comment: $comment, family: old.family,
+                    status: 'current', origin: 'sme'})
+CREATE (q)-[:HAS_ANSWER]->(new)
+CREATE (new)-[:SUPERSEDES {reason: $reason, date: date(), by: $user}]->(old)
+SET old.status = 'superseded'
+
+// review worklist
+MATCH (new:Answer {id: $newId})-[:SUPERSEDES]->(old:Answer)
+      <-[:HAS_ANSWER]-(:Question)-[:ABOUT]->(t:Topic)
+OPTIONAL MATCH (t)<-[:ABOUT]-(:Question)-[:HAS_ANSWER]->(peer:Answer {status: 'current'})
+  WHERE peer.family = old.family AND peer <> new
+OPTIONAL MATCH (d:DraftAnswer)-[:BASED_ON]->(old)
+RETURN old.id AS outdated, collect(DISTINCT t.name) AS topics,
+       collect(DISTINCT peer.id) AS sameTopicAnswersToReview,
+       collect(DISTINCT d.submissionId) AS submissionsThatUsedIt`},
+
+ q8: {title:'Capability 8 · Write-back & audit',
+  nodes:['submission','draft','answer','question','topic','family'],
+  edges:['part_of_d','based_on','has_answer','about_d','scoped_to'],
+  desc:`<b>Shipped.</b> Graph RAG writes each generated answer back as a DraftAnswer, with one BASED_ON edge per historical answer it used. That answers &ldquo;why did we say this?&rdquo; for any submission, shows which datasheet answers do the most work, and surfaces answers built on thin evidence. In code: <code>Neo4jGraphStore.write_draft()</code>, <code>submission_audit()</code>, <code>evidence_reuse()</code>, <code>weakly_supported_drafts()</code>, <code>delete_submission()</code>.`,
+  steps:[`<code>question_answering_func()</code> opens a Submission for the batch and closes it at the end.`,
+         `Each answered question MERGEs a DraftAnswer and UNWINDs its evidence into BASED_ON edges (rank, score, method, inPrompt).`,
+         `<code>topScore</code> is stored on the draft, so answers built on weak evidence are a query, not a hunch.`,
+         `Questions that retrieved nothing are still recorded, with no BASED_ON: the coverage gaps.`,
+         `Deleting a submission removes its drafts only; reference evidence is never touched.`],
+  example:`Replaces the Citations column text (&ldquo;SOURCE 1: Security QA Database - GeneXpert - GX&rdquo;) with links you can query: draft &rarr; A-0676 (rank 1, score 0.729, vector) &rarr; Ridgeview, Excel 678, and rank 2 is its FOLLOWS_UP parent A-0674 at 0.615, flagged <code>method = 'follow-up-parent'</code>.`,
+  cypher:`// written by Graph RAG for each uploaded question
+MATCH (s:Submission {submissionId: $sid})
+MERGE (d:DraftAnswer {id: $sid + ':' + toString($position)})
+ON CREATE SET d.createdAt = datetime()
+SET d.submissionId = $sid, d.question = $question, d.answer = $answer,
+    d.status = 'draft', d.model = $model, d.evidenceCount = size($evidence),
+    d.topScore = reduce(best = 0.0, ev IN $evidence |
+                        CASE WHEN ev.score > best THEN ev.score ELSE best END)
+MERGE (d)-[p:PART_OF]->(s)
+SET p.position = $position
+
+// one BASED_ON per row the model was shown
+MATCH (d:DraftAnswer {id: $draftId})
+UNWIND $evidence AS ev
+MATCH (a:Answer {id: ev.id})
+MERGE (d)-[b:BASED_ON]->(a)
+SET b.rank = ev.rank, b.score = ev.score, b.method = ev.method,
+    b.inPrompt = ev.inPrompt, b.query = $question, b.linkedAt = datetime()
+
+// audit: why did we answer this way?
+MATCH (s:Submission {submissionId: $sid})<-[p:PART_OF]-(d:DraftAnswer)
+OPTIONAL MATCH (d)-[b:BASED_ON]->(a:Answer)<-[:HAS_ANSWER]-(q:Question)
+WITH p, d, b, a, q ORDER BY b.rank
+RETURN p.position AS n, d.question AS asked, d.answer AS generated, d.topScore AS topScore,
+       collect({rank: b.rank, score: b.score, method: b.method,
+                excelRow: q.rowIndex + 2, usedAnswer: a.response}) AS evidence
+ORDER BY n
+
+// hallucination risk: confident answers built on thin evidence
+MATCH (d:DraftAnswer)
+WHERE d.topScore IS NULL OR d.topScore < 0.5
+RETURN d.submissionId, d.question, d.answer, d.topScore, d.evidenceCount
+ORDER BY coalesce(d.topScore, 0.0)
+
+// reuse: which datasheet answers do the most work
+MATCH (d:DraftAnswer)-[:BASED_ON {inPrompt: true}]->(a:Answer)<-[:HAS_ANSWER]-(q:Question)
+RETURN a.id AS answer, a.family AS product, q.rowIndex + 2 AS excelRow,
+       count(DISTINCT d.submissionId) AS submissions
+ORDER BY submissions DESC LIMIT 20`}
+};
+
+// ------------------------------------------------------------------ rendering
+const svg = document.getElementById('svg');
+const NS = 'http://www.w3.org/2000/svg';
+const R = 50;
+const nodeById = {};
+NODES.forEach(n => { nodeById[n.id] = n; });
+const el = (t, attrs, parent) => {
+  const e = document.createElementNS(NS, t);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+const defs = el('defs', {}, svg);
+const COLORS = {'#555555':'m0', '#C0392B':'m1', '#1E8449':'m2', '#7D3C98':'m3'};
+for (const c in COLORS) {
+  const m = el('marker', {id:COLORS[c], viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse'}, defs);
+  el('path', {d:'M 0 0 L 10 5 L 0 10 z', fill:c}, m);
+}
+
+const bgLayer = el('g', {class:'layerbox'}, svg);
+el('rect', {x:10, y:10, width:1085, height:960, rx:16, fill:'#f2f8fd', stroke:'#bcd8ee', 'stroke-dasharray':'6 4'}, bgLayer);
+const refLbl = el('text', {x:26, y:34, 'font-size':12.5, 'font-weight':700, fill:'#1a5276'}, bgLayer);
+refLbl.textContent = 'REFERENCE LAYER · built by ingestion from the datasheet · no submissionId';
+const reqBox = el('g', {}, bgLayer);
+el('rect', {x:1105, y:150, width:385, height:570, rx:16, fill:'#fff8ee', stroke:'#f0d2a8', 'stroke-dasharray':'6 4'}, reqBox);
+const reqLbl1 = el('text', {x:1120, y:174, 'font-size':12.5, 'font-weight':700, fill:'#935116'}, reqBox);
+reqLbl1.textContent = 'REQUEST LAYER';
+const reqLbl2 = el('text', {x:1120, y:191, 'font-size':11, fill:'#935116'}, reqBox);
+reqLbl2.textContent = 'written by Graph RAG · every node has submissionId';
+
+const edgeLayer = el('g', {}, svg);
+const nodeLayer = el('g', {}, svg);
+const edgeEls = {}, nodeEls = {};
+
+function edgeGeom(e) {
+  const a = nodeById[e.from], b = nodeById[e.to];
+  if (e.from === e.to) {
+    const ang = (e.self || 0) * Math.PI / 180, o = 62;
+    const p1x = a.x + Math.cos(ang - .5) * R, p1y = a.y + Math.sin(ang - .5) * R;
+    const p2x = a.x + Math.cos(ang + .5) * R, p2y = a.y + Math.sin(ang + .5) * R;
+    const c1x = a.x + Math.cos(ang - .6) * (R + o), c1y = a.y + Math.sin(ang - .6) * (R + o);
+    const c2x = a.x + Math.cos(ang + .6) * (R + o), c2y = a.y + Math.sin(ang + .6) * (R + o);
+    return { d:`M ${p1x} ${p1y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2x} ${p2y}`,
+             lx: a.x + Math.cos(ang) * (R + o + 8), ly: a.y + Math.sin(ang) * (R + o + 8) };
+  }
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  const nx = -dy / len, ny = dx / len, c = e.curve || 0;
+  const mx = (a.x + b.x) / 2 + nx * c, my = (a.y + b.y) / 2 + ny * c;
+  const t1 = R / len;
+  const sx = a.x + dx * t1 + nx * c * t1 * 2, sy = a.y + dy * t1 + ny * c * t1 * 2;
+  const ex = b.x - dx * t1 + nx * c * t1 * 2, ey = b.y - dy * t1 + ny * c * t1 * 2;
+  return { d:`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`, lx: mx * 0.5 + (sx + ex) * 0.25, ly: my * 0.5 + (sy + ey) * 0.25 };
+}
+
+EDGES.forEach(e => {
+  const cls = ['edge', e.phase, e.bridge ? 'bridge' : ''].join(' ').trim();
+  const g = el('g', {class:cls, 'data-id':e.id}, edgeLayer);
+  const col = e.color || '#555555';
+  const path = el('path', {stroke:col, 'marker-end':`url(#${COLORS[col]})`}, g);
+  const bg = el('rect', {class:'lblbg', rx:3}, g);
+  const lbl = el('text', {class:'lbl', 'text-anchor':'middle'}, g);
+  lbl.textContent = e.type;
+  g.addEventListener('click', ev => { ev.stopPropagation(); select('edge', e.id); });
+  edgeEls[e.id] = {g, path, lbl, bg};
+});
+
+NODES.forEach(n => {
+  const g = el('g', {class:`node ${n.layer} ${n.phase}`, 'data-id':n.id}, nodeLayer);
+  el('circle', {r:R}, g);
+  const t = el('text', {'text-anchor':'middle', y:-1, class: n.cap.length > 11 ? 'long' : ''}, g);
+  t.textContent = n.cap;
+  const c = el('text', {'text-anchor':'middle', y:15, class:'cnt'}, g);
+  c.textContent = n.count;
+  g.addEventListener('mousedown', ev => startDrag(ev, n));
+  g.addEventListener('click', ev => { ev.stopPropagation(); if (!dragMoved) select('node', n.id); });
+  nodeEls[n.id] = g;
+});
+
+function updatePositions() {
+  NODES.forEach(n => nodeEls[n.id].setAttribute('transform', `translate(${n.x},${n.y})`));
+  EDGES.forEach(e => {
+    const geo = edgeGeom(e), ee = edgeEls[e.id];
+    ee.path.setAttribute('d', geo.d);
+    ee.lbl.setAttribute('x', geo.lx);
+    ee.lbl.setAttribute('y', geo.ly + 3);
+    const bb = ee.lbl.getBBox();
+    ee.bg.setAttribute('x', bb.x - 3); ee.bg.setAttribute('y', bb.y - 1);
+    ee.bg.setAttribute('width', bb.width + 6); ee.bg.setAttribute('height', bb.height + 2);
+  });
+}
+
+// ------------------------------------------------------------------ layer toggles
+const show = {v2: true, req: true};
+const nodeVisible = n => (n.layer !== 'req' || show.req) && (n.phase !== 'v2' || show.v2);
+const edgeVisible = e => nodeVisible(nodeById[e.from]) && nodeVisible(nodeById[e.to]) && (e.phase !== 'v2' || show.v2);
+function applyVisibility() {
+  NODES.forEach(n => { nodeEls[n.id].style.display = nodeVisible(n) ? '' : 'none'; });
+  EDGES.forEach(e => { edgeEls[e.id].g.style.display = edgeVisible(e) ? '' : 'none'; });
+  reqBox.style.display = show.req ? '' : 'none';
+  updatePositions();
+}
+document.getElementById('togV2').addEventListener('change', ev => { show.v2 = ev.target.checked; applyVisibility(); });
+document.getElementById('togReq').addEventListener('change', ev => { show.req = ev.target.checked; applyVisibility(); });
+
+// ------------------------------------------------------------------ drag, pan, zoom
+let drag = null, dragMoved = false, pan = null;
+let vb = {x:0, y:0, w:1500, h:980};
+const setVB = () => svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+const toSvg = ev => {
+  const r = svg.getBoundingClientRect();
+  return { x: vb.x + (ev.clientX - r.left) / r.width * vb.w, y: vb.y + (ev.clientY - r.top) / r.height * vb.h };
+};
+function startDrag(ev, n) { ev.stopPropagation(); const p = toSvg(ev); drag = {n, ox: n.x - p.x, oy: n.y - p.y}; dragMoved = false; }
+svg.addEventListener('mousedown', ev => { pan = {sx: ev.clientX, sy: ev.clientY, vx: vb.x, vy: vb.y}; svg.classList.add('panning'); });
+window.addEventListener('mousemove', ev => {
+  if (drag) {
+    const p = toSvg(ev);
+    drag.n.x = p.x + drag.ox; drag.n.y = p.y + drag.oy; dragMoved = true; updatePositions();
+  } else if (pan) {
+    const r = svg.getBoundingClientRect();
+    vb.x = pan.vx - (ev.clientX - pan.sx) / r.width * vb.w;
+    vb.y = pan.vy - (ev.clientY - pan.sy) / r.height * vb.h;
+    setVB();
+  }
+});
+window.addEventListener('mouseup', () => { drag = null; pan = null; svg.classList.remove('panning'); });
+svg.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  const p = toSvg(ev), f = ev.deltaY > 0 ? 1.12 : 1 / 1.12;
+  vb = { x: p.x - (p.x - vb.x) * f, y: p.y - (p.y - vb.y) * f, w: vb.w * f, h: vb.h * f };
+  setVB();
+}, {passive:false});
+svg.addEventListener('click', () => select(null));
+
+// ------------------------------------------------------------------ panel
+const panel = document.getElementById('panel');
+let curView = 'overview';
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const PHASE_TAG = {v1:'<span class="tag v1">v1 core</span>', v2:'<span class="tag v2">v2 enrichment</span>', run:'<span class="tag run">runtime write-back</span>'};
+const LAYER_TAG = {ref:'<span class="tag ref">Reference layer</span>', req:'<span class="tag req">Request layer</span>'};
+const KW = /\b(CYPHER|MATCH|OPTIONAL|SEARCH|VECTOR|FULLTEXT|INDEX|FOR|LIMIT|SCORE|WHERE|WITH|RETURN|CASE|WHEN|THEN|ELSE|END|AS|IN|NOT|AND|OR|ORDER|BY|DESC|DISTINCT|EXISTS|COLLECT|CREATE|MERGE|SET|UNWIND|CONSTRAINT|IF|REQUIRE|IS|UNIQUE|ON|EACH|OPTIONS|DATABASE|WAIT|SHOW|INDEXES|YIELD|collect|count|size|round|toString|datetime|date)\b/g;
+function highlight(code) {
+  return code.split('\n').map(line => {
+    const i = line.indexOf('//');
+    const body = i >= 0 ? line.slice(0, i) : line;
+    const cm = i >= 0 ? line.slice(i) : '';
+    return esc(body).replace(KW, '<span class="kw">$1</span>') + (cm ? `<span class="cm">${esc(cm)}</span>` : '');
+  }).join('\n');
+}
+const propRows = props => props.map(p =>
+  `<tr><td class="k">${esc(p[0])}</td><td>${esc(p[1])}${p[2] ? ' <span class="reqb">req</span>' : ''}</td><td>${p[3] ? `<span class="src">${esc(p[3])}</span>` : ''}</td></tr>`).join('');
+const propTable = props => `<table><tr><th>property</th><th>type / values</th><th>source</th></tr>${propRows(props)}</table>`;
+const list = items => `<ul class="facts">${items.map(x => `<li>${x}</li>`).join('')}</ul>`;
+
+function showOverview() {
+  panel.innerHTML = `<h2>Trustform Graph RAG: schema</h2>
+  <p>A Neo4j knowledge graph built from the security QA datasheet, as an <b>alternative</b> retrieval path next to the existing pgvector RAG (nothing is removed). Embeddings and the vector index live <b>only in Neo4j</b>, in a new <code>trustform</code> database on the local 2026.10 Enterprise instance.</p>
+  <p>${LAYER_TAG.ref} what the datasheet says: products, past questionnaires, questions, answers, topics. Built by ingestion, shared by every request. ${LAYER_TAG.req} a questionnaire a user uploads today and the draft answers Graph RAG writes for it, each linked to the historical answers it used.</p>
+  <h3>Design rules</h3>
+  <ul>
+    <li>One CSV row = one Question. An Answer exists only when the row has a response or a comment.</li>
+    <li>The vector index sits on Answer, so an unanswered question can never be retrieved as evidence.</li>
+    <li>Product scope is copied onto Answer (<code>family</code>) and declared in the vector index: filtering happens inside the index, not after it.</li>
+    <li>Customer names are replaced by <code>[CUSTOMER]</code> before embedding, so one customer's name never steers another customer's answer.</li>
+    <li>Cross-layer edges always point request &rarr; reference, so deleting a submission never touches the knowledge base.</li>
+    <li>Everything inferred (questionnaire boundaries, customers, follow-ups, topics) records <code>method</code> and <code>confidence</code>, so it can be reviewed.</li>
+  </ul>
+  <h3>The graph as built</h3>
+  <table>
+    <tr><td>Source rows &times; columns</td><td class="n">1,864 &times; 5</td></tr>
+    <tr><td>ProductFamily / ProductModel</td><td class="n">5 / 23</td></tr>
+    <tr><td>Questionnaire / with a customer</td><td class="n">31 / 17</td></tr>
+    <tr><td>Customer</td><td class="n">16</td></tr>
+    <tr><td>Question / Answer</td><td class="n">1,864 / 1,660</td></tr>
+    <tr><td>Yes / See Comment / No / other</td><td class="n">833 / 386 / 295 / 146</td></tr>
+    <tr><td>Topic / ABOUT edges / questions tagged</td><td class="n">35 / 2,824 / 1,844 (99%)</td></tr>
+    <tr><td>FOLLOWS_UP (if-yes / if-no / pronoun)</td><td class="n">55 (36 / 11 / 8)</td></tr>
+    <tr><td>Standard / Technology / USES</td><td class="n">15 / 19 / 53</td></tr>
+    <tr><td>Embedded answers (1536-d, cosine)</td><td class="n">1,660</td></tr>
+  </table>
+  <h3>Retrieval, measured</h3>
+  <p>100 paraphrased golden questions (<code>scripts/eval/sweep_retrieval.py --paraphrase --graph</code>), scoring whether the datasheet row that answers the question is retrieved:</p>
+  <table>
+    <tr><th>backend</th><th class="n">recall@1</th><th class="n">recall@3</th><th class="n">recall@10</th><th class="n">MRR</th></tr>
+    <tr><td>pgvector (dense)</td><td class="n">0.990</td><td class="n">1.000</td><td class="n">1.000</td><td class="n">0.993</td></tr>
+    <tr><td>Neo4j graph, names masked</td><td class="n">0.980</td><td class="n">1.000</td><td class="n">1.000</td><td class="n">0.988</td></tr>
+    <tr><td>Neo4j graph, unmasked</td><td class="n">0.990</td><td class="n">1.000</td><td class="n">1.000</td><td class="n">0.993</td></tr>
+  </table>
+  <h3>Answer quality, measured</h3>
+  <p>The same 100 questions answered end to end and scored with Ragas (<code>scripts/eval</code>). The unmasked graph is a second database built with <code>ingest_graph.py --no-mask</code>; the last column is pgvector run twice, which is how far the pipeline moves on its own:</p>
+  <table>
+    <tr><th>metric</th><th class="n">pgvector</th><th class="n">graph, masked</th><th class="n">graph, unmasked</th><th class="n">pgvector re-run</th></tr>
+    <tr><td>answer_correctness</td><td class="n">0.924</td><td class="n">0.841</td><td class="n">0.915</td><td class="n">0.913</td></tr>
+    <tr><td>semantic_similarity</td><td class="n">0.937</td><td class="n">0.906</td><td class="n">0.920</td><td class="n">0.938</td></tr>
+    <tr><td>faithfulness</td><td class="n">0.892</td><td class="n">0.867</td><td class="n">0.898</td><td class="n">0.903</td></tr>
+    <tr><td>ROUGE-L</td><td class="n">0.924</td><td class="n">0.884</td><td class="n">0.899</td><td class="n">0.928</td></tr>
+    <tr><td>context_precision</td><td class="n">0.907</td><td class="n">0.915</td><td class="n">0.928</td><td class="n">0.903</td></tr>
+    <tr><td>context_recall</td><td class="n">0.990</td><td class="n">0.980</td><td class="n">0.990</td><td class="n">0.980</td></tr>
+    <tr><td>answers naming a customer the question did not</td><td class="n">1</td><td class="n">0</td><td class="n">3</td><td class="n">1</td></tr>
+  </table>
+  <p class="hint">Masking accounts for the whole measured gap. Paired 95% bootstrap intervals: masking costs 0.070 answer_correctness [0.028, 0.116], still 0.057 [0.018, 0.102] with the two customer-naming golden answers excluded; unmasked, the graph is indistinguishable from pgvector (&minus;0.005 [&minus;0.039, +0.030]). No ROUGE-L difference is distinguishable from noise. It hurts in two ways, of similar size on this set: <code>[CUSTOMER]</code> in the prompt where the official answer has a name, and masked text retrieving other rows. Unmasked, 6.4% of prompt rows (32) differ from pgvector's (10.6% masked), 22 of them follow-up rows, displacing pgvector's #4 or #5 in 31 cases. The trade: five to seven points of correctness for cross-customer neutrality &mdash; unmasked, 3 of 100 answers named a customer the question did not (pgvector: 1).</p>
+  <h3>Common metadata</h3>
+  <p>${META.desc}</p>
+  ${propTable(META.props)}
+  <h3>Build order (mirrors the KG_Handson modules)</h3>
+  <ol>
+    <li><b>Done.</b> Database, constraints and indexes &mdash; created by the ingest script (button <i>Database &amp; indexes</i> shows the equivalent Cypher).</li>
+    <li><b>Done.</b> Reference layer from the CSV, including Standard and Technology: <code>scripts/ingest_graph.py</code>, rules in <code>src/logic/graph_rules.py</code>. <span class="hint">Module 3</span></li>
+    <li><b>Done.</b> Answers embedded and both indexes ONLINE. <span class="hint">Module 5</span></li>
+    <li><b>Done.</b> Retrieval: SEARCH + in-index scope filter + follow-up expansion, in <code>src/logic/neo4j_graph.py</code>, selected with <code>VECTOR_DB_BACKEND=neo4j</code>. <span class="hint">Module 6</span></li>
+    <li><b>Done.</b> Topic expansion built and measured: it changes nothing on a corpus this size, so it ships off (<code>GRAPH_TOPIC_EXPANSION</code>).</li>
+    <li><b>Done.</b> Write-back: Submission, DraftAnswer, BASED_ON, with audit, reuse, weak-evidence and delete queries. <span class="hint">Module 7</span></li>
+    <li><b>Done.</b> LLM topic pass: <code>scripts/classify_topics.py</code> took coverage from 81% to 99%.</li>
+    <li>Next: capability queries 3-7 surfaced in the admin page, and an end-to-end answer-quality A/B against pgvector with <code>scripts/eval</code>. <span class="hint">Module 8</span></li>
+  </ol>
+  <h3>How to use</h3>
+  <p>Click a node or an edge label for its properties, source columns and rationale. Pick a capability query to light up its path and see the Cypher, with an example from the datasheet. The checkboxes hide v2 enrichment or the request layer.</p>`;
+}
+
+function showMapping() {
+  panel.innerHTML = `<h2>From CSV rows to graph</h2>
+  <table>
+    <tr><th>CSV column</th><th>becomes</th></tr>
+    <tr><td class="k">Product Name</td><td>ProductModel (85 raw values &rarr; 23 models)</td></tr>
+    <tr><td class="k">product_name</td><td>ProductFamily (5); copied to Answer.family for in-index filtering</td></tr>
+    <tr><td class="k">question</td><td>Question.text; mined for Topic (ABOUT), FOLLOWS_UP, Customer, Standard, subject</td></tr>
+    <tr><td class="k">response</td><td>Answer.response + normalised Answer.verdict</td></tr>
+    <tr><td class="k">comment</td><td>Answer.comment; mined for stance, Technology, cited Standard</td></tr>
+    <tr><td class="k">row order</td><td>Questionnaire (runs of one model) + PART_OF.position</td></tr>
+    <tr><td class="k">row number</td><td>Question.rowIndex (= pgvector row_index) and EXTRACTED_FROM.excelRow (= rowIndex + 2)</td></tr>
+  </table>
+  <h3>Clean-up rules at ingestion</h3>
+  <ol>
+    <li>Strip zero-width (294) and non-breaking (13) spaces; the Infinity rollup itself carries U+200B.</li>
+    <li>Repair the find-and-replace artifact that rewrote &ldquo;patching&rdquo; to &ldquo;patCommonSpiritng&rdquo; when CHI was renamed.</li>
+    <li>Collapse the Excel fill-series &ldquo;GeneXpert - Xpress 6.4 &hellip; 6.63&rdquo; into one model.</li>
+    <li>Normalise spacing around hyphens in model names.</li>
+    <li>Verdict: Yes / No / NA / See Comment / free text; empty response with a comment = comment_only; both empty = no Answer node.</li>
+    <li>Follow-up parent = nearest earlier question in the same questionnaire that is not itself a follow-up.</li>
+    <li>Mask customer names as <code>[CUSTOMER]</code> in the embedded text, keeping the original wording in <code>response</code> and <code>comment</code> for citations.</li>
+  </ol>
+  <h3>Worked example: Excel rows 676-678</h3>
+  <pre>${highlight(document.getElementById('example-text').textContent)}</pre>`;
+}
+
+function showDDL() {
+  panel.innerHTML = `<h2>Database &amp; indexes</h2>
+  <p><code>scripts/ingest_graph.py</code> runs all of this; the statements are here so you can read or re-run them in Neo4j Browser. A separate <code>trustform</code> database keeps this graph away from <code>neo4j</code>, <code>gvd</code> and <code>sec</code> on the same instance, and the script refuses to write to a database whose name does not start with <code>trustform</code>. The instance defaults to Cypher 5, so statements that use the vector-index filter syntax or <code>SEARCH</code> start with <code>CYPHER 25</code>.</p>
+  <pre>${highlight(document.getElementById('ddl-text').textContent)}</pre>
+  <p class="hint">Hybrid retrieval: rank the SEARCH vector results and the full-text results separately and fuse them with reciprocal rank fusion in Python, as the pgvector backend does today. Dense alone currently scores higher on this corpus in both backends.</p>`;
+}
+
+function showNode(id) {
+  const n = nodeById[id];
+  const edges = EDGES.filter(e => e.from === id || e.to === id);
+  panel.innerHTML = `<h2>${n.cap}</h2>
+  ${LAYER_TAG[n.layer]}${PHASE_TAG[n.phase]}
+  <p>${n.desc}</p>
+  ${n.data ? `<h3>In the March 2025 datasheet</h3>${list(n.data)}` : ''}
+  ${n.index ? `<h3>Indexes</h3><p>${n.index}</p>` : ''}
+  <h3>Properties</h3>${propTable(n.props)}
+  ${n.topics ? `<h3>Taxonomy (&asymp; questions from the keyword pass)</h3><table><tr><th>code</th><th>topic</th><th>MDS2</th><th class="n">&asymp;Qs</th></tr>${
+    TOPICS.map((t, i) => (i === 0 || TOPICS[i - 1][0] !== t[0] ? `<tr><td colspan="4" style="font-weight:600;color:#566573;padding-top:8px">${t[0]}</td></tr>` : '') +
+      `<tr><td class="k">${t[1]}</td><td>${t[2]}</td><td>${t[3]}</td><td class="n">${t[4]}</td></tr>`).join('')}</table>` : ''}
+  <h3>Edges</h3>
+  <table>${edges.map(e => {
+    const out = e.from === id;
+    const other = nodeById[out ? e.to : e.from].cap;
+    return `<tr><td class="k">${e.from === e.to ? '&#8635; ' : out ? '&rarr; ' : '&larr; '}${e.type}</td><td>${other}</td><td>${PHASE_TAG[e.phase]}</td></tr>`;
+  }).join('')}</table>`;
+}
+
+function showEdge(id) {
+  const e = EDGES.find(x => x.id === id);
+  panel.innerHTML = `<h2>${e.type}</h2>
+  ${PHASE_TAG[e.phase]}
+  <p><b>${nodeById[e.from].cap}</b> &rarr; <b>${nodeById[e.to].cap}</b></p>
+  <h3>Cardinality</h3><p>${e.card}</p>
+  ${e.props.length ? `<h3>Properties</h3><table>${e.props.map(p => `<tr><td class="k">${esc(p[0])}</td><td>${esc(p[1])}</td></tr>`).join('')}</table>` : ''}
+  <h3>Purpose</h3><p>${e.why}</p>
+  ${e.data ? `<h3>In the datasheet</h3><p>${e.data}</p>` : ''}`;
+}
+
+function showQuery(q) {
+  const Q = QUERIES[q];
+  panel.innerHTML = `<h2>${Q.title}</h2>
+  <p>${Q.desc}</p>
+  <h3>Traversal</h3><ol>${Q.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+  <h3>Example from the datasheet</h3><div class="example">${Q.example}</div>
+  <h3>Cypher</h3><pre>${highlight(Q.cypher)}</pre>`;
+}
+
+function showCurrent() {
+  if (QUERIES[curView]) showQuery(curView);
+  else if (curView === 'mapping') showMapping();
+  else if (curView === 'ddl') showDDL();
+  else showOverview();
+}
+
+function applyHighlight() {
+  const Q = QUERIES[curView];
+  NODES.forEach(n => nodeEls[n.id].classList.toggle('dimmed', !!Q && !Q.nodes.includes(n.id)));
+  EDGES.forEach(e => {
+    const on = !Q || Q.edges.includes(e.id);
+    edgeEls[e.id].g.classList.toggle('dimmed', !on);
+    edgeEls[e.id].g.classList.toggle('glow', !!Q && on);
+  });
+}
+
+function select(kind, id) {
+  document.querySelectorAll('.node.selected,.edge.selected').forEach(x => x.classList.remove('selected'));
+  if (kind === 'node') { nodeEls[id].classList.add('selected'); showNode(id); }
+  else if (kind === 'edge') { edgeEls[id].g.classList.add('selected'); showEdge(id); }
+  else showCurrent();
+}
+
+document.querySelectorAll('.qbtn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.qbtn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  curView = b.dataset.q;
+  applyHighlight();
+  select(null);
+}));
+
+updatePositions(); setVB(); showOverview();
+</script>
+</body>
+</html>
