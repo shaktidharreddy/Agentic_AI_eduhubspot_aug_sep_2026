@@ -1,0 +1,37 @@
+import os
+
+from dotenv import load_dotenv
+from neo4j import GraphDatabase
+
+load_dotenv(".env", override=True)
+
+uri = os.getenv("NEO4J_URI")
+user = os.getenv("NEO4J_USERNAME")
+password = os.getenv("NEO4J_PASSWORD")
+database = os.getenv("NEO4J_DATABASE") or "neo4j"
+
+print(f"Connecting to {uri} as '{user}' (database '{database}')...")
+
+with GraphDatabase.driver(uri, auth=(user, password)) as driver:
+    driver.verify_connectivity()
+    print("Connected.")
+
+    records, _, _ = driver.execute_query(
+        "CALL dbms.components() YIELD name, versions, edition "
+        "RETURN name, versions[0] AS version, edition",
+        database_=database,
+    )
+    for r in records:
+        print(f"Server: {r['name']} {r['version']} ({r['edition']})")
+
+    records, _, _ = driver.execute_query("SHOW DATABASES YIELD name, currentStatus", database_="system")
+    print("Databases:", ", ".join(f"{r['name']} ({r['currentStatus']})" for r in records))
+
+    records, _, _ = driver.execute_query("MATCH (n) RETURN count(n) AS nodes", database_=database)
+    print(f"Nodes in '{database}': {records[0]['nodes']}")
+
+    records, _, _ = driver.execute_query(
+        "SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS apoc",
+        database_=database,
+    )
+    print("APOC plugin installed:", records[0]["apoc"] > 0)
