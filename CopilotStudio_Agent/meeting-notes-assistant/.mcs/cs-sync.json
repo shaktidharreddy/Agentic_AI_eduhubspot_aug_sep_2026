@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "operation": "pull",
+  "syncedAt": "2026-11-05T20:57:06.571Z",
+  "botId": "34a384f5-f242-46d2-90a6-449abce37699",
+  "environmentId": "Default-771c9c47-7f24-44dc-958e-34f8713a8394",
+  "files": {
+    "behaviors/meeting-notes-summarizer/SKILL.md": "8ead19ca172df940c4827cf91de223adeb511de2",
+    "behaviors/meeting-notes-summarizer/skill.mcs.yml": "73428bbe2849a5c051cca570a8aaad814cce2680",
+    "settings.mcs.yml": "55abffd48bbceab3be85e637e300de834cd98a2a"
+  },
+  "remote": null
+}
