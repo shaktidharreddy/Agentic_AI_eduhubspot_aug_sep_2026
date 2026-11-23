@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Playwright Setup Guide · CDP GenAI Apps</title>
+<style>
+  :root {
+    --brand: #003a5d;
+    --accent: #0079C1;
+    --accent-soft: #E3F2FD;
+    --accent-line: #b9dcf3;
+    --bg: #F8FAFC;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --text: #0f172a;
+    --muted: #5b6b80;
+    --border: #e2e8f0;
+    --code-bg: #062a43;
+    --code-text: #dbeefc;
+    --code-muted: #8fb3cf;
+    --code-str: #b5e8a0;
+    --code-kw: #ffcf7a;
+    --code-num: #f4a9c0;
+    --out-bg: #0f1d2b;
+    --ok: #166534; --ok-bg: #dcfce7;
+    --warn: #854d0e; --warn-bg: #fef9c3;
+    --err: #991b1b; --err-bg: #fee2e2;
+    --info: #0b4f7c; --info-bg: #E3F2FD;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 20px rgba(15, 23, 42, .06);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  [data-theme="dark"] {
+    --brand: #8fd0ff;
+    --accent: #4fb3f6;
+    --accent-soft: #0e2b45;
+    --accent-line: #1f4e75;
+    --bg: #0a1220;
+    --surface: #101b2d;
+    --surface-2: #0c1626;
+    --text: #e5edf7;
+    --muted: #94a6bd;
+    --border: #1f2d45;
+    --code-bg: #050c17;
+    --out-bg: #08111d;
+    --ok: #86efac; --ok-bg: #0f2e1d;
+    --warn: #fde68a; --warn-bg: #3a2d08;
+    --err: #fca5a5; --err-bg: #3b1212;
+    --info: #bfe3ff; --info-bg: #0e2b45;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+  body { margin: 0; font: 15px/1.6 var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  h2, h3, h4 { line-height: 1.3; }
+  code { font-family: var(--mono); font-size: .86em; background: var(--surface-2); border: 1px solid var(--border); padding: .05em .4em; border-radius: 6px; overflow-wrap: anywhere; }
+  kbd { font: 600 .82em var(--mono); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; padding: 0 .4em; background: var(--surface); }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 12px; top: 12px; z-index: 100; background: var(--surface); padding: 8px 12px; border-radius: 8px; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- top bar */
+  .topbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: 12px 28px; background: linear-gradient(100deg, #003a5d, #0079C1); color: #fff; box-shadow: 0 2px 12px rgba(0, 0, 0, .18); }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { flex: none; width: 40px; height: 40px; border-radius: 11px; background: rgba(255, 255, 255, .16); display: grid; place-items: center; font-size: 20px; }
+  .brand h1 { margin: 0; font-size: 18px; line-height: 1.2; }
+  .brand p { margin: 0; font-size: 12.5px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .controls { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .controls .lbl { font-size: 12px; opacity: .85; }
+  .seg { display: inline-flex; background: rgba(255, 255, 255, .14); border-radius: 10px; padding: 3px; }
+  .seg button { border: 0; background: transparent; color: #fff; padding: 6px 12px; border-radius: 8px; font: 600 13px var(--font); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #fff; color: #003a5d; }
+  .icon-btn { border: 0; background: rgba(255, 255, 255, .16); color: #fff; width: 38px; height: 38px; border-radius: 10px; cursor: pointer; font-size: 16px; }
+  .icon-btn:hover, .seg button:hover { filter: brightness(1.08); }
+
+  /* ---------- layout */
+  .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; max-width: 1400px; margin: 0 auto; padding: 24px 28px 80px; }
+  .sidebar { position: sticky; top: 88px; align-self: start; max-height: calc(100vh - 104px); overflow: auto; }
+  .side-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 6px 0; border: 1px solid var(--border); }
+  .bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #0079C1, #22c55e); transition: width .3s; }
+  .progress-msg { font-size: 13px; min-height: 20px; }
+  .progress-msg a { text-decoration: none; font-weight: 600; }
+  .nav, .nav ul { list-style: none; margin: 0; padding: 0; }
+  .nav { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .nav a { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; text-decoration: none; color: var(--text); font-size: 14px; }
+  .nav a:hover { background: var(--surface-2); }
+  .nav a.active { background: var(--accent-soft); color: var(--brand); font-weight: 600; }
+  .nav .sub a { padding: 3px 10px 3px 32px; font-size: 13px; color: var(--muted); }
+  .nav .sub a.done { color: var(--ok); }
+  .nav .sub a.done::after { content: "✓"; margin-left: auto; font-weight: 700; }
+  .link-btn { border: 0; background: none; color: var(--muted); font: 12.5px var(--font); text-decoration: underline; cursor: pointer; padding: 8px 10px 0; }
+  main { min-width: 0; }
+
+  /* ---------- sections and cards */
+  .section { margin: 0 0 64px; }
+  .section > h2 { font-size: 27px; margin: 0 0 6px; color: var(--brand); letter-spacing: -.01em; }
+  .eyebrow { margin: 0 0 4px; font: 700 12px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .lead { color: var(--muted); margin: 0 0 22px; max-width: 86ch; font-size: 16px; }
+  .sub-h { margin: 30px 0 10px; font-size: 18px; color: var(--brand); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+  .grid-wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)); gap: 16px; }
+  .grid-wide h3 { margin-top: 0; font-size: 17px; }
+  .path-card { display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: transform .15s, border-color .15s; }
+  .path-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .path-card .icon { font-size: 28px; }
+  .path-card h3 { margin: 6px 0 4px; color: var(--brand); font-size: 18px; }
+  .path-card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  .path-card .go { margin-top: auto; font-weight: 700; color: var(--accent); font-size: 14px; }
+  .working-on { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 16px; padding: 12px 16px; }
+  .working-on label { font-weight: 700; color: var(--brand); }
+  .working-on select { width: auto; min-width: 260px; }
+  .tldr { margin-top: 16px; padding: 0; }
+  .tldr summary { cursor: pointer; padding: 14px 18px; font-weight: 700; color: var(--brand); }
+  .tldr > div { padding: 0 18px 8px; }
+  .conv { position: relative; padding-top: 16px; }
+  .conv h3 { margin: 0 0 6px; font-size: 16px; color: var(--brand); }
+  .conv p { margin: 0; font-size: 14px; color: var(--muted); }
+  .conv-n { position: absolute; top: 14px; right: 16px; font: 800 26px var(--font); color: var(--accent-line); }
+  .hint { font-size: 13px; color: var(--muted); }
+
+  /* ---------- flow diagram and tree */
+  .flow-label { font: 700 12px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  .flow .node { flex: 1 1 170px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--muted); box-shadow: var(--shadow); }
+  .flow .node b { display: block; color: var(--brand); font-size: 14px; }
+  .flow .arrow { align-self: center; color: var(--accent); font-weight: 800; font-size: 18px; }
+  .tree { margin: 0; font: 13px/1.65 var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; overflow: auto; white-space: pre; box-shadow: var(--shadow); }
+  .tree .d { color: var(--accent); font-weight: 700; }
+  .tree .n { color: var(--muted); }
+
+  /* ---------- tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+  .cheat td:last-child code { white-space: pre-wrap; }
+
+  /* ---------- steps */
+  .step { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin: 0 0 18px; overflow: hidden; }
+  .step::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+  .step.is-done::before { background: #22c55e; }
+  .step-head { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .step-num { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--brand); font-weight: 800; }
+  .step.is-done .step-num { background: #22c55e; color: #fff; }
+  .step.is-done .step-num span { display: none; }
+  .step.is-done .step-num::after { content: "✓"; }
+  .step-title h3 { margin: 0; font-size: 17px; }
+  .eta { font-size: 12.5px; color: var(--muted); }
+  .done-toggle { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; user-select: none; }
+  .done-toggle input { accent-color: #22c55e; }
+  .step.is-done .done-toggle { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+  .step-body { padding: 16px 20px 18px; }
+  .step-body > :first-child { margin-top: 0; }
+  .step-body > :last-child { margin-bottom: 0; }
+  .step-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .next-link { font-weight: 700; text-decoration: none; font-size: 14px; }
+  ul.tight, ol.tight { margin: 8px 0; padding-left: 22px; }
+  ul.tight li, ol.tight li { margin: 4px 0; }
+  .rules { counter-reset: rule; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .rules li { counter-increment: rule; position: relative; padding: 12px 14px 12px 52px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .rules li::before { content: counter(rule); position: absolute; left: 14px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+
+  /* ---------- callouts */
+  .callout { display: flex; gap: 10px; padding: 10px 14px; border-radius: 10px; margin: 12px 0; font-size: 14px; }
+  .callout .ico { flex: none; }
+  .callout > div > :first-child { margin-top: 0; }
+  .callout > div > :last-child { margin-bottom: 0; }
+  .callout.info { background: var(--info-bg); color: var(--info); }
+  .callout.warn { background: var(--warn-bg); color: var(--warn); }
+  .callout.ok { background: var(--ok-bg); color: var(--ok); }
+  .callout.err { background: var(--err-bg); color: var(--err); }
+  .callout code { background: rgba(255, 255, 255, .55); border-color: transparent; color: inherit; }
+  [data-theme="dark"] .callout code { background: rgba(0, 0, 0, .3); }
+
+  /* ---------- code blocks */
+  .code-wrap { position: relative; margin: 10px 0 14px; border-radius: 10px; background: var(--code-bg); border: 1px solid rgba(255, 255, 255, .06); }
+  .code-wrap.is-out { background: var(--out-bg); border-style: dashed; border-color: var(--accent-line); }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 0 14px; font: 700 11px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--code-muted); }
+  .copy-btn { border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .07); color: #dbeefc; font: 600 12px var(--font); padding: 4px 10px; border-radius: 7px; cursor: pointer; text-transform: none; letter-spacing: 0; }
+  .copy-btn:hover { background: rgba(255, 255, 255, .16); }
+  .copy-btn.copied { background: #16a34a; border-color: #16a34a; color: #fff; }
+  pre.code { margin: 0; padding: 6px 14px 14px; overflow: auto; color: var(--code-text); font: 13px/1.6 var(--mono); white-space: pre; tab-size: 2; max-height: 560px; }
+  pre.code .c { color: var(--code-muted); font-style: italic; }
+  pre.code .s { color: var(--code-str); }
+  pre.code .k { color: var(--code-kw); }
+  pre.code .n { color: var(--code-num); }
+  body.shell-ps .code-wrap[data-shell="sh"], body.shell-sh .code-wrap[data-shell="ps"],
+  body.shell-ps [data-only="sh"], body.shell-sh [data-only="ps"] { display: none !important; }
+
+  /* ---------- tools (builder and generators) */
+  .tool { display: grid; grid-template-columns: minmax(290px, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .tool-form { position: sticky; top: 88px; }
+  .tool-out { min-width: 0; }
+  .field { display: flex; flex-direction: column; gap: 5px; margin: 0 0 13px; border: 0; padding: 0; min-width: 0; }
+  .field > label, .field .label { font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: .04em; padding: 0; }
+  input[type="text"], select, textarea { font: 14px var(--font); padding: 9px 11px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 100%; }
+  textarea { resize: vertical; line-height: 1.5; }
+  input[type="text"].mono, textarea.mono { font-family: var(--mono); font-size: 13px; }
+  input.invalid { border-color: #ef4444; background: var(--err-bg); }
+  input:disabled { opacity: .5; cursor: not-allowed; }
+  .cheat-copy { margin-left: 8px; vertical-align: middle; }
+  .check { display: block; position: relative; padding-left: 24px; font-size: 14px; margin: 7px 0; cursor: pointer; }
+  .check input { position: absolute; left: 0; top: 4px; margin: 0; accent-color: var(--accent); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pills label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; font-size: 14px; background: var(--surface); }
+  .pills label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--brand); font-weight: 700; }
+  .pills input { accent-color: var(--accent); margin: 0; }
+  .env-grid { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+  .env-grid .check { margin: 0; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: 600 14px var(--font); padding: 8px 14px; border-radius: 10px; cursor: pointer; text-decoration: none; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.sm { padding: 4px 10px; font-size: 13px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+  .out-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .out-head .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .file-path { font: 600 13px var(--mono); color: var(--brand); overflow-wrap: anywhere; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+  .tabs button { border: 1px solid var(--border); background: var(--surface); padding: 5px 10px; font: 600 12.5px var(--mono); color: var(--muted); border-radius: 8px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .issues { list-style: none; padding: 0; margin: 0 0 10px; }
+  .issues li { padding: 7px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13.5px; }
+  .issues li.err { background: var(--err-bg); color: var(--err); }
+  .issues li.warn { background: var(--warn-bg); color: var(--warn); }
+  .issues li.ok { background: var(--ok-bg); color: var(--ok); }
+  .issues li.info { background: var(--info-bg); color: var(--info); }
+  .explain { margin: 4px 0 10px; padding-left: 20px; font-size: 14px; color: var(--muted); }
+  .explain li { margin: 3px 0; }
+  .reg { border-left: 3px solid var(--accent-line); padding: 2px 0 2px 16px; margin: 0 0 18px; }
+  .reg h4 { margin: 0 0 2px; font-size: 15px; }
+  .reg p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+
+  /* ---------- FAQ, filters, footer, toast */
+  .filter { max-width: 420px; margin: 0 0 14px; }
+  details.faq { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+  details.faq summary { cursor: pointer; padding: 12px 16px; font-weight: 700; list-style: none; display: flex; gap: 10px; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::before { content: "▸"; color: var(--accent); transition: transform .15s; }
+  details.faq[open] summary::before { transform: rotate(90deg); }
+  details.faq .faq-body { padding: 0 18px 12px 38px; font-size: 14.5px; }
+  details.faq .faq-body > :first-child { margin-top: 0; }
+  .no-results { color: var(--muted); font-style: italic; }
+  footer.foot { border-top: 1px solid var(--border); padding-top: 18px; color: var(--muted); font-size: 13px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 100; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  /* Show code literally: coding fonts would otherwise draw "=>" as an arrow. Last, so no font shorthand resets it. */
+  pre.code, code, kbd, .tree, input.mono, textarea.mono { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+
+  @media (max-width: 1150px) {
+    .tool { grid-template-columns: 1fr; }
+    .tool-form { position: static; }
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding: 16px; }
+    .sidebar { position: static; max-height: none; }
+    .topbar { flex-wrap: wrap; padding: 10px 16px; }
+    .controls { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+  @media print {
+    .topbar, .sidebar, .copy-btn, .done-toggle, .tool-form, .btn, .filter { display: none !important; }
+    .layout { display: block; }
+    .code-wrap[data-shell] { display: block !important; }
+    pre.code { max-height: none; white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body class="shell-ps">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">🎭</div>
+    <div>
+      <h1>Playwright Setup Guide</h1>
+      <p>cdp-genai-apps-playwright-testing · set up, run and extend the GenAI app suites</p>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="lbl">Commands for</span>
+    <div class="seg" role="group" aria-label="Shell used in the commands">
+      <button type="button" data-shell-btn="ps" aria-pressed="true">PowerShell</button>
+      <button type="button" data-shell-btn="sh" aria-pressed="false">Bash</button>
+    </div>
+    <button type="button" class="icon-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Guide sections">
+    <div class="side-card">
+      <div class="progress-label"><span>Setup progress</span><span id="progressText">0 / 8</span></div>
+      <div class="bar" aria-hidden="true"><span id="progressFill"></span></div>
+      <div class="progress-msg" id="progressMsg"></div>
+      <ul class="nav">
+        <li><a href="#start">🏁 Start here</a></li>
+        <li><a href="#overview">🧭 How it fits together</a></li>
+        <li><a href="#setup">🚀 Set up &amp; run</a>
+          <ul class="sub">
+            <li><a href="#step-prereqs">1 · Prerequisites</a></li>
+            <li><a href="#step-clone">2 · Clone</a></li>
+            <li><a href="#step-env">3 · Your .env</a></li>
+            <li><a href="#step-install">4 · Dependencies</a></li>
+            <li><a href="#step-browser">5 · Browser</a></li>
+            <li><a href="#step-first-run">6 · First test</a></li>
+            <li><a href="#step-reports">7 · Reports</a></li>
+            <li><a href="#step-runner">8 · Live Test Runner</a></li>
+          </ul>
+        </li>
+        <li><a href="#run">🎛️ Command builder</a></li>
+        <li><a href="#add-test">🧪 Add a test case</a></li>
+        <li><a href="#add-app">🧩 Add a new app</a></li>
+        <li><a href="#tips">✍️ Writing good tests</a></li>
+        <li><a href="#troubleshooting">🛟 Troubleshooting</a></li>
+        <li><a href="#cheatsheet">📋 Cheat sheet</a></li>
+      </ul>
+      <button type="button" class="link-btn" id="resetProgress">Reset progress</button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- ================================================================ START -->
+    <section id="start" class="section">
+      <p class="eyebrow">Interactive guide</p>
+      <h2>Set up, run and extend the Playwright suites</h2>
+      <p class="lead">This repo holds one Playwright + TypeScript project per GenAI application, plus a
+        <strong>Live Test Runner</strong> web UI that runs any of them. Choose a path below. Commands follow the shell
+        picked at the top right (<span data-only="ps">PowerShell</span><span data-only="sh">Bash</span>) and the app you are
+        working on, and every block has a <strong>Copy</strong> button.</p>
+      <div class="grid-3">
+        <a class="card path-card" href="#setup">
+          <span class="icon">🚀</span>
+          <h3>Set up &amp; run tests</h3>
+          <p>Install the tools, fill in the one <code>.env</code>, run your first test and read the reports. About 20 minutes.</p>
+          <span class="go">Start the setup →</span>
+        </a>
+        <a class="card path-card" href="#add-test">
+          <span class="icon">🧪</span>
+          <h3>Add a test case</h3>
+          <p>Add a <code>tests/testcase&lt;id&gt;.ts</code> file to an app. The runner and the QC report find it automatically.</p>
+          <span class="go">Add a test case →</span>
+        </a>
+        <a class="card path-card" href="#add-app">
+          <span class="icon">🧩</span>
+          <h3>Add a new app</h3>
+          <p>Generate a complete suite folder, then register it with the Live Test Runner and its Docker image.</p>
+          <span class="go">Add an app →</span>
+        </a>
+      </div>
+
+      <div class="card working-on">
+        <label for="appSelectTop">I'm working on</label>
+        <select id="appSelectTop" class="app-select"></select>
+        <span class="hint">Folder <code data-bind="folder"></code> · <code>.env</code> prefix <code data-bind="prefix"></code></span>
+      </div>
+
+      <details class="card tldr">
+        <summary>⚡ Already know Playwright? The 60-second version</summary>
+        <div>
+<pre class="code" data-lang="ps" data-shell="ps">git clone https://github.com/Cepheid-Data-Platform/cdp-genai-apps-playwright-testing.git
+cd cdp-genai-apps-playwright-testing
+Copy-Item example.env .env           # then fill in EMAILID / PASS (step 3)
+cd {{folder}}
+npm ci
+npx playwright test testcase1.ts --project=chrome
+npm run qc-report                    # report: qc-report\index.html</pre>
+<pre class="code" data-lang="sh" data-shell="sh">git clone https://github.com/Cepheid-Data-Platform/cdp-genai-apps-playwright-testing.git
+cd cdp-genai-apps-playwright-testing
+cp example.env .env                  # then fill in EMAILID / PASS (step 3)
+cd {{folder}}
+npm ci
+npx playwright test testcase1.ts --project=chrome
+npm run qc-report                    # report: qc-report/index.html</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================================================================ OVERVIEW -->
+    <section id="overview" class="section">
+      <h2>How it fits together</h2>
+      <p class="lead">Five conventions explain the whole repo. The runner, the QC reports and the generators in this guide all build on them.</p>
+      <div class="grid-auto">
+        <div class="card conv"><span class="conv-n">1</span>
+          <h3>One app = one folder</h3>
+          <p>Each <code>cdp-genai-*-playwright</code> folder is an independent Playwright project with its own <code>package.json</code>,
+            <code>playwright.config.ts</code> and <code>tests/</code>. Its <code>app.config.json</code> registers it with the Live Test Runner.</p>
+        </div>
+        <div class="card conv"><span class="conv-n">2</span>
+          <h3>One test case = one file</h3>
+          <p><code>tests/testcase&lt;id&gt;.ts</code> holds a single <code>test('&lt;id&gt; - &lt;description&gt;', …)</code>.
+            The id becomes the runner's button and the description its label. There is no list to update.</p>
+        </div>
+        <div class="card conv"><span class="conv-n">3</span>
+          <h3>One <code>.env</code> for everything</h3>
+          <p>The repo-root <code>.env</code> (a copy of <code>example.env</code>) feeds every app through <code>load-env.js</code>:
+            <code>NAME</code> reaches every app, <code>&lt;APP&gt;__NAME</code> only one.</p>
+        </div>
+        <div class="card conv"><span class="conv-n">4</span>
+          <h3>Sign in once, reuse it</h3>
+          <p><code>tests/fixtures.ts</code> opens Chrome or Edge with a persistent profile in <code>.profiles/&lt;channel&gt;</code>, so
+            the SSO session is reused between runs. Because that profile is shared, those suites run with <code>workers: 1</code>.</p>
+        </div>
+        <div class="card conv"><span class="conv-n">5</span>
+          <h3>Every run is reported</h3>
+          <p>Playwright writes <code>test-results/results.json</code>, and <code>npm run qc-report</code> turns it into
+            <code>qc-report/index.html</code>. The Live Test Runner does both for you.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-h">What happens when a test runs</h3>
+      <div class="flow-label">Run</div>
+      <div class="flow">
+        <div class="node"><b>You</b>type <code>npx playwright test …</code> in a terminal, or click a test case in the Live Test Runner</div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b>Playwright CLI</b>runs in the app folder: <code>testcase3.ts --project=chrome</code></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b>Chrome / Edge</b>reuses the signed-in profile in <code>.profiles/chrome</code> or <code>.profiles/msedge</code></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b>Target app</b>the Dev, QA or Non-Prod environment picked for the run</div>
+      </div>
+      <div class="flow-label">Settings</div>
+      <div class="flow">
+        <div class="node"><b>Repo-root <code>.env</code></b><code>NAME</code> for every app, <code>&lt;APP&gt;__NAME</code> for one</div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b><code>load-env.js</code></b>gives each app only its own values</div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b><code>playwright.config.ts</code> → <code>tests/config.ts</code></b>URLs, credentials and timeouts</div>
+      </div>
+      <div class="flow-label">Reports</div>
+      <div class="flow">
+        <div class="node"><b><code>test-results/results.json</code></b>plus a screenshot, video and trace for every failure</div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b><code>generate-qc-report.js</code></b><code>npm run qc-report</code>, or automatic in the runner</div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="node"><b><code>qc-report/index.html</code></b>Summary · Latest per Testcase · Steps · one tab per failure</div>
+      </div>
+
+      <h3 class="sub-h">Repository layout</h3>
+<pre class="tree"><span class="d">cdp-genai-apps-playwright-testing/</span>
+├─ .env                          <span class="n">← your settings for every app (gitignored, copy of example.env)</span>
+├─ example.env                   <span class="n">← template: runner settings + one block per app</span>
+├─ load-env.js                   <span class="n">← hands each app its NAME / &lt;APP&gt;__NAME values</span>
+├─ <span class="d">live-test-runner/</span>             <span class="n">← web UI + API that runs any registered app (npm start → :8090)</span>
+│  ├─ Dockerfile                 <span class="n">← hosted image: lists every bundled app folder</span>
+│  ├─ test-browser-launch.js     <span class="n">← checks every bundled app's browser setup</span>
+│  └─ generate-qc-report.template.js  <span class="n">← copied into each app as generate-qc-report.js</span>
+├─ <span class="d">cdp-genai-cepheid-query-validator-playwright/</span>   <span class="n">← one app (folder), for example</span>
+│  ├─ app.config.json            <span class="n">← registers it: id, name, environments, browsers</span>
+│  ├─ package.json               <span class="n">← @playwright/test, dotenv · scripts: test, qc-report</span>
+│  ├─ package-lock.json          <span class="n">← exact versions for npm ci (commit it)</span>
+│  ├─ playwright.config.ts       <span class="n">← loadEnv(), workers: 1, list/json/html reporters, chrome + edge</span>
+│  ├─ example.env                <span class="n">← what this app reads (an app-level .env is optional)</span>
+│  ├─ generate-qc-report.js      <span class="n">← test-results/results.json → qc-report/index.html</span>
+│  ├─ query-validator-test-scripts.txt  <span class="n">← the manual test cases the specs automate</span>
+│  └─ <span class="d">tests/</span>
+│     ├─ config.ts               <span class="n">← URLs and credentials from the environment</span>
+│     ├─ fixtures.ts             <span class="n">← persistent Chrome/Edge profile (.profiles/&lt;channel&gt;)</span>
+│     ├─ queryValidatorHelpers.ts  <span class="n">← shared sign-in and navigation steps</span>
+│     ├─ testcase1.ts            <span class="n">← one test case per file = one runner button</span>
+│     └─ testcase2.ts …
+└─ … one folder per app (10 today)</pre>
+
+      <h3 class="sub-h">Registered apps</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>App</th><th>Id</th><th>Folder</th><th>Environments</th><th><code>.env</code> prefix</th><th></th></tr></thead>
+          <tbody id="appsBody"></tbody>
+        </table>
+      </div>
+      <p class="hint">A snapshot of the 10 registered apps (November 2026). The runner always lists what is on disk. To print its live list,
+        run this from the repo root:</p>
+<pre class="code" data-lang="any">node -e "const {loadApps}=require('./live-test-runner/shared');for(const a of loadApps().values())console.log(a.id,a.testcases.length)"</pre>
+    </section>
+
+    <!-- ================================================================ SETUP -->
+    <section id="setup" class="section">
+      <h2>Set up &amp; run</h2>
+      <p class="lead">Eight steps from a fresh machine to a green test and a QC report. Tick <strong>Done</strong> as you go: progress is
+        saved in this browser. Commands that mention a folder use the app picked under <em>I'm working on</em>
+        (<strong data-bind="name"></strong>).</p>
+
+      <article class="step" id="step-prereqs">
+        <header class="step-head">
+          <span class="step-num"><span>1</span></span>
+          <div class="step-title"><h3>Install the prerequisites</h3><span class="eta">⏱ ~10 min · once per machine</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="prereqs"> Done</label>
+        </header>
+        <div class="step-body">
+          <ul class="tight">
+            <li><strong>Node.js 18 or newer.</strong> CI and the runner image use Node 22, so use 22 if you can.</li>
+            <li><strong>Git</strong>, to clone the repo and contribute.</li>
+            <li><strong>Google Chrome and/or Microsoft Edge.</strong> The suites drive the browser installed on your machine
+              (Playwright projects <code>chrome</code> and <code>edge</code>).</li>
+            <li><strong>Corporate network or VPN.</strong> Every target app is internal.</li>
+            <li><em>Optional:</em> VS Code with the <em>Playwright Test for VS Code</em> extension (<code>ms-playwright.playwright</code>)
+              to run and debug tests from the editor.</li>
+          </ul>
+<pre class="code" data-lang="ps" data-shell="ps">winget install OpenJS.NodeJS.LTS     # Node.js LTS, includes npm
+winget install Git.Git</pre>
+<pre class="code" data-lang="sh" data-shell="sh">brew install node git                # macOS; on Linux install Node 18+ with nvm or your package manager</pre>
+          <p>Open a <strong>new</strong> terminal and check the versions:</p>
+<pre class="code" data-lang="any">node --version                       # v18 or newer (v22 recommended)
+npm --version
+git --version</pre>
+          <div class="callout warn" data-only="ps"><span class="ico">⚠️</span><div>
+            <p>If <code>npm</code> or <code>npx</code> fails with <em>“running scripts is disabled on this system”</em>, allow local
+              scripts for your account once:</p>
+<pre class="code" data-lang="ps">Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</pre>
+          </div></div>
+          <div class="step-foot"><a class="next-link" href="#step-clone">Next: clone the repository →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-clone">
+        <header class="step-head">
+          <span class="step-num"><span>2</span></span>
+          <div class="step-title"><h3>Clone the repository</h3><span class="eta">⏱ 1 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="clone"> Done</label>
+        </header>
+        <div class="step-body">
+<pre class="code" data-lang="any">git clone https://github.com/Cepheid-Data-Platform/cdp-genai-apps-playwright-testing.git
+cd cdp-genai-apps-playwright-testing</pre>
+          <p>Already cloned? Get the latest suites first:</p>
+<pre class="code" data-lang="any">git checkout main
+git pull</pre>
+          <div class="callout info"><span class="ico">📍</span><div>Every later command starts from this <strong>repo root</strong> unless it
+            begins with <code>cd</code>.</div></div>
+          <div class="step-foot"><a class="next-link" href="#step-env">Next: create your .env →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-env">
+        <header class="step-head">
+          <span class="step-num"><span>3</span></span>
+          <div class="step-title"><h3>Create your one-stop <code>.env</code></h3><span class="eta">⏱ 3 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="env"> Done</label>
+        </header>
+        <div class="step-body">
+          <p>All settings live in one file at the repo root: the runner's settings and every app's URLs and logins. Every app reads it,
+            whether a test is started from the runner or with <code>npx playwright test</code> in the app folder.</p>
+<pre class="code" data-lang="ps" data-shell="ps">Copy-Item example.env .env
+code .env                            # or: notepad .env</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cp example.env .env
+code .env                            # or any editor</pre>
+          <p>Each line reaches either every app or just one:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Line in <code>.env</code></th><th>Reaches</th><th>Seen by the tests as</th></tr></thead>
+              <tbody>
+                <tr><td><code>EMAILID=…</code></td><td>every app</td><td><code>EMAILID</code></td></tr>
+                <tr><td><code><span data-bind="prefix"></span>EMAILID=…</code></td><td>only <span data-bind="name"></span>, and it beats the shared line</td><td><code>EMAILID</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The prefix is the app id in capitals with <code>-</code> as <code>_</code>, plus two underscores. For
+            <strong data-bind="name"></strong> it is <code data-bind="prefix"></code>. The logins for your app look like this:</p>
+<pre class="code" data-lang="env"># Option A: one login for every app
+EMAILID=first.last@cepheid.com
+PASS=&lt;your password&gt;
+
+# Option B: a login only {{name}} uses (wins over option A)
+{{prefix}}EMAILID=first.last@cepheid.com
+{{prefix}}PASS=&lt;your password&gt;</pre>
+          <p>The app's URL and other settings are already in <code>.env</code> as commented-out lines in its block. Uncomment one only
+            to override the default.</p>
+          <p><strong>Which value wins</strong> (first match):</p>
+          <ol class="tight">
+            <li>The environment picked in the Live Test Runner (from <code>app.config.json</code>, e.g. <code>TEST_ENV=NONPROD</code>).</li>
+            <li>The repo-root <code>.env</code>: <code>&lt;APP&gt;__NAME</code>, then <code>NAME</code>.</li>
+            <li>A real environment variable (shell, or the ECS task on the server): <code>&lt;APP&gt;__NAME</code>, then <code>NAME</code>.</li>
+            <li>The app folder's own <code>.env</code>, if there is one (optional; each app has an <code>example.env</code> listing what it reads).</li>
+          </ol>
+          <div class="callout warn"><span class="ico">🔒</span><div><code>.env</code> is gitignored. Never commit it, and never paste passwords
+            into code, tickets or chat.</div></div>
+          <div class="callout info"><span class="ico">💡</span><div>
+            <p>Leave a setting out rather than empty: <code>NAME=</code> replaces the app's default with an empty string.</p>
+            <p>The root <code>.env</code> beats shell variables, so <span data-only="ps"><code>$env:NAME='…'</code></span><span data-only="sh"><code>export NAME=…</code></span>
+              does not override a value set in the file. Edit the file instead.</p>
+            <p>Many apps sign in silently on a Windows-joined laptop (Microsoft account chooser or device SSO), so the password is often only
+              typed on a fresh profile or in the headless server container.</p>
+          </div></div>
+          <div class="step-foot"><a class="next-link" href="#step-install">Next: install dependencies →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-install">
+        <header class="step-head">
+          <span class="step-num"><span>4</span></span>
+          <div class="step-title"><h3>Install the app's dependencies</h3><span class="eta">⏱ 1–2 min per app</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="install"> Done</label>
+        </header>
+        <div class="step-body">
+          <p>Each app folder is its own npm project. Install the one you work on:</p>
+<pre class="code" data-lang="any">cd {{folder}}
+npm ci                               # exact versions from package-lock.json</pre>
+          <p>Or install every registered app at once, from the repo root. You need this before running
+            <code>npm run test:browser</code> or hosting the runner:</p>
+<pre class="code" data-lang="ps" data-shell="ps">Get-ChildItem -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'app.config.json') } | ForEach-Object { Write-Host "--- $($_.Name)"; Push-Location $_.FullName; npm ci; Pop-Location }</pre>
+<pre class="code" data-lang="sh" data-shell="sh">for d in */; do [ -f "$d/app.config.json" ] &amp;&amp; (echo "--- $d" &amp;&amp; cd "$d" &amp;&amp; npm ci); done</pre>
+          <ul class="tight">
+            <li><code>npm ci</code> uses the committed <code>package-lock.json</code>. Use <code>npm install</code> only when you change
+              dependencies, then commit the updated lock file.</li>
+            <li><code>live-test-runner/</code> has no npm dependencies, so it needs no install.</li>
+          </ul>
+          <div class="step-foot"><a class="next-link" href="#step-browser">Next: check the browser →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-browser">
+        <header class="step-head">
+          <span class="step-num"><span>5</span></span>
+          <div class="step-title"><h3>Make sure Playwright can drive Chrome or Edge</h3><span class="eta">⏱ 0–5 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="browser"> Done</label>
+        </header>
+        <div class="step-body">
+          <p>Tests launch the Chrome (<code>--project=chrome</code>) or Edge (<code>--project=edge</code>) installed on your machine, each
+            with its own test profile. On a standard Windows laptop there is <strong>nothing to install</strong>. Run these from the app
+            folder, so they match that app's Playwright version:</p>
+<pre class="code" data-lang="ps" data-shell="ps">npx playwright --version             # e.g. Version 1.64.1
+npx playwright install chrome        # only if Chrome is missing (Edge: npx playwright install msedge)
+npx playwright install chromium      # only for headless, container-style runs</pre>
+<pre class="code" data-lang="sh" data-shell="sh">npx playwright --version                     # e.g. Version 1.64.1
+npx playwright install --with-deps chrome    # only if Chrome is missing
+npx playwright install --with-deps chromium  # only for headless, container-style runs</pre>
+          <div class="callout info"><span class="ico">🖥️</span><div>Headless runs (<code>PW_USE_BUNDLED_CHROMIUM=1</code>, see the
+            <a href="#run">command builder</a>) use Playwright's bundled Chromium, like the hosted runner container. They keep the
+            <code>chrome</code>/<code>edge</code> project names, but both run on Chromium.</div></div>
+          <div class="step-foot"><a class="next-link" href="#step-first-run">Next: run your first test →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-first-run">
+        <header class="step-head">
+          <span class="step-num"><span>6</span></span>
+          <div class="step-title"><h3>Run your first test</h3><span class="eta">⏱ 1–3 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="first-run"> Done</label>
+        </header>
+        <div class="step-body">
+<pre class="code" data-lang="any">cd {{folder}}                        # skip if you're already there
+npx playwright test --list           # compiles every spec and lists the test cases
+npx playwright test testcase1.ts --project=chrome</pre>
+          <p>A Chrome window opens. Most apps use the test profile in <code><span data-bind="folder"></span>/.profiles/chrome</code>: on
+            the very first run you may have to finish the Microsoft sign-in once (on a Windows-joined laptop it is usually silent), and
+            later runs reuse that session. CRA instead signs in a fresh browser through its service-account login. You should see
+            something like:</p>
+<pre class="code" data-lang="out">Running 1 test using 1 worker
+  ✓  1 [chrome] › tests/testcase1.ts:… › 1 - … (48.3s)
+  1 passed (49.1s)</pre>
+          <ul class="tight">
+            <li>Whole suite: <code>npx playwright test --project=chrome</code>. That takes from a few minutes to about 40 minutes, depending
+              on the app.</li>
+            <li>Several cases: <code>npx playwright test testcase1.ts testcase3.ts --project=chrome</code>. The
+              <a href="#run">command builder</a> writes these for you.</li>
+          </ul>
+          <div class="callout warn"><span class="ico">⚠️</span><div>
+            <p>Run <strong>one</strong> Playwright run per app at a time. A second run, a codegen window or the Inspector on the same
+              <code>.profiles/&lt;channel&gt;</code> makes Chrome close one of the browsers mid-test.</p>
+            <p>Some cases create and clean up real records in shared environments (for example, Query Validator cases 2–3 file a tagged chat
+              each run). Read the app's section in <a href="README.md">README.md</a> before running a full suite.</p>
+          </div></div>
+          <div class="step-foot"><a class="next-link" href="#step-reports">Next: read the reports →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-reports">
+        <header class="step-head">
+          <span class="step-num"><span>7</span></span>
+          <div class="step-title"><h3>Read the reports</h3><span class="eta">⏱ 1 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="reports"> Done</label>
+        </header>
+        <div class="step-body">
+<pre class="code" data-lang="ps" data-shell="ps">npm run qc-report                    # custom QC report → qc-report\index.html
+Start-Process qc-report\index.html
+npx playwright show-report           # Playwright's HTML report; Ctrl+C to stop serving it</pre>
+<pre class="code" data-lang="sh" data-shell="sh">npm run qc-report                    # custom QC report → qc-report/index.html
+open qc-report/index.html            # Linux: xdg-open qc-report/index.html
+npx playwright show-report           # Playwright's HTML report; Ctrl+C to stop serving it</pre>
+          <p>The QC report has a <strong>Summary</strong> of the last run, <strong>Latest per Testcase</strong> (where every test case
+            stands, including ones the last run skipped), <strong>All Testcases &amp; Steps</strong> (your <code>// Step</code> comments,
+            ticked off), and <strong>one tab per failure</strong> with the error, the failed step, a screenshot, a video and a trace.</p>
+          <div class="callout warn"><span class="ico">⚠️</span><div>Don't add <code>--reporter=…</code> to the command. It replaces the
+            configured JSON reporter, so <code>test-results/results.json</code> isn't written and <code>npm run qc-report</code> stops with
+            <em>“No test-results/results.json found”</em>.</div></div>
+          <p>Failures keep their artifacts under <code>test-results/</code>. To replay one, run
+            <code>npx playwright show-trace test-results/&lt;test-folder&gt;/trace.zip</code>.</p>
+          <div class="step-foot"><a class="next-link" href="#step-runner">Next: try the Live Test Runner →</a></div>
+        </div>
+      </article>
+
+      <article class="step" id="step-runner">
+        <header class="step-head">
+          <span class="step-num"><span>8</span></span>
+          <div class="step-title"><h3>Try the Live Test Runner <span class="eta">(optional)</span></h3><span class="eta">⏱ 2 min</span></div>
+          <label class="done-toggle"><input type="checkbox" data-step="runner"> Done</label>
+        </header>
+        <div class="step-body">
+          <p>The same web UI the team uses, running on your machine:</p>
+<pre class="code" data-lang="ps" data-shell="ps">cd live-test-runner                  # from the repo root
+npm start                            # or: node server.js  →  http://localhost:8090</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cd live-test-runner &amp;&amp; npm start     # →  http://localhost:8090</pre>
+          <p>Open <a href="http://localhost:8090" target="_blank" rel="noopener">http://localhost:8090</a> and sign in with Centralized SSO.
+            Pick an <strong>App</strong>, an <strong>Environment</strong> and a <strong>Browser</strong>, then click a test case, use
+            <strong>Run ALL</strong>, or type ids such as <code>2 4 6</code>. Output streams live, and the Playwright and QC reports appear
+            when the run ends.</p>
+          <ul class="tight">
+            <li>Runner settings (<code>PORT</code>, SSO, Access Manager, roles) are in the same root <code>.env</code>.
+              <strong>Restart the runner</strong> after you edit it.</li>
+            <li>New apps and test cases appear when you refresh the page. No restart needed.</li>
+            <li>Only one run happens at a time across all apps, because they share browser profiles. Extra runs wait in a queue.</li>
+          </ul>
+          <p>For local development without SSO only, add this to the repo-root <code>.env</code>:</p>
+<pre class="code" data-lang="env"># local development only: never on a shared host, because the runner executes tests on its machine
+SSO_AUTH_ENABLED=false</pre>
+          <p>Hosting, roles, the API and the Windows runner agent are covered in
+            <a href="live-test-runner/DEPLOYMENT.md">live-test-runner/DEPLOYMENT.md</a>.</p>
+          <div class="callout ok"><span class="ico">🎉</span><div>That's the setup. Next: <a href="#run">build a run command</a>,
+            <a href="#add-test">add a test case</a> or <a href="#add-app">add a new app</a>.</div></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================================================================ COMMAND BUILDER -->
+    <section id="run" class="section">
+      <h2>Command builder</h2>
+      <p class="lead">Pick what to run and copy the result into your terminal. Test case ids are the numbers in
+        <code>tests/testcase&lt;id&gt;.ts</code>, the same ids as the runner's buttons.</p>
+      <div class="tool">
+        <form class="card tool-form" onsubmit="return false">
+          <div class="field"><label for="appSelectRun">App</label><select id="appSelectRun" class="app-select"></select></div>
+          <div class="field">
+            <label for="b-ids">Test case ids</label>
+            <input type="text" id="b-ids" class="mono" data-persist="b-ids" placeholder="e.g. 1 3 5 (empty runs them all)" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <span class="label" id="b-browser-label">Browser</span>
+            <div class="pills" role="radiogroup" aria-labelledby="b-browser-label">
+              <label><input type="radio" name="b-browser" value="chrome" data-persist="b-browser" checked> Chrome</label>
+              <label><input type="radio" name="b-browser" value="edge" data-persist="b-browser"> Edge</label>
+              <label><input type="radio" name="b-browser" value="all" data-persist="b-browser"> Both</label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="b-mode">Mode</label>
+            <select id="b-mode" data-persist="b-mode">
+              <option value="run">Run</option>
+              <option value="debug">Debug: step through in the Inspector (--debug)</option>
+              <option value="ui">UI mode: watch and time-travel (--ui)</option>
+              <option value="list">List only: compile check (--list)</option>
+            </select>
+          </div>
+          <div class="field" id="b-env-row" hidden>
+            <label for="b-env">Environment</label>
+            <select id="b-env" data-persist="b-env"></select>
+          </div>
+          <label class="check"><input type="checkbox" id="b-install" data-persist="b-install"> Install dependencies first (<code>npm ci</code>)</label>
+          <label class="check"><input type="checkbox" id="b-qc" data-persist="b-qc" checked> Build and open the QC report afterwards</label>
+          <label class="check"><input type="checkbox" id="b-trace" data-persist="b-trace"> Keep a trace for every test (<code>--trace on</code>)</label>
+          <label class="check"><input type="checkbox" id="b-headless" data-persist="b-headless"> Headless bundled Chromium, like the hosted container</label>
+        </form>
+        <div class="tool-out">
+          <ul class="issues" id="builderIssues" aria-live="polite"></ul>
+          <pre class="code" id="builderOut" data-lang="ps" data-dynamic></pre>
+          <ul class="explain" id="builderExplain"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ ADD A TEST CASE -->
+    <section id="add-test" class="section">
+      <h2>Add a test case to an existing app</h2>
+      <p class="lead">Adding a test case means adding <strong>one file</strong>. The Live Test Runner, the QC report and
+        <code>npx playwright test</code> all discover <code>tests/testcase&lt;id&gt;.ts</code> on their own, so there is no list to
+        register it in.</p>
+
+      <h3 class="sub-h">The five rules the runner relies on</h3>
+      <ol class="rules">
+        <li><strong>File name <code>tests/testcase&lt;id&gt;.ts</code>.</strong> <code>&lt;id&gt;</code> is letters and digits only
+          (<code>12</code>, <code>2b</code>) and unique within the app. Names like <code>testcase12-login.ts</code> or
+          <code>testcase_12.ts</code> are silently ignored. <em>CRA</em> runs numeric ids only: its <code>testMatch</code> is
+          <code>/testcase\d+\.ts/</code>.</li>
+        <li><strong>One top-level test per file, titled <code>'&lt;id&gt; - &lt;description&gt;'</code>.</strong> The runner reads the
+          <em>first</em> <code>test('…')</code> in the file and shows the description as the button label (it strips the
+          <code>&lt;id&gt; - </code> prefix).</li>
+        <li><strong>No quote characters in the title.</strong> The runner and the QC report read the title only up to the first
+          <code>'</code>, <code>"</code> or <code>`</code>. Use typographic quotes (’ “ ”) if you need them. The generator below converts
+          them for you.</li>
+        <li><strong>Import <code>test</code> and <code>expect</code> from <code>./fixtures</code></strong>, not from
+          <code>@playwright/test</code>, so the test gets the signed-in persistent profile. <em>Exception:</em> CRA tests sign in with
+          <code>loginToCraAsServiceAccount()</code> from <code>./serviceLogin</code>.</li>
+        <li><strong>Mark steps with <code>// Step N: …</code> comments</strong> (or <code>// Steps 1-4: …</code>). The QC report lists
+          them and pinpoints the step a failure happened in. A blank line or a line of code ends the step text.</li>
+      </ol>
+
+      <h3 class="sub-h">Step by step</h3>
+      <article class="step">
+        <div class="step-body">
+          <p><strong>1 · Find the next free id</strong> in the app's <code>tests/</code> folder:</p>
+<pre class="code" data-lang="ps" data-shell="ps">cd {{folder}}
+(Get-ChildItem tests -Filter 'testcase*.ts' | ForEach-Object { if ($_.BaseName -match '^testcase(\d+)$') { [int]$Matches[1] } } | Measure-Object -Maximum).Maximum + 1</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cd {{folder}}
+echo $(( $(ls tests | sed -n 's/^testcase\([0-9][0-9]*\)\.ts$/\1/p' | sort -n | tail -1) + 1 ))</pre>
+          <p><strong>2 · Create <code>tests/testcase&lt;id&gt;.ts</code>.</strong> Fill in the generator below and click
+            <em>Download</em>, or copy the closest existing case and change its title:</p>
+<pre class="code" data-lang="ps" data-shell="ps">Copy-Item tests\testcase3.ts tests\testcase4.ts   # then change the title to 4 - …</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cp tests/testcase3.ts tests/testcase4.ts         # then change the title to 4 - …</pre>
+          <p><strong>3 · Automate each step</strong> with the app's own sign-in and navigation helpers (table below).
+            <a href="#tips">Record locators with codegen</a> instead of guessing selectors.</p>
+          <p><strong>4 · Run and debug it.</strong> Add <code>--debug</code> to step through it in the Playwright Inspector:</p>
+<pre class="code" data-lang="any">npx playwright test testcase4.ts --project=chrome</pre>
+          <p><strong>5 · Check the QC report.</strong> Run <code>npm run qc-report</code>. <em>All Testcases &amp; Steps</em> should list
+            your <code>// Step</code> comments.</p>
+          <p><strong>6 · Document and ship it.</strong> Add a row to the app's table in <a href="README.md">README.md</a> (and to its
+            <code>*-test-scripts.txt</code>, if it has one), commit the file and open a PR. Your local runner shows the new button when you
+            refresh the page. The hosted runner shows it once the PR is merged to <code>main</code> and <em>Deploy Live Test Runner</em>
+            finishes.</p>
+        </div>
+      </article>
+
+      <h3 class="sub-h">How each app signs in</h3>
+      <p class="hint">Start step 1 of a new test with the call for its app:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>App</th><th>First step of a test</th></tr></thead>
+          <tbody id="signinBody"></tbody>
+        </table>
+      </div>
+
+      <h3 class="sub-h">Test case generator</h3>
+      <div class="tool">
+        <form class="card tool-form" onsubmit="return false">
+          <div class="field"><label for="appSelectTc">App</label><select id="appSelectTc" class="app-select"></select></div>
+          <div class="field">
+            <label for="t-id">Test case id</label>
+            <input type="text" id="t-id" class="mono" data-persist="t-id" placeholder="e.g. 4" autocomplete="off" spellcheck="false">
+            <span class="hint">Letters and digits only. To find the next free one, see step 1 above.</span>
+          </div>
+          <div class="field">
+            <label for="t-title">What it verifies (title)</label>
+            <input type="text" id="t-title" data-persist="t-title" placeholder="e.g. Export the search results as CSV">
+          </div>
+          <div class="field">
+            <label for="t-steps">Steps, one per line</label>
+            <textarea id="t-steps" rows="6" data-persist="t-steps">Open the application and sign in
+Open the page under test
+Perform the action
+Verify the expected result</textarea>
+            <span class="hint">Each line becomes a <code>// Step N:</code> comment. Step 1 gets the app's sign-in call.</span>
+          </div>
+          <div class="field">
+            <label for="t-timeout">Time budget</label>
+            <select id="t-timeout" data-persist="t-timeout">
+              <option value="120000">2 minutes</option>
+              <option value="300000" selected>5 minutes</option>
+              <option value="600000">10 minutes</option>
+              <option value="900000">15 minutes (slow LLM answers)</option>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="t-fixme" data-persist="t-fixme" checked> Mark it “not automated yet”
+            (<code>test.fixme</code>) until the steps are filled in</label>
+        </form>
+        <div class="tool-out">
+          <div class="out-head">
+            <span class="file-path">📄 <span id="tcPath"></span></span>
+            <div class="btns"><button type="button" class="btn primary" id="tcDownload">⬇ Download</button></div>
+          </div>
+          <ul class="issues" id="tcIssues" aria-live="polite"></ul>
+          <pre class="code" id="tcOut" data-lang="ts" data-dynamic></pre>
+          <p><strong>Then</strong> move it into the app, run it, and commit it once it passes:</p>
+          <pre class="code" id="tcNext" data-lang="ps" data-dynamic></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ ADD A NEW APP -->
+    <section id="add-app" class="section">
+      <h2>Add a new app (project)</h2>
+      <p class="lead">A new app is a new folder next to the others, with an <code>app.config.json</code>. Your local runner lists it as
+        soon as you refresh the page. The hosted runner only lists apps baked into its Docker image (step 5). Fill in the form: every
+        file and snippet below updates as you type.</p>
+
+      <div class="tool">
+        <form class="card tool-form" onsubmit="return false">
+          <div class="field">
+            <label for="n-name">Display name</label>
+            <input type="text" id="n-name" data-persist="n-name" value="My New App">
+            <span class="hint">Shown in the runner's App dropdown and the QC report.</span>
+          </div>
+          <div class="field">
+            <label for="n-id">App id</label>
+            <input type="text" id="n-id" class="mono" data-persist="n-id" autocomplete="off" spellcheck="false">
+            <span class="hint">Lowercase letters, digits and hyphens. Its <code>.env</code> prefix is <code id="n-prefix"></code>.
+              Clear the field to fill it in from the name.</span>
+          </div>
+          <div class="field">
+            <label for="n-folder">Folder</label>
+            <input type="text" id="n-folder" class="mono" data-persist="n-folder" autocomplete="off" spellcheck="false">
+            <span class="hint">Created at the repo root. Clear the field to fill it in from the id.</span>
+          </div>
+          <div class="field">
+            <label for="n-desc">One-line description</label>
+            <input type="text" id="n-desc" data-persist="n-desc" placeholder="Shown under the runner's dropdowns">
+          </div>
+          <div class="field">
+            <label for="n-url">App URL</label>
+            <input type="text" id="n-url" class="mono" data-persist="n-url" value="https://my-new-app.dev.cepheid.com" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="n-urlvar">URL setting name</label>
+            <input type="text" id="n-urlvar" class="mono" data-persist="n-urlvar" autocomplete="off" spellcheck="false">
+            <span class="hint">Read by <code>tests/config.ts</code>. To override it, set <code id="n-urlvar-scoped"></code> in the root
+              <code>.env</code>. Clear the field to fill it in from the id.</span>
+          </div>
+          <fieldset class="field">
+            <legend class="label">Environments</legend>
+            <div class="env-grid">
+              <label class="check"><input type="checkbox" id="n-env-DEV" data-persist="n-env-DEV" checked> Dev</label>
+              <input type="text" id="n-url-DEV" class="mono env-url" data-persist="n-url-DEV" placeholder="Dev URL (optional)">
+              <label class="check"><input type="checkbox" id="n-env-QA" data-persist="n-env-QA"> QA</label>
+              <input type="text" id="n-url-QA" class="mono env-url" data-persist="n-url-QA" placeholder="QA URL (optional)">
+              <label class="check"><input type="checkbox" id="n-env-NONPROD" data-persist="n-env-NONPROD"> Non-Prod</label>
+              <input type="text" id="n-url-NONPROD" class="mono env-url" data-persist="n-url-NONPROD" placeholder="Non-Prod URL (optional)">
+              <label class="check"><input type="checkbox" id="n-env-PROD" data-persist="n-env-PROD"> Prod</label>
+              <input type="text" id="n-url-PROD" class="mono env-url" data-persist="n-url-PROD" placeholder="Prod URL (optional)">
+            </div>
+            <span class="hint">With two or more, each environment can set its own URL. The runner's Environment picker passes it as
+              <code id="n-urlvar-env"></code>; a blank one uses the App URL.</span>
+          </fieldset>
+          <div class="field">
+            <label for="n-defenv">Default environment</label>
+            <select id="n-defenv" data-persist="n-defenv"></select>
+          </div>
+          <fieldset class="field">
+            <legend class="label">Browsers</legend>
+            <div class="pills">
+              <label><input type="checkbox" id="n-br-chrome" data-persist="n-br-chrome" checked> Chrome</label>
+              <label><input type="checkbox" id="n-br-edge" data-persist="n-br-edge" checked> Edge</label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="n-first">First test case</label>
+            <input type="text" id="n-first" data-persist="n-first" value="Open the application and verify the home page">
+          </div>
+          <label class="check"><input type="checkbox" id="n-creds" data-persist="n-creds" checked> Signs in with Microsoft SSO
+            (adds <code>EMAILID</code> / <code>PASS</code>)</label>
+          <label class="check"><input type="checkbox" id="n-qc" data-persist="n-qc" checked> Custom QC report (recommended)</label>
+        </form>
+        <div class="tool-out">
+          <ul class="issues" id="naIssues" aria-live="polite"></ul>
+          <div class="out-head">
+            <span class="file-path">📁 <span id="naFolder"></span>/</span>
+            <div class="btns">
+              <button type="button" class="btn primary" id="naDownload">⬇ Download scaffold script</button>
+              <button type="button" class="btn" id="naCopyScript">Copy script</button>
+            </div>
+          </div>
+          <div class="tabs" id="naTabs" role="tablist" aria-label="Generated files"></div>
+          <pre class="code" id="naOut" data-lang="json" data-dynamic></pre>
+          <p class="hint">The scaffold script writes every file above and copies
+            <code>live-test-runner/generate-qc-report.template.js</code> to <code>generate-qc-report.js</code>. It stops without writing
+            anything if the folder or the app id already exists.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-h">Step by step</h3>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>1</span></span>
+          <div class="step-title"><h3>Create the folder and install it</h3><span class="eta">Run from the repo root</span></div></header>
+        <div class="step-body">
+          <p>Click <strong>Download scaffold script</strong> above, then run it from the repo root. It works in any shell where Node runs.
+            Prefer to do it by hand? Create each file from the tabs above and copy the QC template yourself.</p>
+          <pre class="code" id="naNext" data-lang="ps" data-dynamic></pre>
+          <p>Commit the <code>package-lock.json</code> that <code>npm install</code> creates: the Docker build and CI install with
+            <code>npm ci</code>.</p>
+          <div class="callout info"><span class="ico">ℹ️</span><div>A new app gets the newest Playwright 1.x, which can be newer than the
+            other suites' version. Headed Chrome and Edge need nothing extra. For headless runs (<code>PW_USE_BUNDLED_CHROMIUM=1</code>),
+            run <code>npx playwright install chromium</code> once in the new folder. The Docker image installs the matching Chromium for
+            each app it lists (step 5 ③).</div></div>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>2</span></span>
+          <div class="step-title"><h3>Make the sign-in work</h3><span class="eta">tests/<span class="na-camel"></span>Helpers.ts</span></div></header>
+        <div class="step-body">
+          <p><code>openApp()</code> opens the URL and waits for the page. If the app asks for Microsoft SSO, complete the sign-in there by
+            adapting the helper from an app with the same flow:</p>
+          <ul class="tight">
+            <li><strong>“Login with Centralized SSO” button</strong> (Streamlit apps): <code>signInWithCentralSso()</code> in
+              <code>cdp-genai-cepheid-query-validator-playwright/tests/queryValidatorHelpers.ts</code>, or <code>login()</code> in
+              <code>cdp-genai-cepheid-sfdc-finance-playwright/tests/sfdcHelpers.ts</code>.</li>
+            <li><strong>Microsoft account chooser / SAML</strong> (React apps): <code>openSignedIn()</code> in
+              <code>cdp-genai-rate-explorer-playwright/tests/rateExplorerHelpers.ts</code> or
+              <code>cdp-genai-trustform-ai-playwright/tests/trustformHelpers.ts</code>.</li>
+          </ul>
+          <p>Then rerun <code>testcase1.ts</code> until it passes, and run <code>npm run qc-report</code> once to check the report.</p>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>3</span></span>
+          <div class="step-title"><h3>Add its settings to the root <code>.env</code> and <code>example.env</code></h3><span class="eta">prefix <code class="na-prefix"></code></span></div></header>
+        <div class="step-body">
+          <div class="reg"><h4>Your repo-root <code>.env</code> (not committed)</h4></div>
+          <pre class="code" id="reg-env" data-lang="env" data-dynamic></pre>
+          <div class="reg"><h4>Root <code>example.env</code> (committed template)</h4>
+            <p>Add this block to the <em>Apps</em> part, next to the other apps' blocks.</p></div>
+          <pre class="code" id="reg-example" data-lang="env" data-dynamic></pre>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>4</span></span>
+          <div class="step-title"><h3>Check that the runner discovers it</h3><span class="eta">no restart needed</span></div></header>
+        <div class="step-body">
+          <p>From the repo root, this prints what the runner sees. Your id should be listed with its number of test cases:</p>
+<pre class="code" data-lang="any">node -e "const {loadApps}=require('./live-test-runner/shared');for(const a of loadApps().values())console.log(a.id,a.testcases.length)"</pre>
+          <p>Or refresh <a href="http://localhost:8090" target="_blank" rel="noopener">http://localhost:8090</a>. The app should appear in the
+            <strong>App</strong> dropdown with its environments and test cases. If it doesn't, the runner's console prints
+            <code>[apps] skipping &lt;folder&gt;: …</code> with the reason.</p>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>5</span></span>
+          <div class="step-title"><h3>Bake it into the hosted runner</h3><span class="eta">3 files · 5 small edits</span></div></header>
+        <div class="step-body">
+          <p>The deployed container can only list folders copied into its image.</p>
+          <div class="reg"><h4>① <code>live-test-runner/Dockerfile</code>: the <code>COPY</code> list</h4>
+            <p>Add this after the last app <code>COPY</code> line, above <code># ── Copy the live test runner</code>.</p></div>
+          <pre class="code" id="reg-docker-copy" data-lang="docker" data-dynamic></pre>
+          <div class="reg"><h4>② <code>live-test-runner/Dockerfile</code>: the <code>npm install</code> loop</h4>
+            <p>Add this line directly above <code>      live-test-runner ; do \</code>.</p></div>
+          <pre class="code" id="reg-docker-npm" data-lang="docker" data-dynamic></pre>
+          <div class="reg"><h4>③ <code>live-test-runner/Dockerfile</code>: the <code>playwright install chromium</code> loop</h4>
+            <p>The last folder in this loop ends with <code> ; do \</code> (currently
+              <code>cdp-genai-cepheid-query-validator-playwright</code>). Change that ending to <code> \</code>, then add this as the new
+              last line.</p></div>
+          <pre class="code" id="reg-docker-chromium" data-lang="docker" data-dynamic></pre>
+          <div class="reg"><h4>④ <code>.github/workflows/deploy-live-test-runner.yml</code>: <code>paths:</code></h4>
+            <p>Add this after the last app folder, above <code>- ".dockerignore"</code>, so a change to the app redeploys the runner.</p></div>
+          <pre class="code" id="reg-workflow" data-lang="yaml" data-dynamic></pre>
+          <div class="reg"><h4>⑤ <code>live-test-runner/test-browser-launch.js</code>: the <code>apps</code> array</h4>
+            <p>Add the folder, then check every bundled app's browser setup. This needs <code>npm ci</code> in every app
+              (<a href="#step-install">step 4 of the setup</a>).</p></div>
+          <pre class="code" id="reg-browser" data-lang="js" data-dynamic></pre>
+<pre class="code" data-lang="ps" data-shell="ps">cd live-test-runner; npm run test:browser</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cd live-test-runner &amp;&amp; npm run test:browser</pre>
+          <div class="reg"><h4>Optional: <code>.github/workflows/lint.yml</code></h4>
+            <p>Add the folder to <code>matrix.app</code> so CI compile-checks its specs with <code>npx playwright test --list</code>.</p></div>
+          <pre class="code" id="reg-lint" data-lang="yaml" data-dynamic></pre>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>6</span></span>
+          <div class="step-title"><h3>Document it</h3><span class="eta">README.md · DEPLOYMENT.md</span></div></header>
+        <div class="step-body">
+          <div class="reg"><h4><code>README.md</code>: the <em>Registered apps</em> table</h4></div>
+          <pre class="code" id="reg-readme-row" data-lang="text" data-dynamic></pre>
+          <div class="reg"><h4><code>README.md</code>: an app section</h4>
+            <p>Add it above the existing app sections, newest first.</p></div>
+          <pre class="code" id="reg-readme-section" data-lang="text" data-dynamic></pre>
+          <div class="reg"><h4><code>live-test-runner/DEPLOYMENT.md</code></h4>
+            <p>Add a row to the prefix table in §4, and add the name to the bundled-apps sentence under <em>Container app list</em>.</p></div>
+          <pre class="code" id="reg-deploy-md" data-lang="text" data-dynamic></pre>
+        </div>
+      </article>
+
+      <article class="step">
+        <header class="step-head"><span class="step-num"><span>7</span></span>
+          <div class="step-title"><h3>Ship it</h3><span class="eta">PR → main → Deploy Live Test Runner</span></div></header>
+        <div class="step-body">
+          <pre class="code" id="reg-git" data-lang="ps" data-dynamic></pre>
+          <ul class="tight">
+            <li>When the PR merges to <code>main</code>, the <strong>Deploy Live Test Runner</strong> workflow builds the image and deploys it
+              to ECS.</li>
+            <li>The container has no <code>.env</code> files. Add the app's settings to the ECS task environment with the
+              <code class="na-prefix"></code> names, and keep passwords in Secrets Manager.</li>
+            <li>Reload the hosted runner. If the app is missing, check the deployed <code>GET /api/apps</code> response and that ECS is
+              running the new image.</li>
+          </ul>
+          <div class="callout ok"><span class="ico">✅</span><div>From now on, adding test cases to the new app is just
+            <a href="#add-test">adding files</a>.</div></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================================================================ TIPS -->
+    <section id="tips" class="section">
+      <h2>Writing good tests</h2>
+      <p class="lead">Patterns the existing suites already use. Following them keeps tests stable against slow GenAI answers and shared
+        environments.</p>
+      <div class="grid-wide">
+        <div class="card">
+          <h3>🎯 Find elements the way users do</h3>
+          <p class="hint">Role, label and text locators survive styling changes. Avoid long CSS or XPath chains.</p>
+<pre class="code" data-lang="ts">page.getByRole('button', { name: 'Save Query' });
+page.getByLabel('Reason');
+page.getByPlaceholder('Ask a question');
+page.getByText('Validated Queries', { exact: true });</pre>
+        </div>
+        <div class="card">
+          <h3>🎥 Record instead of guessing</h3>
+          <p class="hint">Codegen with the app's test profile starts already signed in. Close it before running tests, because both use the
+            same profile.</p>
+<pre class="code" data-lang="ps" data-shell="ps">cd {{folder}}
+npx playwright codegen --channel=chrome `
+  --user-data-dir=.profiles\chrome &lt;app URL&gt;</pre>
+<pre class="code" data-lang="sh" data-shell="sh">cd {{folder}}
+npx playwright codegen --channel=chrome \
+  --user-data-dir=.profiles/chrome &lt;app URL&gt;</pre>
+        </div>
+        <div class="card">
+          <h3>⏳ Wait with assertions, not sleeps</h3>
+          <p class="hint">Web-first assertions retry until they time out. <code>page.waitForTimeout()</code> only slows tests down and
+            still flakes. The newer suites set 30 s per action, 90 s per navigation and 10 min per test.</p>
+<pre class="code" data-lang="ts">await expect(
+  page.getByRole('heading', { name: 'Dashboard' }),
+  'the dashboard should open',
+).toBeVisible({ timeout: 60000 });
+
+// a slow LLM answer: more time for this test only
+test.setTimeout(900000);</pre>
+        </div>
+        <div class="card">
+          <h3>🐞 Debug a failure</h3>
+          <p class="hint">Step through it in the Inspector, or replay the trace a failed run kept. <code>await page.pause();</code> stops
+            at a line of your choice.</p>
+<pre class="code" data-lang="any">npx playwright test testcase3.ts --project=chrome --debug
+npx playwright show-trace test-results/&lt;test&gt;/trace.zip</pre>
+        </div>
+        <div class="card">
+          <h3>🧾 Make failures explain themselves</h3>
+          <p class="hint">Assertion messages appear in the QC report next to the failed step. Skip, with a reason, when an optional
+            prerequisite is missing.</p>
+<pre class="code" data-lang="ts">await expect(saveButton, 'Save should be enabled')
+  .toBeEnabled();
+test.skip(!process.env.CCI_OWNER_EMAIL,
+  'needs CCI_OWNER_EMAIL / CCI_OWNER_PASS in .env');</pre>
+        </div>
+        <div class="card">
+          <h3>🧹 Leave shared environments clean</h3>
+          <p class="hint">Tests run against environments other people use:</p>
+          <ul class="tight hint">
+            <li>Tag what you create so it can be found again. Query Validator, for example, tags its chats with
+              <code>[ref QVTEST-&lt;id&gt;]</code>.</li>
+            <li>Delete what you create in a <code>finally</code> block, and restore settings you change.</li>
+            <li>Never act on other users' records.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>📁 Files in, files out</h3>
+          <p class="hint">Keep upload fixtures in <code>test-data/</code>. Save downloads under <code>test-results/downloads/</code>, so a
+            failed run can be inspected.</p>
+<pre class="code" data-lang="ts">const [download] = await Promise.all([
+  page.waitForEvent('download'),
+  page.getByRole('button', { name: 'Export' }).click(),
+]);
+const dir = path.join('test-results', 'downloads');
+const file = download.suggestedFilename();
+await download.saveAs(path.join(dir, file));</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ TROUBLESHOOTING -->
+    <section id="troubleshooting" class="section">
+      <h2>Troubleshooting</h2>
+      <p class="lead">The problems people actually hit, and how to fix each one.</p>
+      <input type="text" class="filter" id="faqFilter" placeholder="🔎 Filter, e.g. profile, .env, results.json" aria-label="Filter troubleshooting entries">
+      <div id="faqList">
+        <details class="faq" data-only="ps">
+          <summary><code>npx</code> / <code>npm</code>: “running scripts is disabled on this system”</summary>
+          <div class="faq-body">
+            <p>PowerShell blocks the <code>npm.ps1</code> / <code>npx.ps1</code> shims. Allow local scripts for your account once (or call
+              <code>npx.cmd</code> instead):</p>
+<pre class="code" data-lang="ps">Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</pre>
+          </div>
+        </details>
+        <details class="faq">
+          <summary><code>npm run qc-report</code>: “No test-results/results.json found”</summary>
+          <div class="faq-body"><p>Run the tests first, without <code>--reporter=…</code>. Overriding the reporter drops the JSON reporter that
+            writes <code>results.json</code>. Plain <code>npx playwright test</code> already prints the list output.</p></div>
+        </details>
+        <details class="faq">
+          <summary>The browser opens and closes straight away, or “user data directory is already in use”</summary>
+          <div class="faq-body"><p>Another browser is using the same <code>.profiles/&lt;channel&gt;</code>: a second run of the same suite, a
+            codegen window, or an Inspector you left open. Close it and run one suite at a time. This is why every app with a shared
+            profile sets <code>workers: 1</code>.</p></div>
+        </details>
+        <details class="faq">
+          <summary>It asks me to sign in every time, or gets stuck on the Microsoft login</summary>
+          <div class="faq-body">
+            <ul class="tight">
+              <li>Check <code>&lt;APP&gt;__EMAILID</code> / <code>&lt;APP&gt;__PASS</code> (or the shared <code>EMAILID</code> /
+                <code>PASS</code>) in the root <code>.env</code>.</li>
+              <li>Finish the sign-in by hand once in the window the test opened. The profile keeps the session.</li>
+              <li>If the profile is broken, delete it. It is recreated on the next run, and you sign in again:</li>
+            </ul>
+<pre class="code" data-lang="ps" data-shell="ps">Remove-Item -Recurse -Force .profiles\chrome     # in the app folder</pre>
+<pre class="code" data-lang="sh" data-shell="sh">rm -rf .profiles/chrome                          # in the app folder</pre>
+          </div>
+        </details>
+        <details class="faq">
+          <summary>My <code>.env</code> change has no effect</summary>
+          <div class="faq-body"><ul class="tight">
+            <li>The <strong>root</strong> <code>.env</code> beats shell variables and the app folder's own <code>.env</code>. Edit the root
+              file.</li>
+            <li>Check the prefix: the app id in capitals, <code>-</code> as <code>_</code>, then <strong>two</strong> underscores
+              (<code>RATE_EXPLORER__</code>).</li>
+            <li><code>NAME=</code> with nothing after it sets an empty value instead of keeping the default. Delete or comment out the line.</li>
+            <li>Restart the Live Test Runner after editing. A standalone <code>npx playwright test</code> reads the file fresh on each run.</li>
+          </ul></div>
+        </details>
+        <details class="faq">
+          <summary>My new test case doesn't show up</summary>
+          <div class="faq-body"><ul class="tight">
+            <li>The file must be named <code>testcase&lt;letters or digits&gt;.ts</code> (no <code>-</code>, <code>_</code> or spaces) and
+              sit in the app's <code>tests/</code> folder.</li>
+            <li><code>npx playwright test --list</code> in the app folder should list it. If not, the file has a syntax or import error.</li>
+            <li>Refresh the runner page. The hosted runner only updates after the PR is merged to <code>main</code> and deployed.</li>
+            <li>A wrong button label means the title isn't the first <code>test('…')</code> in the file, or it contains a quote.</li>
+          </ul></div>
+        </details>
+        <details class="faq">
+          <summary>My new app isn't in the App dropdown</summary>
+          <div class="faq-body"><ul class="tight">
+            <li><code>app.config.json</code> must be valid JSON <strong>without a byte-order mark</strong>. Windows PowerShell 5.1's
+              <code>Set-Content -Encoding UTF8</code> adds one, and the runner then skips the app. The generator's scaffold script writes
+              plain UTF-8.</li>
+            <li><code>"id"</code> must match <code>^[a-z0-9][a-z0-9-]*$</code> and be unique. The runner's console prints
+              <code>[apps] skipping &lt;folder&gt;: …</code> with the reason.</li>
+            <li>Hosted runner: the folder must be in the Dockerfile, and the image redeployed (<a href="#add-app">Add a new app</a>, step 5).</li>
+          </ul></div>
+        </details>
+        <details class="faq">
+          <summary>“Executable doesn't exist at …ms-playwright…”</summary>
+          <div class="faq-body"><p>The browser build for that app's Playwright version isn't installed. Each app folder has its own version.
+            In that folder, run <code>npx playwright install chromium</code> for headless runs, or
+            <code>npx playwright install chrome</code> if Chrome itself is missing.</p></div>
+        </details>
+        <details class="faq">
+          <summary><code>npm ci</code>: “package.json and package-lock.json are not in sync”</summary>
+          <div class="faq-body"><p>Someone changed <code>package.json</code> without updating the lock file. Run <code>npm install</code> in
+            that folder and commit the updated <code>package-lock.json</code>.</p></div>
+        </details>
+        <details class="faq">
+          <summary>A test times out waiting for an answer</summary>
+          <div class="faq-body"><p>GenAI answers can take minutes. Raise the budget for that test with <code>test.setTimeout()</code>, and
+            the wait itself with <code>expect(…).toBeVisible({ timeout })</code>. Some apps also have a setting for it, such as
+            <code>ANSWER_TIMEOUT_MS</code>; see the app's <code>example.env</code>.</p></div>
+        </details>
+        <details class="faq">
+          <summary>Running on a Linux machine without a display</summary>
+          <div class="faq-body"><p>Set <code>PW_USE_BUNDLED_CHROMIUM=1</code> to run headless on bundled Chromium, like the container. Or
+            keep headed Chrome and start it under <code>xvfb-run -a</code>.</p></div>
+        </details>
+        <details class="faq">
+          <summary>The runner says my run is queued</summary>
+          <div class="faq-body"><p>That's by design. The runner does one run at a time across all apps, because they share one host and its
+            browser profiles. Wait for the current run, or cancel it.</p></div>
+        </details>
+        <p class="no-results" id="faqEmpty" hidden>No entry matches. Try fewer words.</p>
+      </div>
+    </section>
+
+    <!-- ================================================================ CHEAT SHEET -->
+    <section id="cheatsheet" class="section">
+      <h2>Cheat sheet</h2>
+      <p class="lead">Run these from an app folder unless they say otherwise.</p>
+      <input type="text" class="filter" id="cheatFilter" placeholder="🔎 Filter, e.g. trace, report, edge" aria-label="Filter commands">
+      <div class="table-wrap">
+        <table class="cheat">
+          <thead><tr><th>Task</th><th>Command</th></tr></thead>
+          <tbody id="cheatBody">
+            <tr><td>Install an app's dependencies</td><td><code class="cmd">npm ci</code></td></tr>
+            <tr><td>List the tests (compile check)</td><td><code class="cmd">npx playwright test --list</code></td></tr>
+            <tr><td>Run the whole suite in Chrome</td><td><code class="cmd">npx playwright test --project=chrome</code></td></tr>
+            <tr><td>Run one test case</td><td><code class="cmd">npx playwright test testcase3.ts --project=chrome</code></td></tr>
+            <tr><td>Run several test cases in Edge</td><td><code class="cmd">npx playwright test testcase1.ts testcase3.ts --project=edge</code></td></tr>
+            <tr><td>Step through a test in the Inspector</td><td><code class="cmd">npx playwright test testcase3.ts --project=chrome --debug</code></td></tr>
+            <tr><td>UI mode (watch, time-travel)</td><td><code class="cmd">npx playwright test --ui</code></td></tr>
+            <tr data-only="ps"><td>Record locators with the saved sign-in</td><td><code class="cmd">npx playwright codegen --channel=chrome --user-data-dir=.profiles\chrome &lt;app URL&gt;</code></td></tr>
+            <tr data-only="sh"><td>Record locators with the saved sign-in</td><td><code class="cmd">npx playwright codegen --channel=chrome --user-data-dir=.profiles/chrome &lt;app URL&gt;</code></td></tr>
+            <tr><td>Build the QC report</td><td><code class="cmd">npm run qc-report</code></td></tr>
+            <tr data-only="ps"><td>Open the QC report</td><td><code class="cmd">Start-Process qc-report\index.html</code></td></tr>
+            <tr data-only="sh"><td>Open the QC report</td><td><code class="cmd">open qc-report/index.html</code></td></tr>
+            <tr><td>Open Playwright's HTML report</td><td><code class="cmd">npx playwright show-report</code></td></tr>
+            <tr><td>Replay a failure's trace</td><td><code class="cmd">npx playwright show-trace test-results/&lt;test-folder&gt;/trace.zip</code></td></tr>
+            <tr data-only="ps"><td>Headless bundled Chromium (stays set for this terminal)</td><td><code class="cmd">$env:PW_USE_BUNDLED_CHROMIUM='1'; npx playwright test --project=chrome</code></td></tr>
+            <tr data-only="sh"><td>Headless bundled Chromium</td><td><code class="cmd">PW_USE_BUNDLED_CHROMIUM=1 npx playwright test --project=chrome</code></td></tr>
+            <tr data-only="ps"><td>Reset an app's saved sign-in</td><td><code class="cmd">Remove-Item -Recurse -Force .profiles\chrome</code></td></tr>
+            <tr data-only="sh"><td>Reset an app's saved sign-in</td><td><code class="cmd">rm -rf .profiles/chrome</code></td></tr>
+            <tr data-only="ps"><td>Next free test case id</td><td><code class="cmd">(Get-ChildItem tests -Filter 'testcase*.ts' | ForEach-Object { if ($_.BaseName -match '^testcase(\d+)$') { [int]$Matches[1] } } | Measure-Object -Maximum).Maximum + 1</code></td></tr>
+            <tr data-only="sh"><td>Next free test case id</td><td><code class="cmd">echo $(( $(ls tests | sed -n 's/^testcase\([0-9][0-9]*\)\.ts$/\1/p' | sort -n | tail -1) + 1 ))</code></td></tr>
+            <tr data-only="ps"><td>Start the Live Test Runner (from the repo root)</td><td><code class="cmd">cd live-test-runner; npm start</code></td></tr>
+            <tr data-only="sh"><td>Start the Live Test Runner (from the repo root)</td><td><code class="cmd">cd live-test-runner &amp;&amp; npm start</code></td></tr>
+            <tr><td>Apps and test cases the runner sees (from the repo root)</td><td><code class="cmd">node -e "const {loadApps}=require('./live-test-runner/shared');for(const a of loadApps().values())console.log(a.id,a.testcases.length)"</code></td></tr>
+            <tr data-only="ps"><td>Check every bundled app's browser setup (from the repo root)</td><td><code class="cmd">cd live-test-runner; npm run test:browser</code></td></tr>
+            <tr data-only="sh"><td>Check every bundled app's browser setup (from the repo root)</td><td><code class="cmd">cd live-test-runner &amp;&amp; npm run test:browser</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="no-results" id="cheatEmpty" hidden>No command matches.</p>
+    </section>
+
+    <footer class="foot">
+      <p>Built from <a href="README.md">README.md</a>, <a href="live-test-runner/DEPLOYMENT.md">live-test-runner/DEPLOYMENT.md</a> and
+        <a href="example.env">example.env</a>, which stay the source of truth. Your progress, choices and form values are saved only in this
+        browser (localStorage). Nothing is sent anywhere.</p>
+    </footer>
+  </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Templates for the new-app generator, taken from cdp-genai-cepheid-query-validator-playwright. -->
+<script type="text/plain" id="tpl-playwright-config">
+import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import { loadEnv } from '../load-env';
+
+// The repo-root .env (one stop shop for every app) first; this folder's .env only fills the gaps.
+loadEnv(__dirname);
+dotenv.config();
+
+const useBundledChromium = process.env.PW_USE_BUNDLED_CHROMIUM === '1' || process.env.USE_CHROMIUM === 'true';
+
+export default defineConfig({
+  testDir: './tests',
+  testMatch: /testcase\w+\.ts/,
+  timeout: 600000,
+  expect: { timeout: 30000 },
+  // All test files share one persistent Chrome/Edge profile per channel (tests/fixtures.ts) to
+  // reuse the SSO login, so they must never run concurrently — Chromium refuses to have two
+  // processes open the same user-data-dir and will tear down the "losing" browser mid-test.
+  workers: 1,
+  fullyParallel: false,
+  reporter: [
+    ['list'],
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['html', { open: 'never' }],
+  ],
+  use: {
+    headless: useBundledChromium,
+    viewport: { width: 1920, height: 1080 },
+    // Playwright's default of 0 means "wait forever": one stuck click would otherwise idle until
+    // the whole 10-minute test budget is gone.
+    actionTimeout: 30000,
+    navigationTimeout: 90000,
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+  },
+  projects: [
+{{PROJECTS}}
+  ],
+});
+</script>
+
+<script type="text/plain" id="tpl-fixtures">
+// tests/fixtures.ts
+import { test as base, expect, chromium, BrowserContext, Page } from '@playwright/test';
+import path from 'path';
+
+export const test = base.extend<{ context: BrowserContext; page: Page }>({
+  context: async ({}, use, testInfo) => {
+    // Read the channel from the active project (chrome | msedge)
+    const channel = testInfo.project.use.channel ?? (testInfo.project.name === 'edge' ? 'msedge' : 'chrome');
+    const useBundledChromium = process.env.PW_USE_BUNDLED_CHROMIUM === '1' || process.env.USE_CHROMIUM === 'true';
+
+    // A dedicated, persistent profile folder per channel, so a completed SSO sign-in is
+    // reused across runs instead of prompting for credentials every time.
+    const userDataDir = path.join(__dirname, '..', '.profiles', channel);
+
+    const context = await chromium.launchPersistentContext(userDataDir, {
+      headless: useBundledChromium,
+      ...(useBundledChromium ? {} : { channel }), // 'chrome' or 'msedge'
+      viewport: { width: 1920, height: 1080 },
+      // Removes the "Chrome is being controlled by automated test software" infobar
+      args: ['--disable-blink-features=AutomationControlled'],
+    });
+
+    await use(context);
+    await context.close();
+  },
+
+  // Persistent context already opens one page — reuse it instead of opening a blank tab
+  page: async ({ context }, use) => {
+    const page = context.pages()[0] ?? (await context.newPage());
+    await use(page);
+  },
+});
+
+export { expect };
+</script>
+
+<script type="text/plain" id="tpl-tsconfig">
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["tests/**/*.ts", "playwright.config.ts"]
+}
+</script>
+
+<script type="text/plain" id="tpl-gitignore">
+node_modules/
+.env
+.profiles/
+test-results/
+playwright-report/
+playwright/.cache/
+# Per-testcase run history behind the QC report's "Latest per Testcase" tab — machine-local state.
+qc-history.json
+</script>
+
+<!-- Body of the downloadable scaffold script; the generator prepends FOLDER, APP_ID, QC_REPORT, FIRST_BROWSER and FILES. -->
+<script type="text/plain" id="tpl-scaffold">
+const root = process.cwd();
+const fail = (message) => {
+  console.error(message);
+  process.exit(1);
+};
+
+if (!fs.existsSync(path.join(root, 'load-env.js')) || !fs.existsSync(path.join(root, 'live-test-runner', 'shared.js'))) {
+  fail('Run this from the repo root: the folder that holds load-env.js and live-test-runner/.');
+}
+const dir = path.join(root, FOLDER);
+if (fs.existsSync(dir)) fail(FOLDER + '/ already exists. Nothing was written.');
+
+for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+  const manifest = path.join(root, entry.name, 'app.config.json');
+  if (!entry.isDirectory() || !fs.existsSync(manifest)) continue;
+  let id = '';
+  try {
+    id = JSON.parse(fs.readFileSync(manifest, 'utf8')).id;
+  } catch {
+    continue;
+  }
+  if (id === APP_ID) fail('App id "' + APP_ID + '" is already used by ' + entry.name + '/. Pick another id.');
+}
+
+for (const [rel, content] of Object.entries(FILES)) {
+  const file = path.join(dir, rel);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, content);
+  console.log('  created ' + FOLDER + '/' + rel);
+}
+if (QC_REPORT) {
+  fs.copyFileSync(
+    path.join(root, 'live-test-runner', 'generate-qc-report.template.js'),
+    path.join(dir, 'generate-qc-report.js'),
+  );
+  console.log('  created ' + FOLDER + '/generate-qc-report.js (copy of live-test-runner/generate-qc-report.template.js)');
+}
+
+console.log('\nDone. Next:');
+console.log('  cd ' + FOLDER);
+console.log('  npm install                   # creates package-lock.json: commit it');
+console.log('  npx playwright test --list    # compile check');
+console.log('  npx playwright test testcase1.ts --project=' + FIRST_BROWSER);
+</script>
+
+<script>
+(() => {
+  'use strict';
+
+  // Snapshot of the registered apps (November 2026). The runner itself always reads app.config.json from disk;
+  // add a new app here too so this guide's pickers offer it. signIn is the call a new test of that app starts with.
+  const APPS = [
+    { id: 'cra', name: 'CRA Application', folder: 'cdp-genai-cra-playwright-automation-testing',
+      envs: ['DEV', 'NONPROD', 'PROD'], envVar: 'TEST_ENV', numericIds: true, signIn: { kind: 'cra' } },
+    { id: 'market-intelligence', name: 'Market Intelligence', folder: 'cdp-genai-market-intelligence-playwright',
+      envs: ['NONPROD'], signIn: { kind: 'mi' } },
+    { id: 'cepheid-gtm', name: 'Cepheid GTM', folder: 'cep-genai-cepheid-gtm-playwright',
+      envs: ['DEV'], signIn: { module: 'gtmHelpers', fn: 'openChatApp' } },
+    { id: 'sfdc-finance', name: 'SFDC Finance Agent', folder: 'cdp-genai-cepheid-sfdc-finance-playwright',
+      envs: ['NONPROD'], signIn: { module: 'sfdcHelpers', fn: 'login' } },
+    { id: 'trustform-ai', name: 'TrustformAI', folder: 'cdp-genai-trustform-ai-playwright',
+      envs: ['NONPROD'], signIn: { module: 'trustformHelpers', fn: 'openSignedIn' } },
+    { id: 'rate-explorer', name: 'Rate Explorer', folder: 'cdp-genai-rate-explorer-playwright',
+      envs: ['QA'], signIn: { module: 'rateExplorerHelpers', fn: 'openSignedIn' } },
+    { id: 'cci-ai-assistant', name: 'CCI AI Assistant', folder: 'cdp-genai-cepheid-cci-playwright',
+      envs: ['DEV'], signIn: { module: 'cciHelpers', fn: 'openApp' } },
+    { id: 'translation-intelligence', name: 'Cepheid Translation Intelligence',
+      folder: 'cdp-genai-cepheid-translation-intelligence-playwright', envs: ['DEV'], signIn: { module: 'tiHelpers', fn: 'openApp' } },
+    { id: 'query-validator', name: 'Query Validator', folder: 'cdp-genai-cepheid-query-validator-playwright',
+      envs: ['DEV'], signIn: { module: 'queryValidatorHelpers', fn: 'login' } },
+    { id: 'quarterly-report', name: 'Quarterly Revenue Report', folder: 'cdp-genai-cepheid-quarterly-report-playwright',
+      envs: ['NONPROD'], signIn: { module: 'quarterlyReportHelpers', fn: 'login' } },
+  ];
+  const ENV_IDS = ['DEV', 'QA', 'NONPROD', 'PROD'];
+  const ENV_LABELS = { DEV: 'Dev', QA: 'QA', NONPROD: 'Non-Prod', PROD: 'Prod' };
+  const SETUP_STEPS = [
+    ['prereqs', 'Install the prerequisites'], ['clone', 'Clone the repository'], ['env', 'Create your .env'],
+    ['install', 'Install dependencies'], ['browser', 'Check the browser'], ['first-run', 'Run your first test'],
+    ['reports', 'Read the reports'], ['runner', 'Try the Live Test Runner'],
+  ];
+  // The same rules live-test-runner/shared.js applies when it discovers apps and test cases.
+  const APP_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+  const TESTCASE_ID_RE = /^[A-Za-z0-9]+$/;
+  const HTTP_RE = /^https?:\/\/\S+$/;
+  const STORE_KEY = 'pwSetupGuide.v1';
+  const DEFAULT_APP = 'query-validator';
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // Mirrors envPrefix() in load-env.js: rate-explorer -> RATE_EXPLORER__
+  const envPrefix = (id) => `${String(id).toUpperCase().replace(/[^A-Z0-9]/g, '_')}__`;
+
+  // ---------------------------------------------------------------- persisted state
+  const state = { shell: '', theme: '', app: DEFAULT_APP, done: [], forms: {} };
+  try {
+    Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY) || '{}'));
+  } catch {
+    // Storage disabled or a corrupt value: start fresh.
+  }
+  if (!['ps', 'sh'].includes(state.shell)) state.shell = /win/i.test(navigator.platform || navigator.userAgent) ? 'ps' : 'sh';
+  if (!['light', 'dark'].includes(state.theme)) state.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (!APPS.some((a) => a.id === state.app)) state.app = DEFAULT_APP;
+  if (!Array.isArray(state.done)) state.done = [];
+  if (!state.forms || typeof state.forms !== 'object') state.forms = {};
+  const save = () => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    } catch {
+      // Storage unavailable: the page still works, it just forgets on reload.
+    }
+  };
+  const isPs = () => state.shell === 'ps';
+  const currentApp = () => APPS.find((a) => a.id === state.app) || APPS[0];
+
+  // ---------------------------------------------------------------- syntax highlighting
+  const KEYWORDS = new Set(['import', 'from', 'export', 'const', 'let', 'var', 'async', 'await', 'function', 'return', 'try',
+    'catch', 'finally', 'if', 'else', 'new', 'for', 'of', 'in', 'true', 'false', 'null', 'undefined', 'typeof', 'throw',
+    'default', 'continue']);
+  const CODE_RE = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\[\s\S]|[^`\\])*`)|\b(\d+(?:\.\d+)?)\b|([A-Za-z_$][\w$]*)/g;
+
+  function highlightCode(text) {
+    let out = '';
+    let last = 0;
+    CODE_RE.lastIndex = 0;
+    for (let m = CODE_RE.exec(text); m; m = CODE_RE.exec(text)) {
+      out += esc(text.slice(last, m.index));
+      if (m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+      else if (m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+      else if (m[3]) out += `<span class="n">${m[3]}</span>`;
+      else out += KEYWORDS.has(m[4]) ? `<span class="k">${m[4]}</span>` : esc(m[4]);
+      last = CODE_RE.lastIndex;
+    }
+    return out + esc(text.slice(last));
+  }
+
+  // Shell, .env, YAML and Dockerfile text: dim # comments that are not inside quotes.
+  function highlightHash(text) {
+    return text.split('\n').map((line) => {
+      let quote = '';
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (quote) {
+          if (ch === quote) quote = '';
+        } else if (ch === '"' || ch === "'") {
+          quote = ch;
+        } else if (ch === '#' && (i === 0 || /\s/.test(line[i - 1]))) {
+          return `${esc(line.slice(0, i))}<span class="c">${esc(line.slice(i))}</span>`;
+        }
+      }
+      return esc(line);
+    }).join('\n');
+  }
+
+  function highlight(text, lang) {
+    if (lang === 'ts' || lang === 'js' || lang === 'json') return highlightCode(text);
+    if (lang === 'text' || lang === 'out') return esc(text);
+    return highlightHash(text);
+  }
+
+  // ---------------------------------------------------------------- code blocks
+  const LANG_LABELS = { ps: 'PowerShell', sh: 'Bash', any: 'Terminal · any shell', ts: 'TypeScript', js: 'JavaScript',
+    json: 'JSON', env: '.env', yaml: 'YAML', docker: 'Dockerfile', text: 'Text', gitignore: '.gitignore', out: 'Expected output' };
+  const HAS_TOKEN_RE = /\{\{(?:folder|prefix|id|name)\}\}/;
+  const TOKEN_RE = /\{\{(folder|prefix|id|name)\}\}/g;
+
+  function setCode(pre, text, lang) {
+    if (lang) pre.dataset.lang = lang;
+    pre.innerHTML = highlight(text, pre.dataset.lang);
+    const label = pre.parentElement && pre.parentElement.querySelector('.code-lang');
+    if (label) label.textContent = LANG_LABELS[pre.dataset.lang] || pre.dataset.lang || '';
+  }
+
+  function enhanceCode(pre) {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    if (pre.dataset.shell) wrap.dataset.shell = pre.dataset.shell;
+    if (pre.dataset.lang === 'out') wrap.classList.add('is-out');
+    const bar = document.createElement('div');
+    bar.className = 'code-bar';
+    const label = document.createElement('span');
+    label.className = 'code-lang';
+    label.textContent = LANG_LABELS[pre.dataset.lang] || '';
+    bar.appendChild(label);
+    if (pre.dataset.lang !== 'out') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => copyText(pre.textContent, btn));
+      bar.appendChild(btn);
+    }
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.append(bar, pre);
+    if (pre.hasAttribute('data-dynamic')) return;
+    const raw = pre.textContent.replace(/\s+$/, '');
+    // Blocks naming the chosen app keep their source and are re-rendered when the app changes.
+    if (HAS_TOKEN_RE.test(raw)) pre.dataset.tpl = raw;
+    else setCode(pre, raw);
+  }
+
+  function renderTemplates() {
+    const app = currentApp();
+    const values = { folder: app.folder, prefix: envPrefix(app.id), id: app.id, name: app.name };
+    $$('pre.code[data-tpl]').forEach((pre) => setCode(pre, pre.dataset.tpl.replace(TOKEN_RE, (_, key) => values[key])));
+  }
+
+  // ---------------------------------------------------------------- copy, download, toast
+  let toastTimer = 0;
+  function toast(message) {
+    const el = $('#toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  async function copyText(text, btn) {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch {
+      // Some embedded browsers have no async clipboard: fall back to a hidden textarea.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      }
+      ta.remove();
+    }
+    toast(ok ? 'Copied to clipboard' : 'Copy failed: select the text and press Ctrl+C');
+    if (ok && btn) {
+      const original = btn.dataset.label || (btn.dataset.label = btn.textContent);
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1500);
+    }
+  }
+
+  function download(filename, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast(`Downloaded ${filename}`);
+  }
+
+  // ---------------------------------------------------------------- shell and theme
+  function applyShell() {
+    document.body.classList.toggle('shell-ps', state.shell === 'ps');
+    document.body.classList.toggle('shell-sh', state.shell === 'sh');
+    $$('[data-shell-btn]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.shellBtn === state.shell)));
+  }
+
+  function applyTheme() {
+    document.documentElement.dataset.theme = state.theme;
+    const btn = $('#themeBtn');
+    btn.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', state.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    btn.title = btn.getAttribute('aria-label');
+  }
+
+  // ---------------------------------------------------------------- app selection
+  function initAppSelects() {
+    $$('select.app-select').forEach((sel) => {
+      sel.innerHTML = APPS.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+      sel.value = state.app;
+      sel.addEventListener('change', () => setApp(sel.value));
+    });
+  }
+
+  function setApp(id) {
+    state.app = id;
+    save();
+    $$('select.app-select').forEach((sel) => { sel.value = id; });
+    renderAppBound();
+  }
+
+  function renderAppBound() {
+    const app = currentApp();
+    const values = { folder: app.folder, prefix: envPrefix(app.id), id: app.id, name: app.name };
+    $$('[data-bind]').forEach((el) => { el.textContent = values[el.dataset.bind] || ''; });
+    renderTemplates();
+    renderBuilder();
+    renderTestcase();
+  }
+
+  function renderAppTables() {
+    const body = $('#appsBody');
+    body.innerHTML = APPS.map((a) => `<tr>
+        <td><strong>${esc(a.name)}</strong></td>
+        <td><code>${a.id}</code></td>
+        <td><code>${a.folder}/</code></td>
+        <td>${a.envs.map((e) => ENV_LABELS[e] || e).join(', ')}</td>
+        <td><code>${envPrefix(a.id)}</code></td>
+        <td><button type="button" class="btn sm" data-use-app="${a.id}">Use →</button></td>
+      </tr>`).join('');
+    body.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-use-app]');
+      if (!btn) return;
+      setApp(btn.dataset.useApp);
+      toast(`Working on ${currentApp().name}`);
+      $('#run').scrollIntoView();
+    });
+
+    $('#signinBody').innerHTML = APPS.map((a) => {
+      const s = a.signIn;
+      let how;
+      if (s.kind === 'cra') {
+        how = '<code>const { context, page } = await loginToCraAsServiceAccount();</code> from <code>./serviceLogin</code>. '
+          + 'Import <code>test</code> from <code>@playwright/test</code> and close the context in <code>finally</code>.';
+      } else if (s.kind === 'mi') {
+        how = '<code>await page.goto(MARKET_INTEL_URL);</code>, then click <em>Login with Centralized SSO</em> and wait for '
+          + '<em>Signed in:</em>, as <code>testcase1.ts</code> does.';
+      } else {
+        how = `<code>await ${s.fn}(page);</code> from <code>./${s.module}</code>`;
+      }
+      return `<tr><td>${esc(a.name)}</td><td>${how}</td></tr>`;
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------- setup progress
+  function renderProgress() {
+    const doneCount = SETUP_STEPS.filter(([id]) => state.done.includes(id)).length;
+    $('#progressFill').style.width = `${(doneCount / SETUP_STEPS.length) * 100}%`;
+    $('#progressText').textContent = `${doneCount} / ${SETUP_STEPS.length}`;
+    for (const [id] of SETUP_STEPS) {
+      const on = state.done.includes(id);
+      const card = document.getElementById(`step-${id}`);
+      if (card) card.classList.toggle('is-done', on);
+      const box = $(`input[data-step="${id}"]`);
+      if (box) box.checked = on;
+      const link = $(`.nav a[href="#step-${id}"]`);
+      if (link) link.classList.toggle('done', on);
+    }
+    const next = SETUP_STEPS.find(([id]) => !state.done.includes(id));
+    $('#progressMsg').innerHTML = next ? `<a href="#step-${next[0]}">Next: ${esc(next[1])} →</a>` : '🎉 Setup complete';
+  }
+
+  function initProgress() {
+    $$('input[data-step]').forEach((box) => box.addEventListener('change', () => {
+      const id = box.dataset.step;
+      state.done = state.done.filter((d) => d !== id);
+      if (box.checked) state.done.push(id);
+      save();
+      renderProgress();
+    }));
+    $('#resetProgress').addEventListener('click', () => {
+      state.done = [];
+      save();
+      renderProgress();
+      toast('Progress reset');
+    });
+  }
+
+  // ---------------------------------------------------------------- form persistence
+  const isTyped = (el) => el.tagName === 'TEXTAREA' || el.type === 'text';
+  const onEdit = (el, fn) => el.addEventListener(isTyped(el) ? 'input' : 'change', fn);
+
+  function initPersist() {
+    $$('[data-persist]').forEach((el) => {
+      const key = el.dataset.persist;
+      if (Object.prototype.hasOwnProperty.call(state.forms, key)) {
+        const saved = state.forms[key];
+        if (el.type === 'checkbox') el.checked = Boolean(saved);
+        else if (el.type === 'radio') el.checked = saved === el.value;
+        else if (el.tagName !== 'SELECT' || Array.from(el.options).some((o) => o.value === saved)) el.value = saved;
+      }
+      onEdit(el, () => {
+        if (el.type === 'checkbox') state.forms[key] = el.checked;
+        else if (el.type !== 'radio') state.forms[key] = el.value;
+        else if (el.checked) state.forms[key] = el.value;
+        save();
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- command builder
+  function renderIssues(list, issues) {
+    list.innerHTML = issues.map(([kind, html]) => `<li class="${kind}">${html}</li>`).join('');
+  }
+
+  function renderBuilder() {
+    const app = currentApp();
+    const ps = isPs();
+    const tokens = $('#b-ids').value.trim().split(/[\s,]+/).filter(Boolean);
+    const ids = [...new Set(tokens.filter((t) => TESTCASE_ID_RE.test(t)))];
+    const bad = tokens.filter((t) => !TESTCASE_ID_RE.test(t));
+    const browser = ($('input[name="b-browser"]:checked') || { value: 'chrome' }).value;
+    const mode = $('#b-mode').value;
+    const headless = $('#b-headless').checked;
+    const trace = $('#b-trace').checked && mode !== 'list';
+    const qc = $('#b-qc').checked && (mode === 'run' || mode === 'debug');
+
+    const multiEnv = app.envs.length > 1;
+    const envSel = $('#b-env');
+    $('#b-env-row').hidden = !multiEnv;
+    if (multiEnv) {
+      envSel.innerHTML = app.envs.map((e) => `<option value="${e}">${ENV_LABELS[e] || e}</option>`).join('');
+      envSel.value = app.envs.includes(state.forms['b-env']) ? state.forms['b-env'] : app.envs[0];
+    }
+
+    const args = ['npx playwright test', ...ids.map((id) => `testcase${id}.ts`)];
+    if (browser !== 'all') args.push(`--project=${browser}`);
+    if (mode === 'debug') args.push('--debug');
+    if (mode === 'ui') args.push('--ui');
+    if (mode === 'list') args.push('--list');
+    if (trace) args.push('--trace on');
+    const command = (headless && !ps ? 'PW_USE_BUNDLED_CHROMIUM=1 ' : '') + args.join(' ');
+
+    const lines = ['# from the repo root', `cd ${app.folder}`];
+    if ($('#b-install').checked) lines.push('npm ci');
+    if (multiEnv) {
+      lines.push(`# ${ENV_LABELS[envSel.value]}: the repo-root .env must say ${envPrefix(app.id)}${app.envVar}=${envSel.value}`);
+    }
+    if (headless && ps) lines.push("$env:PW_USE_BUNDLED_CHROMIUM = '1'");
+    lines.push(command);
+    if (headless && ps) lines.push('Remove-Item Env:PW_USE_BUNDLED_CHROMIUM');
+    if (qc) {
+      lines.push('npm run qc-report');
+      lines.push(ps ? 'Start-Process qc-report\\index.html' : 'open qc-report/index.html        # Linux: xdg-open qc-report/index.html');
+    }
+    setCode($('#builderOut'), lines.join('\n'), ps ? 'ps' : 'sh');
+
+    const target = ids.length ? ids.map((id) => `<code>testcase${id}.ts</code>`).join(', ') : 'every test case';
+    const where = {
+      chrome: headless ? 'the <code>chrome</code> project' : 'Google Chrome, signed in through <code>.profiles/chrome</code>',
+      edge: headless ? 'the <code>edge</code> project' : 'Microsoft Edge, signed in through <code>.profiles/msedge</code>',
+      all: 'every project in <code>playwright.config.ts</code>: Chrome, then Edge',
+    }[browser];
+    const explain = [mode === 'list'
+      ? `Lists ${target} of ${esc(app.name)} without running anything, which also compile-checks every spec.`
+      : `Runs ${target} of ${esc(app.name)} in ${where}.`];
+    if (mode === 'debug') explain.push('Opens the Playwright Inspector: step through each action and try locators live.');
+    if (mode === 'ui') explain.push('Opens UI mode: pick tests, watch them run and time-travel through every step.');
+    if (multiEnv) explain.push(`Standalone runs take the environment from <code>${envPrefix(app.id)}${app.envVar}</code> in the root <code>.env</code>, which beats shell variables. The Live Test Runner's Environment picker sets it for you.`);
+    if (headless) explain.push('Uses Playwright’s bundled Chromium, headless, like the hosted container. It types <code>EMAILID</code> / <code>PASS</code> when it has to sign in.');
+    if (trace) explain.push('Keeps a trace of every test, not just failures. Open one with <code>npx playwright show-trace</code>.');
+    if (qc) explain.push('Rebuilds the QC report from <code>test-results/results.json</code> and opens it.');
+    $('#builderExplain').innerHTML = explain.map((t) => `<li>${t}</li>`).join('');
+
+    const issues = [];
+    if (bad.length) {
+      issues.push(['warn', `Ignored ${bad.map((t) => `<code>${esc(t)}</code>`).join(', ')}: an id is only the letters and digits after <code>testcase</code> in the file name.`]);
+    }
+    const nonNumeric = app.numericIds ? ids.filter((id) => !/^\d+$/.test(id)) : [];
+    if (nonNumeric.length) {
+      issues.push(['warn', `${esc(app.name)} runs numeric ids only (its <code>testMatch</code> is <code>/testcase\\d+\\.ts/</code>), so ${nonNumeric.map((t) => `<code>${esc(t)}</code>`).join(', ')} won’t run.`]);
+    }
+    renderIssues($('#builderIssues'), issues);
+  }
+
+  // ---------------------------------------------------------------- test case generator
+  // The runner and the QC report read a title only up to its first straight quote, so swap them for typographic ones.
+  const safeTitle = (s) => s.replace(/"([^"]*)"/g, '“$1”').replace(/"/g, '”').replace(/['`]/g, '’').replace(/\\/g, '/');
+
+  function testcaseSource(app, id, title, steps, timeout, fixme) {
+    const fixmeLine = "test.fixme(true, 'Not automated yet: automate the steps below, then delete this line');";
+    const stepBlock = (indent, firstStepCode) => steps.flatMap((step, i) => [
+      `${indent}// Step ${i + 1}: ${step}`,
+      ...(i === 0 ? firstStepCode.map((code) => indent + code) : []),
+      '',
+    ]);
+    const lines = [];
+    if (app.signIn.kind === 'cra') {
+      lines.push(
+        "import { test, expect } from '@playwright/test';",
+        "import dotenv from 'dotenv';",
+        "import { loginToCraAsServiceAccount } from './serviceLogin';",
+        '',
+        'dotenv.config();',
+        '',
+        `test('${id} - ${title}', async () => {`,
+        `  test.setTimeout(${timeout});`,
+      );
+      if (fixme) lines.push(`  ${fixmeLine}`);
+      lines.push(
+        '  // A plain browser context is blocked by Conditional Access; use the shared service-account login.',
+        '  const { context, page } = await loginToCraAsServiceAccount();',
+        '',
+        '  try {',
+        ...stepBlock('    ', []),
+        `    console.log('${id} successful');`,
+        '  } finally {',
+        '    await context.close();',
+        '  }',
+        '});',
+      );
+      return `${lines.join('\n')}\n`;
+    }
+    const mi = app.signIn.kind === 'mi';
+    lines.push(
+      "import { test, expect } from './fixtures';",
+      mi ? "import { MARKET_INTEL_URL } from './config';" : `import { ${app.signIn.fn} } from './${app.signIn.module}';`,
+      '',
+      `test('${id} - ${title}', async ({ page }) => {`,
+      `  test.setTimeout(${timeout});`,
+    );
+    if (fixme) lines.push(`  ${fixmeLine}`);
+    const signIn = mi
+      ? [
+        'await page.goto(MARKET_INTEL_URL);',
+        "await page.getByRole('button', { name: /Login with Centralized SSO/i }).click();",
+        "await expect(page.getByText('Signed in:', { exact: false }), 'the app should finish signing in').toBeVisible({ timeout: 60000 });",
+      ]
+      : [`await ${app.signIn.fn}(page);`];
+    lines.push('', ...stepBlock('  ', signIn), `  console.log('${id} successful');`, '});');
+    return `${lines.join('\n')}\n`;
+  }
+
+  function renderTestcase() {
+    const app = currentApp();
+    const ps = isPs();
+    const idRaw = $('#t-id').value.trim();
+    const numericOnly = Boolean(app.numericIds) && TESTCASE_ID_RE.test(idRaw) && !/^\d+$/.test(idRaw);
+    const idOk = TESTCASE_ID_RE.test(idRaw) && !numericOnly;
+    const id = idOk ? idRaw : '<id>';
+    const titleRaw = $('#t-title').value.trim();
+    const title = safeTitle(titleRaw || 'Describe what this test verifies');
+    // Pasted manual scripts often number their steps ("1. Open…", "Step 2: …"); the comments number them again.
+    let steps = $('#t-steps').value.split(/\r?\n/)
+      .map((s) => s.trim().replace(/^(?:step\s*)?\d+\s*[.):-]\s*/i, ''))
+      .filter(Boolean);
+    if (!steps.length) steps = ['Open the application and sign in'];
+    const timeout = Number($('#t-timeout').value) || 300000;
+    const fixme = $('#t-fixme').checked;
+
+    setCode($('#tcOut'), testcaseSource(app, id, title, steps, timeout, fixme), 'ts');
+    $('#tcPath').textContent = `${app.folder}/tests/testcase${id}.ts`;
+    $('#t-id').classList.toggle('invalid', Boolean(idRaw) && !idOk);
+    $('#tcDownload').disabled = !idOk;
+
+    const issues = [];
+    if (!idRaw) {
+      issues.push(['err', 'Enter the test case id: letters and digits only, such as <code>12</code> or <code>2b</code>. Step 1 above finds the next free one.']);
+    } else if (numericOnly) {
+      issues.push(['err', `${esc(app.name)} runs numeric ids only (its <code>testMatch</code> is <code>/testcase\\d+\\.ts/</code>), so <code>${esc(idRaw)}</code> would never run.`]);
+    } else if (!idOk) {
+      issues.push(['err', `<code>${esc(idRaw)}</code> is not a valid id. Use letters and digits only, without dashes, underscores or spaces.`]);
+    }
+    if (!titleRaw) issues.push(['info', 'Add a title. It becomes the button label in the Live Test Runner.']);
+    else if (title !== titleRaw) issues.push(['warn', 'Quotes in the title were changed to typographic ones (’ “ ”), because the runner reads a title only up to its first straight quote.']);
+    if (fixme) issues.push(['info', '<code>test.fixme</code> reports the test as skipped until you delete that line, so an unfinished test can’t pass by accident.']);
+    renderIssues($('#tcIssues'), issues);
+
+    const file = `testcase${id}.ts`;
+    const next = [
+      '# from the repo root, after clicking Download',
+      ps ? `Move-Item "$HOME\\Downloads\\${file}" ${app.folder}\\tests\\` : `mv ~/Downloads/${file} ${app.folder}/tests/`,
+      `cd ${app.folder}`,
+      `npx playwright test ${file} --project=chrome`,
+      'npm run qc-report',
+      'cd ..',
+      '# add a row for it to the app’s table in README.md, then:',
+      `git checkout -b feature/${app.id}-testcase-${id}`,
+      `git add ${app.folder}/tests/${file} README.md`,
+      `git commit -m 'Add ${app.name} test case ${id}'`,
+      'git push -u origin HEAD',
+    ];
+    setCode($('#tcNext'), next.join('\n'), ps ? 'ps' : 'sh');
+  }
+
+  // ---------------------------------------------------------------- new app generator
+  const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const camelCase = (id) => id.replace(/-+([a-z0-9])/g, (_, c) => c.toUpperCase()).replace(/-/g, '');
+  const urlVarFor = (id) => `${id.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')}_URL`;
+  const tsString = (s) => `'${s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  const commentSafe = (s) => s.replace(/\*\//g, '* /');
+  const template = (id) => `${$(`#${id}`).textContent.replace(/^\s*\n/, '').replace(/\s+$/, '')}\n`;
+  const withNewline = (s) => `${s.replace(/\s+$/, '')}\n`;
+  // Fields that follow the display name / id until the user types their own value (clearing one re-derives it).
+  const DERIVED_FIELDS = ['n-id', 'n-folder', 'n-urlvar'];
+
+  function syncDerived() {
+    const idEl = $('#n-id');
+    if (!state.forms['n-id-touched']) idEl.value = slugify($('#n-name').value);
+    const id = idEl.value.trim();
+    if (!state.forms['n-folder-touched']) $('#n-folder').value = id ? `cdp-genai-cepheid-${id}-playwright` : '';
+    if (!state.forms['n-urlvar-touched']) $('#n-urlvar').value = id ? urlVarFor(id) : '';
+  }
+
+  function newAppModel() {
+    syncDerived();
+    const envs = ENV_IDS.filter((e) => $(`#n-env-${e}`).checked)
+      .map((e) => ({ id: e, label: ENV_LABELS[e], url: $(`#n-url-${e}`).value.trim() }));
+    ENV_IDS.forEach((e) => { $(`#n-url-${e}`).disabled = envs.length < 2 || !$(`#n-env-${e}`).checked; });
+    const defSel = $('#n-defenv');
+    const wanted = state.forms['n-defenv'];
+    const defaultEnv = envs.some((e) => e.id === wanted) ? wanted : (envs[0] || { id: 'DEV' }).id;
+    defSel.innerHTML = envs.map((e) => `<option value="${e.id}">${e.label}</option>`).join('');
+    defSel.value = defaultEnv;
+    const id = $('#n-id').value.trim();
+    return {
+      name: $('#n-name').value.trim(),
+      id,
+      folder: $('#n-folder').value.trim(),
+      description: $('#n-desc').value.trim(),
+      url: $('#n-url').value.trim(),
+      urlVar: $('#n-urlvar').value.trim(),
+      envs,
+      defaultEnv,
+      browsers: ['chrome', 'edge'].filter((b) => $(`#n-br-${b}`).checked),
+      firstTitle: safeTitle($('#n-first').value.trim() || 'Open the application and verify the home page'),
+      creds: $('#n-creds').checked,
+      qc: $('#n-qc').checked,
+      camel: camelCase(id) || 'app',
+      prefix: envPrefix(id || 'app'),
+    };
+  }
+
+  function validateNewApp(m) {
+    const issues = [];
+    if (!m.name) issues.push(['err', 'Give the app a display name.']);
+    if (!APP_ID_RE.test(m.id)) {
+      issues.push(['err', 'App id: lowercase letters, digits and hyphens, starting with a letter or digit, such as <code>contract-insights</code>.']);
+    } else {
+      const taken = APPS.find((a) => a.id === m.id);
+      if (taken) issues.push(['err', `App id <code>${esc(m.id)}</code> is already used by ${esc(taken.name)}.`]);
+    }
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(m.folder)) {
+      issues.push(['err', 'Folder: a single folder name made of letters, digits, <code>.</code>, <code>_</code> and <code>-</code>.']);
+    } else if (APPS.some((a) => a.folder.toLowerCase() === m.folder.toLowerCase())
+      || ['live-test-runner', 'node_modules', '.github'].includes(m.folder.toLowerCase())) {
+      issues.push(['err', `<code>${esc(m.folder)}/</code> already exists.`]);
+    } else if (!/-playwright$/.test(m.folder)) {
+      issues.push(['warn', 'By convention, app folders end in <code>-playwright</code>.']);
+    }
+    if (!/^[A-Z][A-Z0-9_]*$/.test(m.urlVar)) {
+      issues.push(['err', 'URL setting name: capitals, digits and underscores, starting with a letter, such as <code>CONTRACT_INSIGHTS_URL</code>.']);
+    } else if (m.urlVar.includes('__')) {
+      issues.push(['err', 'The URL setting name can’t contain <code>__</code>: <code>load-env.js</code> treats <code>X__NAME</code> as another app’s setting and drops it.']);
+    }
+    if (!HTTP_RE.test(m.url)) issues.push(['err', 'App URL: the full <code>http(s)://</code> address of the app.']);
+    if (!m.envs.length) issues.push(['err', 'Pick at least one environment.']);
+    if (m.envs.length > 1) {
+      m.envs.filter((e) => e.url && !HTTP_RE.test(e.url))
+        .forEach((e) => issues.push(['err', `${e.label} URL must start with <code>http://</code> or <code>https://</code>.`]));
+    }
+    if (!m.browsers.length) issues.push(['err', 'Pick at least one browser.']);
+    return issues;
+  }
+
+  function newAppFiles(m) {
+    const envMap = (e) => (m.envs.length > 1 && e.url ? `{ ${JSON.stringify(m.urlVar)}: ${JSON.stringify(e.url)} }` : '{}');
+    const appConfig = [
+      '{',
+      `  "id": ${JSON.stringify(m.id)},`,
+      `  "name": ${JSON.stringify(m.name)},`,
+      `  "description": ${JSON.stringify(m.description || `${m.name} Playwright suite.`)},`,
+      '  "testDir": "tests",',
+      `  "qcReport": ${m.qc},`,
+      `  "defaultEnvironment": ${JSON.stringify(m.defaultEnv)},`,
+      '  "environments": [',
+      m.envs.map((e) => `    { "id": ${JSON.stringify(e.id)}, "label": ${JSON.stringify(e.label)}, "env": ${envMap(e)} }`).join(',\n'),
+      '  ],',
+      `  "defaultBrowser": ${JSON.stringify(m.browsers[0] || 'chrome')},`,
+      '  "browsers": [',
+      m.browsers.map((b) => `    { "id": "${b}", "label": "${b === 'edge' ? 'Edge' : 'Chrome'}" }`).join(',\n'),
+      '  ]',
+      '}',
+    ].join('\n');
+
+    const scripts = { test: 'npx playwright test', 'test:headed': 'npx playwright test --headed', 'test:report': 'npx playwright show-report' };
+    if (m.qc) scripts['qc-report'] = 'node generate-qc-report.js';
+    const packageJson = JSON.stringify({
+      name: `playwright-${m.id || 'app'}-testing`,
+      version: '1.0.0',
+      description: `Playwright browser automation tests for the ${m.name} application`,
+      scripts,
+      devDependencies: { '@playwright/test': '^1.50.0', '@types/node': '^22.10.0', dotenv: '^16.4.7' },
+    }, null, 2);
+
+    const projects = m.browsers.map((b) => (b === 'edge'
+      ? "    { name: 'edge', use: useBundledChromium ? {} : { channel: 'msedge' } },"
+      : "    { name: 'chrome', use: useBundledChromium ? {} : { channel: 'chrome' } },")).join('\n');
+
+    const exampleEnv = [
+      `# ${m.name}: OPTIONAL per-app settings. Copy to .env in this folder (gitignored) only for values`,
+      "# you don't keep in the repo-root .env (the one stop shop, see ../example.env), which wins over this file.",
+      '',
+      '# App URL',
+      `${m.urlVar}=${m.url}`,
+      ...(m.creds ? ['', '# Microsoft SSO login, typed only when a fresh browser profile is asked to sign in.', 'EMAILID=', 'PASS='] : []),
+    ].join('\n');
+
+    const configTs = [
+      "import dotenv from 'dotenv';",
+      '',
+      'dotenv.config();',
+      '',
+      `/** ${commentSafe(m.name)} application. */`,
+      `export const ${m.urlVar} = process.env.${m.urlVar} ?? ${tsString(m.url)};`,
+      ...(m.creds ? [
+        '',
+        '/** Microsoft SSO credentials, used only when a fresh browser profile is asked to sign in. */',
+        "export const EMAILID = process.env.EMAILID ?? '';",
+        "export const PASS = process.env.PASS ?? '';",
+      ] : []),
+    ].join('\n');
+
+    const helpers = [
+      "import { Page, expect } from '@playwright/test';",
+      `import { ${m.urlVar} } from './config';`,
+      '',
+      '/**',
+      ` * The common setup every test case starts with: open ${commentSafe(m.name)} and wait until it is ready.`,
+      ' * If the app asks for Microsoft SSO, complete the sign-in here, e.g. by adapting signInWithCentralSso() from',
+      ' * cdp-genai-cepheid-query-validator-playwright/tests/queryValidatorHelpers.ts ("Login with Centralized SSO") or',
+      ' * openSignedIn() from cdp-genai-rate-explorer-playwright/tests/rateExplorerHelpers.ts (Microsoft account chooser).',
+      ' */',
+      'export async function openApp(page: Page): Promise<void> {',
+      `  await page.goto(${m.urlVar}, { waitUntil: 'domcontentloaded' });`,
+      "  await expect(page.locator('body'), 'the application page should load').toBeVisible({ timeout: 60000 });",
+      '}',
+    ].join('\n');
+
+    const testcase1 = [
+      "import { test, expect } from './fixtures';",
+      `import { openApp } from './${m.camel}Helpers';`,
+      '',
+      `test('1 - ${m.firstTitle}', async ({ page }) => {`,
+      '  test.setTimeout(300000);',
+      '',
+      '  // Steps 1-2: open the application URL and wait for the page to load',
+      '  await openApp(page);',
+      '',
+      '  // Step 3: the application home page is displayed',
+      "  await expect(page, 'the application page should have a title').toHaveTitle(/\\S/);",
+      '',
+      "  console.log('1 successful');",
+      '});',
+    ].join('\n');
+
+    const scriptsTxt = [
+      `${m.name} application URL: ${m.url}`,
+      '',
+      `Source test cases for the ${m.name} Playwright suite (${m.folder}).`,
+      'Each test case is automated in tests/testcase<id>.ts; keep this list and the README table in step with them.',
+      '',
+      '',
+      `Test Case 1: ${m.firstTitle}`,
+      'Objective: Verify that the application opens and its home page is displayed.',
+      'Pre-requisite: Application URL is available.',
+      '',
+      'Steps:',
+      '1. Open the application URL.',
+      '2. Wait for the page to load completely.',
+      '3. Verify that the application home page is displayed.',
+      '',
+      'Expected Result:',
+      '- The application home page is displayed.',
+    ].join('\n');
+
+    return [
+      { path: 'app.config.json', lang: 'json', content: withNewline(appConfig) },
+      { path: 'package.json', lang: 'json', content: withNewline(packageJson) },
+      { path: 'playwright.config.ts', lang: 'ts', content: template('tpl-playwright-config').replace('{{PROJECTS}}', projects) },
+      { path: 'tsconfig.json', lang: 'json', content: template('tpl-tsconfig') },
+      { path: '.gitignore', lang: 'gitignore', content: template('tpl-gitignore') },
+      { path: 'example.env', lang: 'env', content: withNewline(exampleEnv) },
+      { path: 'tests/config.ts', lang: 'ts', content: withNewline(configTs) },
+      { path: 'tests/fixtures.ts', lang: 'ts', content: template('tpl-fixtures') },
+      { path: `tests/${m.camel}Helpers.ts`, lang: 'ts', content: withNewline(helpers) },
+      { path: 'tests/testcase1.ts', lang: 'ts', content: withNewline(testcase1) },
+      { path: `${m.id || 'app'}-test-scripts.txt`, lang: 'text', content: withNewline(scriptsTxt) },
+    ];
+  }
+
+  function scaffoldScript(m, files) {
+    return [
+      '#!/usr/bin/env node',
+      `// Creates ${m.folder}/, a ready-to-run Playwright suite for ${m.name} (generated by playwright-setup-guide.html).`,
+      `// Run it from the repo root, the folder that holds load-env.js:  node scaffold-${m.id}.js`,
+      "'use strict';",
+      "const fs = require('node:fs');",
+      "const path = require('node:path');",
+      '',
+      `const FOLDER = ${JSON.stringify(m.folder)};`,
+      `const APP_ID = ${JSON.stringify(m.id)};`,
+      `const QC_REPORT = ${m.qc};`,
+      `const FIRST_BROWSER = ${JSON.stringify(m.browsers[0] || 'chrome')};`,
+      'const FILES = {',
+      ...files.map((f) => `  ${JSON.stringify(f.path)}: ${JSON.stringify(f.content)},`),
+      '};',
+      '',
+      template('tpl-scaffold'),
+    ].join('\n');
+  }
+
+  function renderRegistration(m) {
+    const ps = isPs();
+    const copyFrom = `${m.folder}/`;
+    const fence = '```';
+    setCode($('#reg-env'), [
+      `# --- ${m.name} (${m.id}) ---`,
+      ...(m.creds ? [`${m.prefix}EMAILID=first.last@cepheid.com`, `${m.prefix}PASS=<your password>`] : []),
+      '# only to override the default URL in tests/config.ts:',
+      `# ${m.prefix}${m.urlVar}=${m.url}`,
+    ].join('\n'));
+    setCode($('#reg-example'), [
+      `# --- ${m.name} (${m.id}) ---`,
+      ...(m.creds ? [`# ${m.prefix}EMAILID=`, `# ${m.prefix}PASS=`] : []),
+      `# ${m.prefix}${m.urlVar}=${m.url}`,
+    ].join('\n'));
+    // Same column alignment as the existing COPY lines.
+    setCode($('#reg-docker-copy'), `COPY ${copyFrom.length >= 51 ? `${copyFrom} ` : copyFrom.padEnd(51)}./${m.folder}/`);
+    setCode($('#reg-docker-npm'), `      ${m.folder} \\`);
+    setCode($('#reg-docker-chromium'), `      ${m.folder} ; do \\`);
+    setCode($('#reg-workflow'), `      - "${m.folder}/**"`);
+    setCode($('#reg-browser'), `  '${m.folder}',`);
+    setCode($('#reg-lint'), `          - ${m.folder}`);
+    setCode($('#reg-readme-row'), `| ${m.name} | \`${m.folder}/\` | ${m.envs.map((e) => e.label).join(', ')} | \`1\` — ${m.firstTitle} |`);
+    setCode($('#reg-readme-section'), [
+      `### ${m.name}`,
+      '',
+      `Playwright suite for ${m.name} (\`${m.urlVar}\`, default \`${m.url}\`).${m.description ? ` ${m.description}` : ''}`,
+      '',
+      '| Id | Test case |',
+      '| --- | --- |',
+      `| \`1\` | ${m.firstTitle} |`,
+      '',
+      'Run it with:',
+      '',
+      `${fence}powershell`,
+      `cd ${m.folder}`,
+      'npm install',
+      'npx playwright test --project=chrome        # or: npx playwright test testcase1.ts --project=chrome',
+      ...(m.qc ? ['npm run qc-report                           # custom QC report -> qc-report/index.html'] : []),
+      fence,
+    ].join('\n'));
+    setCode($('#reg-deploy-md'), `| ${m.name} | \`${m.prefix}\` |`);
+
+    const commitName = m.name.replace(/'/g, '’');
+    setCode($('#reg-git'), [
+      `git checkout -b feature/add-${m.id}`,
+      `git add ${m.folder} example.env README.md live-test-runner/Dockerfile live-test-runner/DEPLOYMENT.md live-test-runner/test-browser-launch.js .github/workflows/deploy-live-test-runner.yml .github/workflows/lint.yml`,
+      'git status                           # no .env, .profiles/ or node_modules/ should be staged',
+      `git commit -m 'Add ${commitName} Playwright suite and register it with the live test runner'`,
+      'git push -u origin HEAD',
+    ].join('\n'), ps ? 'ps' : 'sh');
+
+    const scriptName = `scaffold-${m.id}.js`;
+    setCode($('#naNext'), [
+      '# from the repo root, after clicking Download scaffold script',
+      ps ? `node "$HOME\\Downloads\\${scriptName}"` : `node ~/Downloads/${scriptName}`,
+      `cd ${m.folder}`,
+      'npm install                          # creates package-lock.json: commit it',
+      'npx playwright test --list           # compile check: should list 1 - …',
+      `npx playwright test testcase1.ts --project=${m.browsers[0] || 'chrome'}`,
+      ...(m.qc ? ['npm run qc-report'] : []),
+    ].join('\n'), ps ? 'ps' : 'sh');
+  }
+
+  let activeFileIndex = 0;
+  let lastNewApp = null;
+  function renderNewApp() {
+    const m = newAppModel();
+    const files = newAppFiles(m);
+    const issues = validateNewApp(m);
+    const blocked = issues.some(([kind]) => kind === 'err');
+    if (!issues.length) {
+      issues.push(['ok', `Ready: <code>${esc(m.folder)}/</code> with ${files.length + (m.qc ? 1 : 0)} files, app id <code>${esc(m.id)}</code> and <code>.env</code> prefix <code>${esc(m.prefix)}</code>.`]);
+    }
+    renderIssues($('#naIssues'), issues);
+    $('#n-prefix').textContent = m.prefix;
+    $('#n-urlvar-scoped').textContent = `${m.prefix}${m.urlVar || '…_URL'}`;
+    $('#n-urlvar-env').textContent = m.urlVar || 'the URL setting';
+    $('#naFolder').textContent = m.folder || '<folder>';
+    $$('.na-prefix').forEach((el) => { el.textContent = m.prefix; });
+    $$('.na-camel').forEach((el) => { el.textContent = m.camel; });
+    $('#n-id').classList.toggle('invalid', !APP_ID_RE.test(m.id) || APPS.some((a) => a.id === m.id));
+    $('#n-urlvar').classList.toggle('invalid', !/^[A-Z][A-Z0-9_]*$/.test(m.urlVar) || m.urlVar.includes('__'));
+    $('#n-url').classList.toggle('invalid', !HTTP_RE.test(m.url));
+
+    activeFileIndex = Math.min(activeFileIndex, files.length - 1);
+    $('#naTabs').innerHTML = files.map((f, i) => `<button type="button" role="tab" aria-selected="${i === activeFileIndex}" data-index="${i}">${esc(f.path)}</button>`).join('');
+    setCode($('#naOut'), files[activeFileIndex].content, files[activeFileIndex].lang);
+    $('#naDownload').disabled = blocked;
+    $('#naCopyScript').disabled = blocked;
+    renderRegistration(m);
+    lastNewApp = { m, files, blocked };
+  }
+
+  // ---------------------------------------------------------------- filters, cheat sheet, scroll spy
+  function initFilter(inputId, itemsSelector, emptyId) {
+    const input = $(`#${inputId}`);
+    input.addEventListener('input', () => {
+      const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let shown = 0;
+      $$(itemsSelector).forEach((el) => {
+        const text = el.textContent.toLowerCase();
+        el.hidden = !words.every((w) => text.includes(w));
+        if (!el.hidden && el.offsetParent !== null) shown += 1;
+      });
+      $(`#${emptyId}`).hidden = shown > 0;
+    });
+  }
+
+  function initCheatSheet() {
+    $$('#cheatBody code.cmd').forEach((code) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn sm cheat-copy';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => copyText(code.textContent, btn));
+      code.after(btn);
+    });
+  }
+
+  function initScrollSpy() {
+    const links = new Map($$('.nav > li > a').map((a) => [a.getAttribute('href').slice(1), a]));
+    const observer = new IntersectionObserver((entries) => {
+      entries.filter((entry) => entry.isIntersecting).forEach((entry) => {
+        links.forEach((a) => a.classList.remove('active'));
+        const link = links.get(entry.target.id);
+        if (link) link.classList.add('active');
+      });
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    $$('main > section[id]').forEach((section) => observer.observe(section));
+  }
+
+  // ---------------------------------------------------------------- init
+  applyTheme();
+  applyShell();
+  initAppSelects();
+  initPersist();
+  $$('pre.code').forEach(enhanceCode);
+  renderAppTables();
+  initProgress();
+  initCheatSheet();
+  initFilter('faqFilter', '#faqList details.faq', 'faqEmpty');
+  initFilter('cheatFilter', '#cheatBody tr', 'cheatEmpty');
+
+  $$('[data-shell-btn]').forEach((btn) => btn.addEventListener('click', () => {
+    state.shell = btn.dataset.shellBtn;
+    save();
+    applyShell();
+    renderBuilder();
+    renderTestcase();
+    renderNewApp();
+  }));
+  $('#themeBtn').addEventListener('click', () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    save();
+    applyTheme();
+  });
+
+  const formFields = (sectionId) => $$(`#${sectionId} form input, #${sectionId} form select, #${sectionId} form textarea`)
+    .filter((el) => !el.classList.contains('app-select'));
+  formFields('run').forEach((el) => onEdit(el, renderBuilder));
+  formFields('add-test').forEach((el) => onEdit(el, renderTestcase));
+  DERIVED_FIELDS.forEach((fieldId) => $(`#${fieldId}`).addEventListener('input', (event) => {
+    state.forms[`${fieldId}-touched`] = event.target.value.trim() !== '';
+    save();
+  }));
+  formFields('add-app').forEach((el) => onEdit(el, renderNewApp));
+
+  $('#tcDownload').addEventListener('click', () => {
+    const id = $('#t-id').value.trim();
+    if (TESTCASE_ID_RE.test(id)) download(`testcase${id}.ts`, $('#tcOut').textContent);
+  });
+  $('#naTabs').addEventListener('click', (event) => {
+    const tab = event.target.closest('[data-index]');
+    if (!tab) return;
+    activeFileIndex = Number(tab.dataset.index);
+    renderNewApp();
+  });
+  $('#naDownload').addEventListener('click', () => {
+    if (lastNewApp && !lastNewApp.blocked) download(`scaffold-${lastNewApp.m.id}.js`, scaffoldScript(lastNewApp.m, lastNewApp.files));
+  });
+  $('#naCopyScript').addEventListener('click', (event) => {
+    if (lastNewApp && !lastNewApp.blocked) copyText(scaffoldScript(lastNewApp.m, lastNewApp.files), event.currentTarget);
+  });
+
+  renderAppBound();
+  renderNewApp();
+  renderProgress();
+  initScrollSpy();
+})();
+</script>
+</body>
+</html>
