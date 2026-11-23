@@ -1,0 +1,30 @@
+[project]
+name = "knowledge-graph"
+version = "0.2.0"
+description = "Knowledge Graphs for RAG course notebooks (Neo4j + LangChain), updated for LangChain 1.x"
+requires-python = ">=3.14"
+dependencies = [
+    "langchain>=1.0",
+    "langchain-core>=1.0",
+    "langchain-openai>=1.0",
+    "langchain-neo4j>=0.6",
+    "langchain-text-splitters>=1.0",
+    "neo4j>=6.0",
+    "openai>=2.0",
+    "python-dotenv>=1.1",
+    # Use the OS certificate store for HTTPS (needed behind TLS-inspecting corporate proxies)
+    "truststore>=0.10",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.0",
+    "jupyter>=1.1",
+    "nbclient>=0.10",
+    "nbformat>=5.10",
+]
+
+[tool.uv]
+package = false
+python-preference = "only-system"
+native-tls = true
