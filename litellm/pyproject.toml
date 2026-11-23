@@ -1,0 +1,37 @@
+[project]
+name = "litellm-playground"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "langchain-litellm>=0.6.4",
+    "langgraph>=1.2.12",
+    # traces/spans/events emitted by the LangGraph planner itself; the proxy's
+    # langfuse_otel callback only sees the LLM calls, not the graph structure.
+    # Capped below 5 to match dag-agent, where langgraph-api pins otel to 1.42.
+    "langfuse>=4.15,<5",
+    # langfuse's LangChain callback handler imports `langchain` itself, not just
+    # langchain-core; without it the handler silently disables
+    "langchain>=1.0",
+    "laya[langchain]>=0.3.20",
+    "mcp>=2.2.0",
+    # /v1/decisions and /v1/systemone require >=1.104.2 (now the latest stable).
+    "litellm[proxy,extra-proxy]>=1.104.2,<1.105",
+    "openai>=2.54.0",
+    # langfuse_otel exports over OTLP/HTTP. Not litellm's `proxy-runtime` extra:
+    # that pins opentelemetry-api==1.28.0, which collides with mcp's 1.45.0.
+    "opentelemetry-sdk>=1.45.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.0",
+    "python-dotenv>=1.2.3",
+    "truststore>=0.10.4",
+    "typesafe-sdk>=0.7.1",
+]
+
+# langgraph-cli is deliberately NOT here: langgraph-api needs protobuf>=6.32.1
+# and litellm[extra-proxy] -> google-cloud-kms caps protobuf<6. Run the Studio
+# server from the dag-agent project instead, which does not depend on litellm.
+
+[tool.uv]
+prerelease = "allow"
