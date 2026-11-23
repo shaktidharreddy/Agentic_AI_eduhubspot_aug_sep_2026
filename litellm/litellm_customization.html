@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description"
+        content="LiteLLM custom registry setup and developer usage for models, auto routers, MCP, A2A, vector stores, web search, memory, and skills.">
+  <title>LiteLLM custom registry (A2A, MCP, Vectorstore) steps</title>
+
+  <style>
+    :root {
+      --background: #f4f6fa;
+      --surface: #ffffff;
+      --text: #172b4d;
+      --muted: #526179;
+      --accent: #0052cc;
+      --accent-soft: #eaf2ff;
+      --border: #dce3ed;
+      --code-background: #111c30;
+      --code-text: #e6edf7;
+      --warning-background: #fff8e6;
+      --warning-border: #e2a400;
+      --radius: 12px;
+      --shadow: 0 6px 24px rgb(23 43 77 / 5%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 24px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--accent);
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      text-decoration-thickness: 2px;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid #579dff;
+      outline-offset: 4px;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 16px;
+      z-index: 100;
+      padding: 12px 18px;
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .skip-link:focus {
+      top: 16px;
+    }
+
+    .page-header {
+      background: #10213f;
+      color: #ffffff;
+      border-bottom: 5px solid #579dff;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: auto;
+      padding: 46px 36px 36px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: #aacbff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 1050px;
+      margin: 0 0 18px;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      line-height: 1.2;
+      letter-spacing: -0.035em;
+    }
+
+    .metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      margin: 0;
+      color: #d4def0;
+      font-size: 14px;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .header-actions a {
+      color: #ffffff;
+    }
+
+    .print-button {
+      padding: 9px 16px;
+      border: 1px solid #8098bd;
+      border-radius: 7px;
+      background: transparent;
+      color: #ffffff;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .print-button:hover {
+      background: rgb(255 255 255 / 10%);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 32px;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 36px 72px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar h2 {
+      margin: 0 0 16px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-group + .sidebar-group {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sidebar-group > a {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+    }
+
+    .sidebar ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sidebar li a {
+      display: block;
+      padding: 5px 0 5px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      text-decoration: none;
+      border-left: 2px solid transparent;
+    }
+
+    .sidebar li a:hover {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .chapter {
+      padding: 34px 38px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .chapter + .chapter {
+      margin-top: 32px;
+    }
+
+    .chapter > h2 {
+      margin: 0 0 20px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--accent-soft);
+      color: #10213f;
+      font-size: 1.75rem;
+      line-height: 1.3;
+      letter-spacing: -0.025em;
+    }
+
+    section > h3 {
+      margin: 42px 0 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 1.3rem;
+      line-height: 1.4;
+      letter-spacing: -0.015em;
+    }
+
+    p {
+      margin: 0 0 16px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 20px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      font-weight: 650;
+    }
+
+    .path {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      background: var(--accent-soft);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      color: #0747a6;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .table-wrap {
+      max-width: 100%;
+      margin: 20px 0 24px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #eef3fa;
+      color: #253858;
+      font-weight: 700;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #fafbfd;
+    }
+
+    td:first-child {
+      min-width: 150px;
+    }
+
+    td {
+      overflow-wrap: anywhere;
+    }
+
+    code,
+    pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono",
+        Menlo, monospace;
+    }
+
+    :not(pre) > code {
+      padding: 2px 5px;
+      border: 1px solid #e1e7f0;
+      border-radius: 4px;
+      background: #f0f3f8;
+      color: #263f65;
+      font-size: 0.875em;
+      overflow-wrap: anywhere;
+    }
+
+    pre {
+      margin: 18px 0 24px;
+      padding: 20px;
+      overflow-x: auto;
+      border: 1px solid #263753;
+      border-radius: 8px;
+      background: var(--code-background);
+      color: var(--code-text);
+      font-size: 12.5px;
+      line-height: 1.7;
+      tab-size: 4;
+    }
+
+    pre code {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: inherit;
+      overflow-wrap: normal;
+    }
+
+    blockquote {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--warning-border);
+      border-radius: 0 8px 8px 0;
+      background: var(--warning-background);
+      color: #584313;
+    }
+
+    blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .source-note {
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #edf2f9;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .page-footer {
+      max-width: 1440px;
+      margin: auto;
+      padding: 0 36px 36px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 20px;
+        padding-right: 24px;
+        padding-left: 24px;
+      }
+
+      .chapter {
+        padding: 28px;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .header-inner {
+        padding: 32px 20px 28px;
+      }
+
+      .layout {
+        display: block;
+        padding: 20px 16px 48px;
+      }
+
+      .sidebar {
+        position: static;
+        max-height: none;
+        margin-bottom: 22px;
+      }
+
+      .sidebar-group ul {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 14px;
+      }
+
+      .chapter {
+        padding: 24px 20px;
+      }
+
+      .chapter > h2 {
+        font-size: 1.5rem;
+      }
+
+      pre {
+        padding: 15px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sidebar-group ul {
+        grid-template-columns: 1fr;
+      }
+
+      th,
+      td {
+        padding: 10px;
+      }
+
+      .chapter {
+        padding: 22px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    @media print {
+      @page {
+        margin: 16mm;
+      }
+
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 10pt;
+      }
+
+      .page-header {
+        background: #ffffff;
+        color: #000000;
+        border-bottom: 2px solid #333333;
+      }
+
+      .header-inner {
+        padding: 0 0 18px;
+      }
+
+      .eyebrow,
+      .metadata {
+        color: #444444;
+      }
+
+      .header-actions,
+      .sidebar,
+      .skip-link,
+      .source-note {
+        display: none;
+      }
+
+      .layout {
+        display: block;
+        padding: 24px 0 0;
+      }
+
+      .chapter {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .chapter + .chapter {
+        break-before: page;
+        margin-top: 0;
+      }
+
+      h2,
+      h3 {
+        break-after: avoid;
+      }
+
+      .table-wrap {
+        overflow: visible;
+      }
+
+      tr {
+        break-inside: avoid;
+      }
+
+      thead {
+        display: table-header-group;
+      }
+
+      pre {
+        overflow: visible;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #f4f4f4;
+        color: #000000;
+        border-color: #cccccc;
+        font-size: 8pt;
+      }
+
+      blockquote {
+        background: #fffaf0;
+        border-left-color: #777777;
+        color: #222222;
+      }
+
+      a {
+        color: #000000;
+      }
+
+      .page-footer {
+        padding: 24px 0 0;
+      }
+    }
+  </style>
+</head>
+
+<body id="top">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="page-header">
+    <div class="header-inner">
+      <p class="eyebrow">LiteLLM · Registry guide</p>
+      <h1>LiteLLM custom registry (A2A, MCP, Vectorstore) steps</h1>
+
+      <p class="metadata">
+        <span>Author: Shaktidhar Reddy</span>
+        <span>
+          Page last modified:
+          <time datetime="2026-10-21T15:57:00Z">
+            October 21, 2026 · 15:57 UTC
+          </time>
+        </span>
+      </p>
+
+      <div class="header-actions">
+        <a href="https://cepheid.atlassian.net/wiki/spaces/CGAI/pages/2152038415/LiteLLM+custom+registry+A2A+MCP+Vectorstore+steps"
+           target="_blank"
+           rel="noopener noreferrer">
+          Open original Confluence page
+        </a>
+        <button class="print-button" type="button" onclick="window.print()">
+          Print / Save as PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Table of contents">
+      <h2>On this page</h2>
+
+      <div class="sidebar-group">
+        <a href="#console-setup">17. Admin console setup</a>
+        <ul>
+          <li><a href="#console-models">17.1 Models</a></li>
+          <li><a href="#console-credentials">17.2 Credentials</a></li>
+          <li><a href="#console-router">17.3 Auto router</a></li>
+          <li><a href="#console-mcp">17.4 MCP servers</a></li>
+          <li><a href="#console-vector">17.5 Vector stores</a></li>
+          <li><a href="#console-a2a">17.6 A2A agents</a></li>
+          <li><a href="#console-search">17.7 Web search tools</a></li>
+          <li><a href="#console-memory">17.8 Memory</a></li>
+          <li><a href="#console-skills">17.9 Skills</a></li>
+          <li><a href="#console-limitations">Console limitations</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-group">
+        <a href="#registry-reference">16. Registry reference</a>
+        <ul>
+          <li><a href="#reference-models">16.1 Models</a></li>
+          <li><a href="#reference-router">16.2 Auto router</a></li>
+          <li><a href="#reference-mcp">16.3 MCP</a></li>
+          <li><a href="#reference-a2a">16.4 A2A</a></li>
+          <li><a href="#reference-vector">16.5 Vector stores</a></li>
+          <li><a href="#reference-search">16.6 Web search</a></li>
+          <li><a href="#reference-memory">16.7 Memory</a></li>
+          <li><a href="#reference-skills">16.8 Skills</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="main-content">
+      <aside class="source-note" aria-label="Source information">
+        HTML adaptation of the linked Confluence page. The source ordering
+        and numbering—section 17 followed by section 16—are preserved.
+        References to earlier sections remain as written in the source.
+      </aside>
+
+      <!-- SECTION 17 -->
+      <article class="chapter" id="console-setup"
+               aria-labelledby="console-setup-title">
+        <h2 id="console-setup-title">
+          17. Registry setup using the admin console only
+        </h2>
+
+        <p>
+          For admins who have no shell on the LiteLLM host and no config
+          file access. Everything here is clicks in the console at
+          <code><redacted URL></code>.
+          Field names below are taken from the running console, not
+          from documentation.
+        </p>
+
+        <p>
+          Sign in with your username and password. The default is
+          <code>admin</code> plus the proxy master key—if the yellow
+          <em>Environment-credential login is enabled</em> banner is showing,
+          create a real admin account and set
+          <code>general_settings.disable_env_credential_login: true</code>,
+          because that shared static secret grants full proxy-admin rights
+          to anyone who has it.
+        </p>
+
+        <p>Where to find each registry in the left navigation:</p>
+
+        <div class="table-wrap">
+          <table aria-label="Registry console navigation">
+            <thead>
+              <tr>
+                <th scope="col">Registry</th>
+                <th scope="col">Navigation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Models</td>
+                <td><strong>Models + Endpoints</strong> → <em>Add Model</em></td>
+              </tr>
+              <tr>
+                <td>Auto router</td>
+                <td><strong>Models + Endpoints</strong> → <em>Auto-Routers</em> (Beta)</td>
+              </tr>
+              <tr>
+                <td>Credentials</td>
+                <td><strong>Models + Endpoints</strong> → <em>LLM Credentials</em></td>
+              </tr>
+              <tr><td>MCP</td><td><strong>MCP Servers</strong></td></tr>
+              <tr><td>A2A</td><td><strong>Agentic → Agents</strong></td></tr>
+              <tr><td>Memory</td><td><strong>Agentic → Memory</strong></td></tr>
+              <tr><td>Web search</td><td><strong>Tools → Search Tools</strong></td></tr>
+              <tr><td>Vector stores</td><td><strong>Tools → Vector Stores</strong></td></tr>
+              <tr><td>Skills (marketplace)</td><td><strong>Skills</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Everything created here is stored in the database, so it survives
+          restarts and stays editable. Entries that came from
+          <code>config.yaml</code> show <strong>Source: config</strong>
+          and are read-only in the console.
+        </p>
+
+        <section id="console-models">
+          <h3>17.1 Models</h3>
+          <p class="path">Models + Endpoints → Add Model</p>
+
+          <p>
+            Worked example—registering the Azure deployment
+            <code>gpt-5.6-luna</code>:
+          </p>
+
+          <div class="table-wrap">
+            <table aria-label="Model registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Provider</td>
+                  <td><code>Azure</code> <em>(the literal entry; not “Azure OpenAI”)</em></td>
+                </tr>
+                <tr><td>LiteLLM Model Name(s)</td><td><code>gpt-5.6-luna</code></td></tr>
+                <tr><td>Mode</td><td><code>Chat - /chat/completions</code></td></tr>
+                <tr><td>Existing Credentials</td><td><em>leave empty if filling the fields below</em></td></tr>
+                <tr><td>API Base</td><td><code><redacted URL></code></td></tr>
+                <tr><td>API Version</td><td><code>2024-10-21</code></td></tr>
+                <tr><td>Base Model</td><td><em>leave empty</em>—see the warning</td></tr>
+                <tr><td>Azure API Key</td><td>your Azure key</td></tr>
+                <tr><td>Model Access Group</td><td><em>optional, e.g.</em> <code>platform-team</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Enter the <strong>deployment name</strong> in
+            <em>LiteLLM Model Name(s)</em>. The form states:
+            <em>“Your deployment name will be saved as the public model name,
+            and LiteLLM will use</em> <code>azure/deployment-name</code>
+            <em>internally”</em>—so developers will call
+            <code>gpt-5.6-luna</code> and LiteLLM resolves
+            <code>azure/gpt-5.6-luna</code>. The <strong>Model Mappings</strong>
+            table below the field previews that pairing as you type;
+            check it before saving.
+          </p>
+
+          <p>
+            Finish with <strong>Test Connect</strong>, then
+            <strong>Add Model</strong>. Confirm under
+            <em>Deployed Models</em>.
+          </p>
+
+          <blockquote>
+            <p>
+              <strong>Leave Base Model empty unless you are certain.</strong>
+              It exists for cost tracking when the deployment name hides
+              the real model. A <em>wrong</em> value makes LiteLLM apply the
+              wrong parameter rules—a reasoning model labelled
+              <code>azure/gpt-4.1</code> gets <code>max_tokens</code>
+              forwarded and Azure rejects the call. With two deployments
+              under one public name that becomes an <em>intermittent</em>
+              failure, because only the mislabelled half fails.
+            </p>
+          </blockquote>
+
+          <p>
+            For a second deployment of an existing model, enter the
+            <strong>same</strong> public name; the two rows become one
+            load-balanced group. Two rows you did not intend is the
+            single most common cause of “it works sometimes”.
+          </p>
+        </section>
+
+        <section id="console-credentials">
+          <h3>
+            17.2 Credentials (do this before 17.5 if you self-host a vector store)
+          </h3>
+          <p class="path">
+            Models + Endpoints → LLM Credentials → Add Credential
+          </p>
+
+          <p>
+            Worked example—a credential that points at the self-hosted
+            vector store from section 15:
+          </p>
+
+          <div class="table-wrap">
+            <table aria-label="Credential registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Credential Name</td>
+                  <td><code>pgvector-sidecar</code> <em>(how other forms reference it)</em></td>
+                </tr>
+                <tr><td>Display Name</td><td><code>pgvector sidecar</code></td></tr>
+                <tr><td>Provider</td><td><code>OpenAI</code></td></tr>
+                <tr><td>Authentication</td><td><code>API key</code></td></tr>
+                <tr><td>API Base</td><td><code><redacted URL></code></td></tr>
+                <tr><td>OpenAI Organization ID</td><td><em>leave empty</em></td></tr>
+                <tr><td>OpenAI API Key</td><td>the backend’s <code>SERVER_API_KEY</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Add Credential</strong>. The row appears with
+            <em>Source: DB</em>.
+          </p>
+
+          <p>
+            This page is the only place in the console that attaches a
+            <strong>custom API Base</strong> to an OpenAI-compatible
+            endpoint, which is what makes 17.5 work. Verified: the
+            credential stores the API Base and masks the key.
+          </p>
+        </section>
+
+        <section id="console-router">
+          <h3>17.3 Auto router</h3>
+          <p class="path">
+            Models + Endpoints → Auto-Routers → Add Auto Router
+          </p>
+
+          <p>Worked example—the five-tier router used by this stack:</p>
+
+          <div class="table-wrap">
+            <table aria-label="Auto router registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Auto Router Name</td><td><code>cepheid_smart_router</code></td></tr>
+                <tr><td>Model Access Group</td><td><em>optional</em></td></tr>
+                <tr>
+                  <td>Choose your classifier</td>
+                  <td><code>Decisions Model</code> <em>(a decision model picks the tier)</em></td>
+                </tr>
+                <tr><td>How often to classify</td><td><code>Every request</code></td></tr>
+                <tr><td>Simple Tier</td><td><code>gpt-5.6-luna</code>, reasoning effort <code>Default</code></td></tr>
+                <tr><td>Medium Tier</td><td><code>gpt-5.6-terra</code>, reasoning effort <code>Default</code></td></tr>
+                <tr><td>Complex Tier</td><td><code>gpt-5.6-sol</code>, reasoning effort <code>Default</code></td></tr>
+                <tr><td>Reasoning Tier</td><td><code>gpt-5.6-sol</code>, reasoning effort <code>xhigh</code></td></tr>
+                <tr><td>Add a non-reasoning tier</td><td><code>gpt-4.1-nano</code></td></tr>
+                <tr><td>Default Model</td><td><code>gpt-5.6-luna</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Classifier choices are <strong>Heuristics</strong> (local,
+            no API call), <strong>LLM</strong> (a judge model), or
+            <strong>Decisions Model</strong>. Classification frequency is
+            <em>Every request</em>, <em>Every new user message</em>, or
+            <em>Once per session</em>.
+          </p>
+
+          <p>
+            Use <strong>Test Routing</strong> with representative prompts
+            before saving, then <strong>Add Auto Router</strong>.
+            The list view shows <em>Type</em>, <em>Routes to</em> and
+            <em>Default model</em>, which is the fastest way to spot
+            an empty tier.
+          </p>
+
+          <blockquote>
+            <p>
+              Put an <strong>ordinary chat model</strong> on the
+              non-reasoning tier—it serves relay, acknowledgement,
+              reformatting and extraction. A classifier model cannot
+              serve those requests at all, and a <em>reasoning</em> model
+              there can return an empty body, because the router injects
+              the tier’s token ceiling and the model spends it on
+              reasoning. <strong>Test Routing</strong> shows which tier
+              answered but not that the answer was blank, so read the
+              response text too.
+            </p>
+          </blockquote>
+        </section>
+
+        <section id="console-mcp">
+          <h3>17.4 MCP servers</h3>
+          <p class="path">
+            MCP Servers → + Add New MCP Server → + Custom Server
+          </p>
+
+          <p>
+            The first screen is a catalogue of known public servers.
+            Your internal server is behind <strong>+ Custom Server</strong>
+            at the top left—easy to miss.
+          </p>
+
+          <p>Worked example—the calculator server from section 4:</p>
+
+          <div class="table-wrap">
+            <table aria-label="MCP server registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>MCP Server Name</td><td><code>calc_http</code></td></tr>
+                <tr>
+                  <td>Alias</td>
+                  <td><code>calc_http</code> <em>(prefixes tool names, e.g.</em> <code>calc_http-add</code><em>)</em></td>
+                </tr>
+                <tr><td>Description</td><td><code>FastMCP Calculator over streamable HTTP</code></td></tr>
+                <tr><td>Logo / GitHub Source URL</td><td><em>optional, cosmetic</em></td></tr>
+                <tr><td>Transport Type</td><td><code>Streamable HTTP (Recommended)</code></td></tr>
+                <tr><td>MCP Server URL</td><td><code><redacted URL></code></td></tr>
+                <tr><td>Max Concurrent Requests</td><td><em>optional, e.g.</em> <code>10</code></td></tr>
+                <tr><td>RPM limit (all callers)</td><td><em>optional, e.g.</em> <code>60</code></td></tr>
+                <tr><td>Authentication</td><td><em>leave as none for an unauthenticated internal server</em></td></tr>
+                <tr><td>MCP Access Groups</td><td><em>optional</em></td></tr>
+                <tr><td>Default Cost per Query ($)</td><td><code>0.0000</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Transport choices are
+            <code>Streamable HTTP (Recommended)</code>,
+            <code>Server-Sent Events (SSE)</code>,
+            <code>Standard Input/Output (stdio)</code> and
+            <code>OpenAPI Spec</code>.
+            <strong>The MCP Server URL field only appears after you choose
+            a transport.</strong>
+          </p>
+
+          <p>
+            <strong>Add MCP Server</strong>, then check the card shows
+            <strong>Healthy</strong>. <em>Unhealthy</em> means the gateway
+            cannot reach the URL you typed—it must be routable
+            <strong>from the LiteLLM host</strong>, so
+            <code>127.0.0.1</code> only works if the server runs on that
+            same box.
+          </p>
+
+          <p>
+            The <strong>Connect</strong> tab generates client configuration
+            for developers, and <strong>Import from JSON</strong> accepts
+            a standard MCP client config block if you have one.
+          </p>
+        </section>
+
+        <section id="console-vector">
+          <h3>17.5 Vector stores</h3>
+
+          <p>
+            The page has two flows and picking the wrong one is the
+            usual mistake:
+          </p>
+
+          <ul>
+            <li>
+              <strong>Create Vector Store</strong>—uploads documents and
+              creates a <em>new</em> store.
+            </li>
+            <li>
+              <strong>Manage Vector Stores → + Add Vector Store</strong>—
+              registers a store that <strong>already exists</strong>.
+              This is the one for a self-hosted backend.
+            </li>
+          </ul>
+
+          <p>Provider choice has a consequence the form never explains:</p>
+
+          <div class="table-wrap">
+            <table aria-label="Vector store provider differences">
+              <thead>
+                <tr>
+                  <th scope="col">Provider</th>
+                  <th scope="col">API Base field?</th>
+                  <th scope="col">Console document upload</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><em>PostgreSQL pgvector (LiteLLM Connector)</em></td>
+                  <td>Yes, on the form</td>
+                  <td><strong>No</strong></td>
+                </tr>
+                <tr>
+                  <td><em>OpenAI</em></td>
+                  <td>No—only via a credential</td>
+                  <td><strong>Yes</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The console’s drag-and-drop upload uses the RAG ingest path,
+            which accepts only certain providers, and
+            <code>pg_vector</code> is not one of them. So for a self-hosted
+            OpenAI-compatible backend, register it as <strong>OpenAI</strong>
+            and supply the base URL through the credential from 17.2.
+          </p>
+
+          <p>
+            Worked example—registering the existing
+            <code>genai-kb</code> store:
+          </p>
+
+          <div class="table-wrap">
+            <table aria-label="Vector store registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Provider</td><td><code>OpenAI</code></td></tr>
+                <tr>
+                  <td>Vector Store ID</td>
+                  <td><code>6ad5a50a-8829-4134-86e4-623fe516d5b6</code> <em>(from your backend)</em></td>
+                </tr>
+                <tr><td>Vector Store Name</td><td><code>genai-kb</code></td></tr>
+                <tr><td>Description</td><td><code>Internal runbooks and handbooks</code></td></tr>
+                <tr>
+                  <td>Existing Credentials</td>
+                  <td><code>pgvector-sidecar</code> <em>(created in 17.2)</em></td>
+                </tr>
+                <tr>
+                  <td>Metadata</td>
+                  <td><em>optional, e.g.</em> <code>{"owner": "platform"}</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Create</strong>. The row should show
+            <em>Provider: OpenAI</em> and <em>Source: DB</em>.
+          </p>
+
+          <p>
+            Then use <strong>Create Vector Store</strong> to drag documents
+            in, and <strong>Test Vector Store</strong> to run a query
+            against it. Picking <em>PostgreSQL pgvector</em> instead still
+            gives working search—you lose console uploads and must ingest
+            over the API.
+          </p>
+        </section>
+
+        <section id="console-a2a">
+          <h3>17.6 A2A agents</h3>
+          <p class="path">Agentic → Agents → Add New Agent</p>
+
+          <p>
+            Fastest route: paste the agent’s base URL into
+            <strong>Discover</strong> and let the console read its agent
+            card, which fills the rest. Otherwise enter it manually.
+          </p>
+
+          <p>Worked example—the weather agent from section 6:</p>
+
+          <div class="table-wrap">
+            <table aria-label="A2A agent registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Agent Type</td><td><code>A2A Standard</code></td></tr>
+                <tr><td>Identity Provider</td><td><code>No explicit identity binding</code></td></tr>
+                <tr><td>Agent Name</td><td><code>weather-agent</code> <em>(the id developers call)</em></td></tr>
+                <tr><td>Display Name</td><td><code>Weather Agent</code></td></tr>
+                <tr><td>Description</td><td><code>Reports the current weather for a city.</code></td></tr>
+                <tr><td>URL</td><td><code><redacted URL></code></td></tr>
+                <tr><td>Version</td><td><code>1.0.0</code></td></tr>
+                <tr><td>Protocol Version</td><td><code>0.3</code></td></tr>
+                <tr><td>Skills → id</td><td><code>weather</code></td></tr>
+                <tr><td>Skills → name</td><td><code>Weather lookup</code></td></tr>
+                <tr><td>Skills → description</td><td><code>Current conditions for a city</code></td></tr>
+                <tr><td>Skills → tags</td><td><code>weather</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Agent Type choices include <code>A2A Standard</code>,
+            <code>LangFlow</code>, <code>LangGraph</code>,
+            <code>Bedrock AgentCore</code>, <code>Azure AI Foundry</code>,
+            <code>Pydantic AI</code>, <code>Vertex AI Agent Engine</code>,
+            <code>watsonx Orchestrate</code> and <code>Custom / Other</code>.
+            Identity Provider offers <code>No explicit identity binding</code>
+            or <code>Microsoft Entra ID</code>.
+          </p>
+
+          <p>
+            Optional sections: <strong>Capabilities</strong>,
+            <strong>Cost Configuration</strong>,
+            <strong>LiteLLM Parameters</strong>,
+            <strong>Authentication Headers</strong>,
+            <strong>Kill Switch</strong>. Step through with
+            <strong>Next →</strong> and save.
+          </p>
+
+          <blockquote>
+            <p>
+              <strong>Always fill in Skills.</strong> Leaving it empty
+              stores a generic “chat” skill, and that generic text is what
+              semantic agent search embeds—so the agent gets ranked on the
+              wrong description and routing silently picks the wrong agent.
+              <strong>URL</strong> must be the advertised, routable address,
+              not <code>127.0.0.1</code>.
+            </p>
+          </blockquote>
+        </section>
+
+        <section id="console-search">
+          <h3>17.7 Web search tools</h3>
+          <p class="path">
+            Tools → Search Tools → + Add New Search Tool
+          </p>
+
+          <p>Worked example:</p>
+
+          <div class="table-wrap">
+            <table aria-label="Web search tool registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Search Tool Name</td><td><code>my-tavily-tool</code> <em>(developers call this name)</em></td></tr>
+                <tr><td>Search Provider</td><td><code>Tavily</code></td></tr>
+                <tr><td>API Key</td><td>your Tavily key</td></tr>
+                <tr><td>Description (Optional)</td><td><code>General web search</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Providers in the dropdown include <code>Perplexity</code>,
+            <code>Tavily</code>, <code>Parallel AI</code>, <code>Exa AI</code>,
+            <code>Brave Search</code>, <code>Google PSE</code>,
+            <code>DataForSEO</code>, <code>Firecrawl</code>,
+            <code>SearXNG</code>, <code>Linkup</code>, <code>DuckDuckGo</code>,
+            <code>SearchAPI.io</code>, <code>Serper</code>,
+            <code>You.com</code>, <code>Nimble</code>,
+            <code>Web Search on Amazon Bedrock</code> and
+            <code>Grounding with Bing Search</code>.
+          </p>
+
+          <p>
+            Click <strong>Test Connection</strong> first—it validates the
+            key—then <strong>Add Search Tool</strong>.
+          </p>
+        </section>
+
+        <section id="console-memory">
+          <h3>17.8 Memory</h3>
+          <p class="path">Agentic → Memory → New memory</p>
+
+          <p>Worked example:</p>
+
+          <div class="table-wrap">
+            <table aria-label="Memory creation fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Key</td><td><code>crm/acct-42/preferences</code></td></tr>
+                <tr>
+                  <td>Value</td>
+                  <td><code>Prefers metric units. Escalate Sev1 to the platform rota.</code></td>
+                </tr>
+                <tr>
+                  <td>Metadata (optional JSON)</td>
+                  <td><code>{"account": "acct-42", "tags": ["crm"]}</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Create</strong>. The search box filters by key prefix
+            or memory ID, so agree a consistent prefix per tenant or per
+            agent up front—<code>crm/acct-42/…</code> here.
+          </p>
+
+          <p>
+            Nothing is injected into prompts automatically; an application
+            has to read the value and put it in the context itself.
+          </p>
+        </section>
+
+        <section id="console-skills">
+          <h3>17.9 Skills</h3>
+          <p class="path">Skills → + Add Skill</p>
+
+          <p>
+            This page manages the <strong>Claude Code marketplace</strong>,
+            served at <code>/claude-code/marketplace.json</code>. It
+            registers a <em>source reference</em>, not an upload.
+          </p>
+
+          <p>
+            Worked example—the <code>pptx</code> skill already registered
+            on this gateway:
+          </p>
+
+          <div class="table-wrap">
+            <table aria-label="Marketplace skill registration fields">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Value to enter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Source URL</td><td><code><redacted URL></code></td></tr>
+                <tr><td>Subfolder path (Optional)</td><td><code>pptx</code></td></tr>
+                <tr><td>Skill Name</td><td><code>pptx</code></td></tr>
+                <tr><td>Domain (Optional)</td><td><code>Productivity</code></td></tr>
+                <tr><td>Namespace (Optional)</td><td><em>leave empty</em></td></tr>
+                <tr><td>Description (Optional)</td><td><code>Create and edit PowerPoint decks</code></td></tr>
+                <tr><td>Category (Optional)</td><td><code>Agent Skills</code></td></tr>
+                <tr><td>Keywords (Optional)</td><td><code>pptx, slides, powerpoint</code></td></tr>
+                <tr><td>Version (Optional)</td><td><code>1.0.0</code></td></tr>
+                <tr><td>Author Name / Email</td><td><em>optional</em></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Add Skill</strong>. The row appears with
+            <em>Public: Yes</em>.
+          </p>
+
+          <blockquote>
+            <p>
+              Two caveats before you plan around this page. The
+              <strong>Source URL must be reachable over HTTPS</strong>
+              by whoever consumes the marketplace, so an internal-only
+              git host will not work. And this is <strong>not</strong>
+              the registry a chat request uses via
+              <code>container.skills</code>—those are zip archives
+              containing <code>SKILL.md</code>, they have
+              <strong>no console page</strong>, and they can only be
+              registered over the API. Registering here does not make a
+              skill available to <code>container.skills</code>, or vice
+              versa.
+            </p>
+          </blockquote>
+        </section>
+
+        <section id="console-limitations">
+          <h3>What you cannot do from the console</h3>
+
+          <p>
+            Worth knowing before promising a fully click-only workflow:
+          </p>
+
+          <ul>
+            <li>
+              <strong>Agent-skills archives</strong>
+              (<code>container.skills</code>)—upload is API-only, as above.
+            </li>
+            <li>
+              <strong>Config-file entries</strong>—anything from
+              <code>config.yaml</code> is read-only in the console.
+              To change it you need file access and a restart.
+            </li>
+            <li>
+              <strong>A self-hosted vector store with a custom base URL</strong>—
+              possible, but only via the credential indirection in 17.5,
+              not from the vector store form alone.
+            </li>
+          </ul>
+        </section>
+      </article>
+
+      <!-- SECTION 16 -->
+      <article class="chapter" id="registry-reference"
+               aria-labelledby="registry-reference-title">
+        <h2 id="registry-reference-title">
+          16. Registry reference—admin setup and developer usage
+        </h2>
+
+        <p>
+          Eight registries live on the gateway. This section is the quick
+          reference: what each one is, how an <strong>admin</strong>
+          registers an entry, and how an <strong>end developer</strong>
+          consumes it. Every request below was run against this gateway.
+        </p>
+
+        <p>Two conventions throughout:</p>
+
+        <pre><code class="language-shell">export LITELLM_BASE=<redacted URL>
+export LITELLM_KEY=sk-...          # a virtual key for developers, master key for admins</code></pre>
+
+        <div class="table-wrap">
+          <table aria-label="Registry admin and developer reference">
+            <thead>
+              <tr>
+                <th scope="col">Registry</th>
+                <th scope="col">Admin writes</th>
+                <th scope="col">Developer calls</th>
+                <th scope="col">Console</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Models</td>
+                <td><code>model_list</code> / <code>POST /model/new</code></td>
+                <td><code>POST /v1/chat/completions</code></td>
+                <td>Models + Endpoints</td>
+              </tr>
+              <tr>
+                <td>Auto router</td>
+                <td><code>POST /model/new</code> (DB only)</td>
+                <td><code>model: "&lt;router name&gt;"</code></td>
+                <td>Models + Endpoints</td>
+              </tr>
+              <tr>
+                <td>MCP</td>
+                <td><code>mcp_servers</code> / <code>POST /v1/mcp/server</code></td>
+                <td><code>/mcp</code> or <code>/mcp-rest/tools/*</code></td>
+                <td>MCP Servers</td>
+              </tr>
+              <tr>
+                <td>A2A</td>
+                <td><code>agents</code> / <code>POST /v1/agents</code></td>
+                <td><code>POST /a2a/{name}/</code></td>
+                <td>Agentic → Agents</td>
+              </tr>
+              <tr>
+                <td>Vector stores</td>
+                <td><code>POST /vector_store/new</code></td>
+                <td><code>POST /v1/vector_stores/{id}/search</code></td>
+                <td>Tools → Vector Stores</td>
+              </tr>
+              <tr>
+                <td>Web search</td>
+                <td><code>search_tools</code> in config</td>
+                <td><code>POST /v1/search/{name}</code></td>
+                <td>Tools → Search Tools</td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>n/a (self-serve)</td>
+                <td><code>POST/GET/PUT/DELETE /v1/memory</code></td>
+                <td>Agentic → Memory</td>
+              </tr>
+              <tr>
+                <td>Skills</td>
+                <td><code>POST /v1/skills</code> (zip)</td>
+                <td><code>container.skills</code></td>
+                <td>Skills</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Anything registered over REST lands in the database and is
+          editable in the console. Anything in <code>config.yaml</code>
+          is read-only there, and <strong>if a name exists in both, the
+          database record wins</strong>.
+        </p>
+
+        <section id="reference-models">
+          <h3>16.1 Models registry</h3>
+
+          <p>
+            <strong>Admin.</strong> Config file, applied on the LiteLLM host:
+          </p>
+
+          <pre><code class="language-yaml">model_list:
+  - model_name: gpt-5.6-luna            # the name developers use
+    litellm_params:
+      model: azure/gpt-5.6-luna          # the real deployment
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY</code></pre>
+
+          <p>Or over REST, no restart:</p>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/model/new -H "Authorization: Bearer $LITELLM_KEY" \
+  -H 'Content-Type: application/json' -d '{
+    "model_name": "gpt-5.6-luna",
+    "litellm_params": {"model": "azure/gpt-5.6-luna", "api_key": "...", "api_base": "..."}
+  }'</code></pre>
+
+          <blockquote>
+            <p>
+              <strong>Do not set</strong> <code>base_model</code>
+              <strong>unless the deployment name hides the real model.</strong>
+              A wrong value makes LiteLLM apply the wrong parameter rules—
+              a reasoning model labelled <code>azure/gpt-4.1</code> gets
+              <code>max_tokens</code> forwarded and Azure rejects it.
+              With two deployments under one <code>model_name</code>,
+              load balancing turns that into an intermittent failure.
+              Check for duplicates with <code>GET /v1/model/info</code>
+              and compare <code>max_output_tokens</code>.
+            </p>
+          </blockquote>
+
+          <p><strong>Developer.</strong></p>
+
+          <pre><code class="language-python">import os
+from openai import OpenAI
+
+client = OpenAI(base_url=f"{os.environ['LITELLM_BASE']}/v1",
+                api_key=os.environ["LITELLM_KEY"])
+
+resp = client.chat.completions.create(
+    model="gpt-5.6-luna",
+    messages=[{"role": "user", "content": "Summarise this incident in two lines."}],
+)
+print(resp.choices[0].message.content)</code></pre>
+        </section>
+
+        <section id="reference-router">
+          <h3>16.2 Auto router registry</h3>
+
+          <p>
+            Routes each request to the cheapest adequate model tier,
+            classified per request.
+          </p>
+
+          <p>
+            <strong>Admin.</strong> The router is a <em>model</em> whose
+            <code>litellm_params.model</code> is
+            <code>auto_router/complexity_router</code>:
+          </p>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/model/new -H "Authorization: Bearer $LITELLM_KEY" \
+  -H 'Content-Type: application/json' -d '{
+    "model_name": "cepheid_smart_router",
+    "litellm_params": {
+      "model": "auto_router/complexity_router",
+      "complexity_router_config": {
+        "classifier_type": "jev",
+        "classification_mode": "every_request",
+        "default_model": "gpt-5.6-luna",
+        "enable_non_reasoning_tier": true,
+        "tiers": {
+          "NON_REASONING": ["gpt-4.1-nano"],
+          "SIMPLE":        ["gpt-5.6-luna"],
+          "MEDIUM":        ["gpt-5.6-terra"],
+          "COMPLEX":       ["gpt-5.6-sol"],
+          "REASONING":     ["gpt-5.6-sol"]
+        }
+      }
+    }
+  }'</code></pre>
+
+          <p>Three things that cost real time:</p>
+
+          <ul>
+            <li>
+              <code>NON_REASONING</code> <strong>is a serving tier, not
+              the classifier.</strong> It handles relay, acknowledgement,
+              reformatting and extraction, so it needs a real chat model.
+              Putting the classifier model there fails every request
+              routed to it.
+            </li>
+            <li>
+              <strong>Don’t put a reasoning model on a tier</strong> while
+              <code>max_tokens_from_tier_model</code> is at its default
+              <code>true</code>: the router injects the tier ceiling as
+              <code>max_tokens</code>, and a reasoning model can spend the
+              whole budget on reasoning and return HTTP 200 with
+              <strong>empty content</strong>—a silent failure.
+            </li>
+            <li>
+              <code>POST /model/update</code>
+              <strong>rejects partial updates.</strong> Round-trip the full
+              <code>litellm_params</code> from
+              <code>GET /v1/model/info</code>. Safe only when the object
+              has no <code>api_key</code>—keys come back masked and would
+              be written back as literal <code>****</code>.
+            </li>
+          </ul>
+
+          <p>
+            <strong>Developer.</strong> Call it like any model; you cannot
+            pin a tier from the client. <code>x-litellm-model-id</code>
+            returns the deployment id, so map it back to see which tier
+            answered:
+          </p>
+
+          <pre><code class="language-python">raw = client.chat.completions.with_raw_response.create(
+    model="cepheid_smart_router",
+    messages=[{"role": "user", "content": "Return only the order id: order_id=A-1193"}],
+)
+
+rows = httpx.get(f"{base}/v1/model/info",
+                 headers={"Authorization": f"Bearer {key}"}, timeout=60).json()["data"]
+names = {m["model_info"]["id"]: m["model_name"] for m in rows}
+
+print(names.get(raw.headers.get("x-litellm-model-id")))   # gpt-4.1-nano
+print(raw.parse().choices[0].message.content)             # A-1193</code></pre>
+
+          <p>
+            If you need a specific model, call that model directly instead
+            of the router. Note that <code>max_tokens</code> you pass may
+            be overwritten by the tier ceiling while
+            <code>max_tokens_from_tier_model</code> is <code>true</code>.
+          </p>
+        </section>
+
+        <section id="reference-mcp">
+          <h3>16.3 MCP registry</h3>
+
+          <p><strong>Admin.</strong></p>
+
+          <pre><code class="language-yaml">mcp_servers:
+  calc_http:
+    url: <redacted URL>
+    transport: http
+    description: FastMCP Calculator over streamable HTTP</code></pre>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/v1/mcp/server -H "Authorization: Bearer $LITELLM_KEY" \
+  -H 'Content-Type: application/json' -d '{
+    "server_name": "calc_http", "alias": "calc_http", "transport": "http",
+    "url": "<redacted URL>"
+  }'
+
+curl -s $LITELLM_BASE/v1/mcp/server/health -H "Authorization: Bearer $LITELLM_KEY"</code></pre>
+
+          <p>
+            Bind MCP servers to a routable interface, not
+            <code>127.0.0.1</code>, or the gateway cannot reach them.
+            Verify health before telling anyone it is registered.
+          </p>
+
+          <p>
+            <strong>Developer—MCP-native client.</strong>
+            The gateway is itself an MCP server:
+          </p>
+
+          <pre><code><redacted URL>                  # all permitted servers
+<redacted URL>        # one server</code></pre>
+
+          <p>
+            Pass the key as the bearer token;
+            <code>x-mcp-servers</code> narrows the toolset.
+          </p>
+
+          <p><strong>Developer—plain REST.</strong></p>
+
+          <pre><code class="language-python">import httpx, os
+
+base, key = os.environ["LITELLM_BASE"], os.environ["LITELLM_KEY"]
+h = {"Authorization": f"Bearer {key}"}
+
+with httpx.Client(base_url=base, headers=h, timeout=60) as c:
+    servers = c.get("/v1/mcp/server").json()
+    server_id = next(s["server_id"] for s in servers
+                     if (s.get("alias") or s["server_name"]) == "calc_http")
+
+    tools = c.get("/mcp-rest/tools/list").json()
+
+    out = c.post("/mcp-rest/tools/call", json={
+        "name": "add",                 # UNPREFIXED name
+        "arguments": {"a": 21, "b": 21},
+        "server_id": server_id,        # required
+    }).json()
+    print(out["content"][0]["text"])   # 42</code></pre>
+
+          <blockquote>
+            <p>
+              Tool names are <code>{alias}-{tool}</code> when listed
+              through the gateway’s catalog, but
+              <code>/mcp-rest/tools/call</code> wants the
+              <strong>unprefixed</strong> name plus
+              <code>server_id</code>.
+            </p>
+          </blockquote>
+        </section>
+
+        <section id="reference-a2a">
+          <h3>16.4 A2A registry</h3>
+
+          <p><strong>Admin.</strong></p>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/v1/agents -H "Authorization: Bearer $LITELLM_KEY" \
+  -H 'Content-Type: application/json' -d '{
+    "agent_name": "weather-agent",
+    "agent_card_params": {
+      "name": "Weather Agent",
+      "description": "Reports the current weather for a city.",
+      "url": "<redacted URL>",
+      "protocolVersion": "0.3",
+      "skills": [{"id": "weather", "name": "Weather lookup",
+                  "description": "Current conditions for a city",
+                  "tags": ["weather"]}]
+    }
+  }'</code></pre>
+
+          <p>
+            Always pin <code>protocolVersion</code>, advertise a routable
+            URL (not <code>127.0.0.1</code>), and include
+            <code>skills</code>—omitting them stores a generic “chat”
+            skill, which is the text <code>/v1/agents/search</code>
+            embeds, so semantic routing ranks on the wrong description.
+          </p>
+
+          <p><strong>Developer.</strong> A2A is JSON-RPC over HTTP:</p>
+
+          <pre><code class="language-python">import httpx, os, uuid
+
+base, key = os.environ["LITELLM_BASE"], os.environ["LITELLM_KEY"]
+
+payload = {
+    "jsonrpc": "2.0", "id": str(uuid.uuid4()), "method": "message/send",
+    "params": {"message": {"role": "user", "kind": "message",
+                           "messageId": str(uuid.uuid4()),
+                           "parts": [{"kind": "text", "text": "Weather in Paris?"}]}},
+}
+
+# follow_redirects is REQUIRED: /a2a/{name}/ answers 307 and a client that drops
+# the body on redirect makes every agent look broken.
+with httpx.Client(headers={"Authorization": f"Bearer {key}"},
+                  follow_redirects=True, timeout=180) as c:
+    r = c.post(f"{base}/a2a/weather-agent/", json=payload).json()
+
+parts = r["result"].get("parts") or r["result"]["status"]["message"]["parts"]
+print("".join(p.get("text", "") for p in parts))</code></pre>
+
+          <p>Discover agents first if you don’t know the name:</p>
+
+          <pre><code class="language-shell">curl -s "$LITELLM_BASE/v1/agents/search?query=who+can+convert+currency" \
+  -H "Authorization: Bearer $LITELLM_KEY"
+curl -s $LITELLM_BASE/a2a/weather-agent/.well-known/agent-card.json \
+  -H "Authorization: Bearer $LITELLM_KEY"</code></pre>
+        </section>
+
+        <section id="reference-vector">
+          <h3>16.5 Vector store registry</h3>
+
+          <p>
+            Deployment is section 15; this is the registry contract.
+          </p>
+
+          <p><strong>Admin.</strong></p>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/vector_store/new -H "Authorization: Bearer $LITELLM_KEY" \
+  -H 'Content-Type: application/json' -d '{
+    "vector_store_name": "genai-kb",
+    "vector_store_description": "Internal runbooks and handbooks",
+    "vector_store_id": "6ad5a50a-...",
+    "custom_llm_provider": "openai",
+    "litellm_params": {"api_base": "<redacted URL>",
+                       "api_key": "..."}
+  }'</code></pre>
+
+          <p>
+            The store must already exist on the backing service—LiteLLM
+            registers an id, it does not create one. Use
+            <code>openai</code>, not <code>pg_vector</code>, and end
+            <code>api_base</code> with <code>/v1</code>
+            (section 15.4 explains why).
+          </p>
+
+          <p><strong>Developer—search.</strong></p>
+
+          <pre><code class="language-python">hits = httpx.post(f"{base}/v1/vector_stores/{store_id}/search",
+                  headers={"Authorization": f"Bearer {key}"},
+                  json={"query": "what counts as a Sev1?", "max_num_results": 3},
+                  timeout=120).json()["data"]
+
+for h in hits:
+    print(round(h["score"], 3), h["filename"], h["content"][0]["text"][:120])</code></pre>
+
+          <p>
+            <strong>Developer—ingest.</strong> Use
+            <code>pgvector-service/ingest.py</code>, or call the endpoint
+            directly. The JSON goes in a form field named literally
+            <code>request</code>:
+          </p>
+
+          <pre><code class="language-shell">curl -X POST $LITELLM_BASE/v1/rag/ingest -H "Authorization: Bearer $LITELLM_KEY" \
+  -F 'request={"ingest_options":{"vector_store":{"custom_llm_provider":"openai","vector_store_id":"6ad5a50a-..."},"wait_for_ingestion":true}}' \
+  -F 'file=@runbook.md;type=text/markdown'</code></pre>
+
+          <p>
+            A <code>200</code> does not mean success—read
+            <code>status</code> in the body, which is
+            <code>completed</code> or <code>failed</code>.
+          </p>
+        </section>
+
+        <section id="reference-search">
+          <h3>16.6 Web search tool registry</h3>
+
+          <p>
+            <strong>Admin.</strong> Config file only; there is no create
+            endpoint, the REST surface is read-only:
+          </p>
+
+          <pre><code class="language-yaml">search_tools:
+  - search_tool_name: my-tavily-tool
+    litellm_params:
+      search_provider: tavily
+      api_key: os.environ/TAVILY_API_KEY
+    search_tool_info:
+      description: General web search</code></pre>
+
+          <p><strong>Developer.</strong></p>
+
+          <pre><code class="language-python">res = httpx.post(f"{base}/v1/search/my-tavily-tool",
+                 headers={"Authorization": f"Bearer {key}"},
+                 json={"query": "LiteLLM vector store docs", "max_results": 3},
+                 timeout=60).json()
+
+for r in res["results"]:
+    print(r["title"], "-&gt;", r["url"])</code></pre>
+
+          <p>
+            <code>GET /v1/search/tools</code> lists what is available.
+            Access can be restricted per key or team via
+            <code>object_permission.search_tools</code>.
+          </p>
+        </section>
+
+        <section id="reference-memory">
+          <h3>16.7 Memory registry</h3>
+
+          <p>
+            Durable key/value context on the proxy, scoped to the caller’s
+            user or team. There is no admin registration step—developers
+            create their own entries, and an admin can scope one to another
+            user or team with <code>user_id</code>/<code>team_id</code>.
+          </p>
+
+          <p><strong>Developer.</strong></p>
+
+          <pre><code class="language-python">h = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+httpx.post(f"{base}/v1/memory", headers=h, json={
+    "key": "crm/acct-42/preferences",
+    "value": "Prefers metric units. Escalate Sev1 to the platform rota.",
+    "metadata": {"account": "acct-42"},
+})
+
+httpx.put(f"{base}/v1/memory/crm/acct-42/preferences", headers=h,
+          json={"value": "Prefers metric units."})
+
+row = httpx.get(f"{base}/v1/memory/crm/acct-42/preferences", headers=h).json()
+
+page = httpx.get(f"{base}/v1/memory", headers=h,
+                 params={"key_prefix": "crm/", "page": 1, "page_size": 50}).json()
+print(page["total"], len(page["memories"]))
+
+httpx.delete(f"{base}/v1/memory/crm/acct-42/preferences", headers=h)</code></pre>
+
+          <p>
+            Keys are path-like namespaces, so <code>key_prefix</code>
+            is the cheap way to list a tenant’s entries. Feed
+            <code>value</code> into a prompt yourself—nothing is
+            auto-injected.
+          </p>
+        </section>
+
+        <section id="reference-skills">
+          <h3>16.8 Skills registry</h3>
+
+          <p>
+            A skill is an Anthropic Agent Skills archive: a zip with
+            <code>SKILL.md</code> at its root, injected as model
+            instructions when a call references it.
+          </p>
+
+          <p>
+            <strong>Admin.</strong> <code>multipart/form-data</code>,
+            and <code>custom_llm_provider=litellm_proxy</code> is
+            mandatory—without it the request is proxied to Anthropic
+            and needs an Anthropic key:
+          </p>
+
+          <pre><code class="language-shell">zip -j postmortem.zip skills/blameless-incident-postmortem/SKILL.md
+
+curl -X POST "$LITELLM_BASE/v1/skills?custom_llm_provider=litellm_proxy" \
+  -H "Authorization: Bearer $LITELLM_KEY" \
+  -F 'display_title=Blameless Incident Postmortem' \
+  -F 'description=House format for incident postmortems' \
+  -F 'files[]=@postmortem.zip;type=application/zip'
+
+curl -s "$LITELLM_BASE/v1/skills?custom_llm_provider=litellm_proxy" \
+  -H "Authorization: Bearer $LITELLM_KEY"</code></pre>
+
+          <p>
+            Only the archive reaches the model. The
+            <code>description</code> field is stored for discovery but
+            never injected, so the guidance must live in
+            <code>SKILL.md</code>.
+          </p>
+
+          <p><strong>Developer.</strong></p>
+
+          <pre><code class="language-python">resp = client.chat.completions.create(
+    model="claude-sonnet-4",            # see the caveat below
+    messages=[{"role": "user", "content": "Write the postmortem for INC-1182."}],
+    extra_body={"container": {"skills": [
+        {"type": "litellm_skill", "skill_id": "litellm_skill_72249ab3-..."}
+    ]}},
+)</code></pre>
+
+          <blockquote>
+            <p>
+              <strong>Requires an Anthropic-family model.</strong>
+              The skill is converted into an Anthropic-shaped tool
+              (<code>name</code>/<code>description</code>/<code>input_schema</code>).
+              Against an Azure or OpenAI deployment the call fails with
+              <code>400 Missing required parameter: 'tools[0].type'</code>.
+              Registration and listing work regardless; only invocation
+              is provider-bound. If the gateway has no
+              <code>anthropic/…</code> or
+              <code>bedrock/anthropic.…</code> model, this path is
+              unusable—paste <code>SKILL.md</code> into the system
+              prompt instead.
+            </p>
+          </blockquote>
+
+          <p>
+            Skills shown under <strong>Skills</strong> in the console
+            come from a <em>different</em> registry—the Claude Code
+            marketplace at <code>/claude-code/plugins</code>, which
+            stores a git source reference rather than an archive.
+            Registering one does not register the other.
+          </p>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <footer class="page-footer">
+    <p>
+      LiteLLM custom registry (A2A, MCP, Vectorstore) steps
+      · <a href="#top">Back to top</a>
+      ·
+      <a href="https://cepheid.atlassian.net/wiki/spaces/CGAI/pages/2152038415/LiteLLM+custom+registry+A2A+MCP+Vectorstore+steps"
+         target="_blank"
+         rel="noopener noreferrer">
+        Confluence source
+      </a>
+    </p>
+  </footer>
+</body>
+</html>
