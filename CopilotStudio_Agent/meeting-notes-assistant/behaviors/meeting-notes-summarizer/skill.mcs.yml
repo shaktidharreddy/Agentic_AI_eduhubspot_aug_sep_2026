@@ -1,0 +1,5 @@
+mcs.metadata:
+  componentName: meeting-notes-summarizer
+  schemaName: sr_MeetingNotesAssistant.skill.meetingnotessummarizer_Dy8
+kind: InlineAgentSkill
+skillFolderName: meeting-notes-summarizer
