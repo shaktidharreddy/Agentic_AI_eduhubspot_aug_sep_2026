@@ -1,0 +1,1771 @@
+<!DOCTYPE html><html data-theme="dark:dark light:light motion:motion shape:shape spacing:spacing typography:typography" data-color-mode="light" lang="en"><head><meta charSet="utf-8"/><title>Atlassian</title><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="faus-server-rendered" content="true"/><meta name="faus-bundle" content="global-ui"/><style type="text/css">
+
+  html,
+  body,
+  p,
+  div,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  ul,
+  ol,
+  dl,
+  img,
+  pre,
+  form,
+  fieldset {
+    margin: 0;
+    padding: 0;
+  }
+  img,
+  fieldset {
+    border: 0;
+  }
+
+
+  body,
+  html {
+    height: 100%;
+    width: 100%;
+  }
+
+  body,
+	[data-subtree-theme] {
+		background-color: var(--ds-surface, #fff);
+		color: var(--ds-text, #172B4D);
+		font: var(--ds-font-body, normal 400 14px/1.42857142857143 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+	}
+
+	body {
+		-ms-overflow-style: -ms-autohiding-scrollbar;
+		text-decoration-skip-ink: auto;
+	}
+
+  /* Default margins */
+  p,
+  ul,
+  ol,
+  dl,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  blockquote,
+  pre,
+  form,
+  table {
+    margin: var(--ds-space-150, 12px) 0 0 0;
+  }
+
+  /* Links */
+  a {
+    color: var(--ds-link, #0052CC);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--ds-link, #0065FF);
+    text-decoration: underline;
+  }
+  a:active {
+    color: var(--ds-link-pressed, #0747A6);
+  }
+  a:focus-visible {
+    outline: var(--ds-border-width-focused, 2px) solid var(--ds-border-focused, #2684FF);
+    outline-offset: var(--ds-space-025, 2px);
+  }
+  @supports not selector(*:focus-visible) {
+    a:focus {
+      outline: var(--ds-border-width-focused, 2px) solid var(--ds-border-focused, #4C9AFF);
+      outline-offset: var(--ds-space-025, 2px);
+    }
+  }
+  /* Headings */
+  h1 {
+    font: var(--ds-font-heading-xlarge, 600 2.0714285714285716em/1.103448275862069 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: var(--ds-space-500, 40px);
+  }
+  h2 {
+    font: var(--ds-font-heading-large, 500 1.7142857142857142em/1.1666666666666667 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: var(--ds-space-500, 40px);
+  }
+  h3 {
+    font: var(--ds-font-heading-medium, 500 1.4285714285714286em/1.2 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: 28px;
+  }
+  h4 {
+    font: var(--ds-font-heading-small, 600 1.1428571428571428em/1.25 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: var(--ds-space-300, 24px);
+  }
+  h5 {
+    font: var(--ds-font-heading-xsmall, 600 1em/1.1428571428571428 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: var(--ds-space-200, 16px);
+  }
+  h6 {
+    font: var(--ds-font-heading-xxsmall, 600 0.8571428571428571em/1.3333333333333333 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    color: var(--ds-text, #292A2E);
+    margin-top: var(--ds-space-250, 20px);
+    text-transform: uppercase;
+  }
+
+  /* Lists */
+  ul,
+  ol,
+  dl {
+    padding-left: var(--ds-space-500, 40px);
+  }
+
+  dd,
+  dd + dt,
+  li + li {
+    margin-top: var(--ds-space-050, 4px);
+  }
+
+  ul ul:not(:first-child),
+	ul style:first-child ~ * + ul,
+  ol ul:not(:first-child),
+	ol style:first-child ~ * + ul,
+  ul ol:not(:first-child),
+	ul style:first-child ~ * + ol,
+  ol ol:not(:first-child),
+	ol style:first-child ~ * + ol {
+    margin-top: var(--ds-space-050, 4px);
+  }
+
+  /* remove top margin for first element */
+  p:first-child,
+  style:first-child + p,
+  ul:first-child,
+  style:first-child + ul,
+  ol:first-child,
+  style:first-child + ol,
+  dl:first-child,
+  style:first-child + dl,
+  h1:first-child,
+  style:first-child + h1,
+  h2:first-child,
+  style:first-child + h2,
+  h3:first-child,
+  style:first-child + h3,
+  h4:first-child,
+  style:first-child + h4,
+  h5:first-child,
+  style:first-child + h5,
+  h6:first-child,
+  style:first-child + h6,
+  blockquote:first-child,
+  style:first-child + blockquote,
+  pre:first-child,
+  style:first-child + pre,
+  form:first-child,
+  style:first-child + form,
+  table:first-child,
+  style:first-child + table {
+    margin-top: 0;
+  }
+
+  /* Quotes */
+  blockquote,
+  q {
+    color: inherit;
+  }
+  blockquote {
+    border: none;
+    padding-left: var(--ds-space-500, 40px);
+  }
+  [dir='rtl'] blockquote {
+    padding-left: 0;
+    padding-right: var(--ds-space-500, 40px);
+  }
+
+  blockquote::before,
+  q::before {
+    content: '\201C';
+  }
+
+  blockquote::after,
+  q::after {
+    content: '\201D';
+  }
+
+  blockquote::before {
+    float: left;
+    /* to keep the quotes left of any child elements like blockquote > p */
+    margin-left: -1em;
+    text-align: right;
+    width: 1em;
+  }
+  [dir='rtl'] blockquote::before {
+    float: right;
+    margin-right: -1em;
+    text-align: left;
+  }
+
+  blockquote > :last-child {
+    display: inline-block; /* so the quotes added via pseudos follow it immediately. */
+  }
+
+  /* Other typographical elements */
+  small {
+    font: var(--ds-font-body-small, normal 400 11px/16px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+  }
+
+  code,
+  kbd {
+    font-family: var(--ds-font-family-code, ui-monospace, Menlo, "Segoe UI Mono", "Ubuntu Mono", monospace);
+  }
+
+  var,
+  address,
+  dfn,
+  cite {
+    font-style: italic;
+  }
+
+  abbr {
+    border-bottom: var(--ds-border-width, 1px) var(--ds-border, #ccc) dotted;
+    cursor: help;
+  }
+
+  @supports (color-scheme: dark) and (color-scheme: light) {
+    [data-color-mode="light"] {
+      color-scheme: light;
+    }
+    [data-color-mode="dark"] {
+      color-scheme: dark;
+    }
+  }
+
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  thead,
+  tbody,
+  tfoot {
+    border-bottom: var(--ds-border-width-selected, 2px) solid var(--ds-border, #DFE1E6);
+  }
+
+  td,
+  th {
+    border: none;
+    padding: var(--ds-space-050, 4px) var(--ds-space-100, 8px);
+    text-align: left;
+  }
+
+  th {
+    vertical-align: top;
+  }
+
+  td:first-child,
+	style:first-child + td,
+  th:first-child,
+	style:first-child + th {
+    padding-left: 0;
+  }
+
+  td:last-child,
+  th:last-child {
+    padding-right: 0;
+  }
+
+  caption {
+    font: var(--ds-font-heading-medium, 500 1.4285714285714286em/1.2 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif);
+    letter-spacing: -0.008em;
+    color: var(--ds-text, #292A2E);
+    margin-top: 28px;
+    margin-bottom: var(--ds-space-100, 8px);
+    text-align: left;
+  }
+
+
+  /* IE11 and some older browsers don't support these elements yet and treat them as display: inline; */
+  article,
+  aside,
+  details,
+  figcaption,
+  figure,
+  footer,
+  header,
+  hgroup,
+  main,
+  menu,
+  nav,
+  section {
+    display: block;
+  }
+
+  /* Suppress the ugly broken image styling in Firefox */
+  @-moz-document url-prefix() {
+    img {
+      font-size: 0;
+    }
+    img:-moz-broken {
+      font-size: inherit;
+    }
+  }
+
+/*
+  Chrome 83.0.4103.61 introduced a new user-agent style that broke all buttons for us. This default override reverts it.
+  chrome user agent added this => font: 400 13.3333px Arial;
+*/
+button {
+  font-family: inherit;
+}
+
+/*
+ * Feature-gated harmonized scrollbar appearance.
+ * Only colors change. Size, visibility and overlay behavior stay browser managed, so the
+ * operating system preference (for example macOS "When scrolling") is honored and applies
+ * live. Custom WebKit scrollbar sizing is never drawn as an overlay, so it is not used.
+ *
+ * The track is transparent so it matches every surface, which lets the colors be set once on
+ * the root and inherited. A per-element var() would make every element's style depend on
+ * inherited custom properties.
+ */
+@layer atlaskit-scrollbar-harmonisation {
+:root[data-scrollbar-harmonisation] {
+  scrollbar-color: var(--ds-background-accent-gray-subtle, #8C8F97) transparent;
+}
+
+@media (forced-colors: active) {
+  :root[data-scrollbar-harmonisation] {
+    scrollbar-color: auto;
+  }
+}
+}
+
+
+  .assistive {
+    border: 0 !important;
+    clip: rect(1px, 1px, 1px, 1px) !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    position: absolute !important;
+    width: 1px !important;
+    white-space: nowrap !important;
+  }
+
+</style><style data-theme="light">
+html[data-color-mode="light"][data-theme~="light:light"], [data-subtree-theme][data-color-mode="light"][data-theme~="light:light"],
+html[data-color-mode="dark"][data-theme~="dark:light"], [data-subtree-theme][data-color-mode="dark"][data-theme~="dark:light"] {
+  color-scheme: light;
+  --ds-background-accent-lime-subtlest: #EFFFD6;
+  --ds-background-accent-lime-subtlest-hovered: #D3F1A7;
+  --ds-background-accent-lime-subtlest-pressed: #BDE97C;
+  --ds-background-accent-lime-subtler: #D3F1A7;
+  --ds-background-accent-lime-subtler-hovered: #BDE97C;
+  --ds-background-accent-lime-subtler-pressed: #B3DF72;
+  --ds-background-accent-lime-subtle: #94C748;
+  --ds-background-accent-lime-subtle-hovered: #B3DF72;
+  --ds-background-accent-lime-subtle-pressed: #BDE97C;
+  --ds-background-accent-lime-bolder: #5B7F24;
+  --ds-background-accent-lime-bolder-hovered: #4C6B1F;
+  --ds-background-accent-lime-bolder-pressed: #3F5224;
+  --ds-background-accent-red-subtlest: #FFECEB;
+  --ds-background-accent-red-subtlest-hovered: #FFD5D2;
+  --ds-background-accent-red-subtlest-pressed: #FFB8B2;
+  --ds-background-accent-red-subtler: #FFD5D2;
+  --ds-background-accent-red-subtler-hovered: #FFB8B2;
+  --ds-background-accent-red-subtler-pressed: #FD9891;
+  --ds-background-accent-red-subtle: #F87168;
+  --ds-background-accent-red-subtle-hovered: #FD9891;
+  --ds-background-accent-red-subtle-pressed: #FFB8B2;
+  --ds-background-accent-red-bolder: #C9372C;
+  --ds-background-accent-red-bolder-hovered: #AE2E24;
+  --ds-background-accent-red-bolder-pressed: #872821;
+  --ds-background-accent-orange-subtlest: #FFF5DB;
+  --ds-background-accent-orange-subtlest-hovered: #FCE4A6;
+  --ds-background-accent-orange-subtlest-pressed: #FBD779;
+  --ds-background-accent-orange-subtler: #FCE4A6;
+  --ds-background-accent-orange-subtler-hovered: #FBD779;
+  --ds-background-accent-orange-subtler-pressed: #FBC828;
+  --ds-background-accent-orange-subtle: #FCA700;
+  --ds-background-accent-orange-subtle-hovered: #FBC828;
+  --ds-background-accent-orange-subtle-pressed: #FBD779;
+  --ds-background-accent-orange-bolder: #BD5B00;
+  --ds-background-accent-orange-bolder-hovered: #9E4C00;
+  --ds-background-accent-orange-bolder-pressed: #7A3B00;
+  --ds-background-accent-yellow-subtlest: #FEF7C8;
+  --ds-background-accent-yellow-subtlest-hovered: #F5E989;
+  --ds-background-accent-yellow-subtlest-pressed: #EFDD4E;
+  --ds-background-accent-yellow-subtler: #F5E989;
+  --ds-background-accent-yellow-subtler-hovered: #EFDD4E;
+  --ds-background-accent-yellow-subtler-pressed: #EED12B;
+  --ds-background-accent-yellow-subtle: #EED12B;
+  --ds-background-accent-yellow-subtle-hovered: #DDB30E;
+  --ds-background-accent-yellow-subtle-pressed: #EFDD4E;
+  --ds-background-accent-yellow-bolder: #946F00;
+  --ds-background-accent-yellow-bolder-hovered: #7F5F01;
+  --ds-background-accent-yellow-bolder-pressed: #614A05;
+  --ds-background-accent-green-subtlest: #DCFFF1;
+  --ds-background-accent-green-subtlest-hovered: #BAF3DB;
+  --ds-background-accent-green-subtlest-pressed: #97EDC9;
+  --ds-background-accent-green-subtler: #BAF3DB;
+  --ds-background-accent-green-subtler-hovered: #97EDC9;
+  --ds-background-accent-green-subtler-pressed: #7EE2B8;
+  --ds-background-accent-green-subtle: #4BCE97;
+  --ds-background-accent-green-subtle-hovered: #7EE2B8;
+  --ds-background-accent-green-subtle-pressed: #97EDC9;
+  --ds-background-accent-green-bolder: #1F845A;
+  --ds-background-accent-green-bolder-hovered: #216E4E;
+  --ds-background-accent-green-bolder-pressed: #19573D;
+  --ds-background-accent-teal-subtlest: #E7F9FF;
+  --ds-background-accent-teal-subtlest-hovered: #C6EDFB;
+  --ds-background-accent-teal-subtlest-pressed: #B1E4F7;
+  --ds-background-accent-teal-subtler: #C6EDFB;
+  --ds-background-accent-teal-subtler-hovered: #B1E4F7;
+  --ds-background-accent-teal-subtler-pressed: #9DD9EE;
+  --ds-background-accent-teal-subtle: #6CC3E0;
+  --ds-background-accent-teal-subtle-hovered: #9DD9EE;
+  --ds-background-accent-teal-subtle-pressed: #B1E4F7;
+  --ds-background-accent-teal-bolder: #227D9B;
+  --ds-background-accent-teal-bolder-hovered: #206A83;
+  --ds-background-accent-teal-bolder-pressed: #1A5265;
+  --ds-background-accent-blue-subtlest: #E9F2FE;
+  --ds-background-accent-blue-subtlest-hovered: #CFE1FD;
+  --ds-background-accent-blue-subtlest-pressed: #ADCBFB;
+  --ds-background-accent-blue-subtler: #CFE1FD;
+  --ds-background-accent-blue-subtler-hovered: #ADCBFB;
+  --ds-background-accent-blue-subtler-pressed: #8FB8F6;
+  --ds-background-accent-blue-subtle: #669DF1;
+  --ds-background-accent-blue-subtle-hovered: #8FB8F6;
+  --ds-background-accent-blue-subtle-pressed: #ADCBFB;
+  --ds-background-accent-blue-bolder: #1868DB;
+  --ds-background-accent-blue-bolder-hovered: #1558BC;
+  --ds-background-accent-blue-bolder-pressed: #144794;
+  --ds-background-accent-purple-subtlest: #F8EEFE;
+  --ds-background-accent-purple-subtlest-hovered: #EED7FC;
+  --ds-background-accent-purple-subtlest-pressed: #E3BDFA;
+  --ds-background-accent-purple-subtler: #EED7FC;
+  --ds-background-accent-purple-subtler-hovered: #E3BDFA;
+  --ds-background-accent-purple-subtler-pressed: #D8A0F7;
+  --ds-background-accent-purple-subtle: #C97CF4;
+  --ds-background-accent-purple-subtle-hovered: #D8A0F7;
+  --ds-background-accent-purple-subtle-pressed: #E3BDFA;
+  --ds-background-accent-purple-bolder: #964AC0;
+  --ds-background-accent-purple-bolder-hovered: #803FA5;
+  --ds-background-accent-purple-bolder-pressed: #673286;
+  --ds-background-accent-magenta-subtlest: #FFECF8;
+  --ds-background-accent-magenta-subtlest-hovered: #FDD0EC;
+  --ds-background-accent-magenta-subtlest-pressed: #FCB6E1;
+  --ds-background-accent-magenta-subtler: #FDD0EC;
+  --ds-background-accent-magenta-subtler-hovered: #FCB6E1;
+  --ds-background-accent-magenta-subtler-pressed: #F797D2;
+  --ds-background-accent-magenta-subtle: #E774BB;
+  --ds-background-accent-magenta-subtle-hovered: #F797D2;
+  --ds-background-accent-magenta-subtle-pressed: #FCB6E1;
+  --ds-background-accent-magenta-bolder: #AE4787;
+  --ds-background-accent-magenta-bolder-hovered: #943D73;
+  --ds-background-accent-magenta-bolder-pressed: #77325B;
+  --ds-background-accent-gray-subtlest: #F0F1F2;
+  --ds-background-accent-gray-subtlest-hovered: #DDDEE1;
+  --ds-background-accent-gray-subtlest-pressed: #B7B9BE;
+  --ds-background-accent-gray-subtler: #DDDEE1;
+  --ds-background-accent-gray-subtler-hovered: #B7B9BE;
+  --ds-background-accent-gray-subtler-pressed: #8C8F97;
+  --ds-background-accent-gray-subtle: #8C8F97;
+  --ds-background-accent-gray-subtle-hovered: #B7B9BE;
+  --ds-background-accent-gray-subtle-pressed: #DDDEE1;
+  --ds-background-accent-gray-bolder: #6B6E76;
+  --ds-background-accent-gray-bolder-hovered: #505258;
+  --ds-background-accent-gray-bolder-pressed: #3B3D42;
+  --ds-background-code-added-highlight: #DCFFF1;
+  --ds-background-code-added-line: #BAF3DB66;
+  --ds-background-code-default: #FFFFFF;
+  --ds-background-code-gutter: #F0F1F2;
+  --ds-background-code-highlight: #F0F1F2;
+  --ds-background-code-removed-highlight: #FFECEB;
+  --ds-background-code-removed-line: #FFD5D266;
+  --ds-background-disabled: #0515240F;
+  --ds-background-draghandle: #1868DB;
+  --ds-background-droptarget: #E9F2FE;
+  --ds-background-droptarget-hovered: #CFE1FD;
+  --ds-background-input: #FFFFFF;
+  --ds-background-input-hovered: #F8F8F8;
+  --ds-background-input-pressed: #FFFFFF;
+  --ds-background-inverse-subtle: #00000029;
+  --ds-background-inverse-subtle-hovered: #0000003D;
+  --ds-background-inverse-subtle-pressed: #00000052;
+  --ds-background-neutral: #0515240F;
+  --ds-background-neutral-hovered: #0B120E24;
+  --ds-background-neutral-pressed: #080F214A;
+  --ds-background-neutral-subtle: #00000000;
+  --ds-background-neutral-subtle-hovered: #0515240F;
+  --ds-background-neutral-subtle-pressed: #0B120E24;
+  --ds-background-neutral-bold: #292A2E;
+  --ds-background-neutral-bold-hovered: #3B3D42;
+  --ds-background-neutral-bold-pressed: #505258;
+  --ds-background-selected: #E9F2FE;
+  --ds-background-selected-hovered: #CFE1FD;
+  --ds-background-selected-pressed: #8FB8F6;
+  --ds-background-selected-bold: #1868DB;
+  --ds-background-selected-bold-hovered: #1558BC;
+  --ds-background-selected-bold-pressed: #123263;
+  --ds-background-brand-subtlest: #E9F2FE;
+  --ds-background-brand-subtlest-hovered: #CFE1FD;
+  --ds-background-brand-subtlest-pressed: #ADCBFB;
+  --ds-background-brand-bold: #1868DB;
+  --ds-background-brand-bold-hovered: #1558BC;
+  --ds-background-brand-bold-pressed: #144794;
+  --ds-background-brand-boldest: #1C2B42;
+  --ds-background-brand-boldest-hovered: #123263;
+  --ds-background-brand-boldest-pressed: #144794;
+  --ds-background-danger: #FFECEB;
+  --ds-background-danger-hovered: #FFD5D2;
+  --ds-background-danger-pressed: #FFB8B2;
+  --ds-background-danger-subtler: #FFD5D2;
+  --ds-background-danger-subtler-hovered: #FFB8B2;
+  --ds-background-danger-subtler-pressed: #FD9891;
+  --ds-background-danger-subtle: #FD9891;
+  --ds-background-danger-bold: #C9372C;
+  --ds-background-danger-bold-hovered: #AE2E24;
+  --ds-background-danger-bold-pressed: #872821;
+  --ds-background-warning: #FFF5DB;
+  --ds-background-warning-hovered: #FCE4A6;
+  --ds-background-warning-pressed: #FBD779;
+  --ds-background-warning-subtler: #FCE4A6;
+  --ds-background-warning-subtler-hovered: #FBD779;
+  --ds-background-warning-subtler-pressed: #FBC828;
+  --ds-background-warning-subtle: #FBD779;
+  --ds-background-warning-bold: #FBC828;
+  --ds-background-warning-bold-hovered: #FCA700;
+  --ds-background-warning-bold-pressed: #F68909;
+  --ds-background-success: #EFFFD6;
+  --ds-background-success-hovered: #D3F1A7;
+  --ds-background-success-pressed: #BDE97C;
+  --ds-background-success-subtler: #D3F1A7;
+  --ds-background-success-subtler-hovered: #BDE97C;
+  --ds-background-success-subtler-pressed: #B3DF72;
+  --ds-background-success-subtle: #B3DF72;
+  --ds-background-success-bold: #5B7F24;
+  --ds-background-success-bold-hovered: #4C6B1F;
+  --ds-background-success-bold-pressed: #3F5224;
+  --ds-background-discovery: #F8EEFE;
+  --ds-background-discovery-hovered: #EED7FC;
+  --ds-background-discovery-pressed: #E3BDFA;
+  --ds-background-discovery-subtler: #EED7FC;
+  --ds-background-discovery-subtler-hovered: #E3BDFA;
+  --ds-background-discovery-subtler-pressed: #D8A0F7;
+  --ds-background-discovery-subtle: #D8A0F7;
+  --ds-background-discovery-bold: #964AC0;
+  --ds-background-discovery-bold-hovered: #803FA5;
+  --ds-background-discovery-bold-pressed: #673286;
+  --ds-background-information: #E9F2FE;
+  --ds-background-information-hovered: #CFE1FD;
+  --ds-background-information-pressed: #ADCBFB;
+  --ds-background-information-subtler: #CFE1FD;
+  --ds-background-information-subtler-hovered: #ADCBFB;
+  --ds-background-information-subtler-pressed: #8FB8F6;
+  --ds-background-information-subtle: #8FB8F6;
+  --ds-background-information-bold: #1868DB;
+  --ds-background-information-bold-hovered: #1558BC;
+  --ds-background-information-bold-pressed: #144794;
+  --ds-border: #0B120E24;
+  --ds-border-accent-lime: #6A9A23;
+  --ds-border-accent-lime-subtle: #B3DF72;
+  --ds-border-accent-red: #E2483D;
+  --ds-border-accent-red-subtle: #FD9891;
+  --ds-border-accent-orange: #E06C00;
+  --ds-border-accent-orange-subtle: #FBC828;
+  --ds-border-accent-yellow: #B38600;
+  --ds-border-accent-yellow-subtle: #EED12B;
+  --ds-border-accent-green: #22A06B;
+  --ds-border-accent-green-subtle: #7EE2B8;
+  --ds-border-accent-teal: #2898BD;
+  --ds-border-accent-teal-subtle: #9DD9EE;
+  --ds-border-accent-blue: #357DE8;
+  --ds-border-accent-blue-subtle: #8FB8F6;
+  --ds-border-accent-purple: #AF59E1;
+  --ds-border-accent-purple-subtle: #D8A0F7;
+  --ds-border-accent-magenta: #CD519D;
+  --ds-border-accent-magenta-subtle: #F797D2;
+  --ds-border-accent-gray: #7D818A;
+  --ds-border-accent-gray-subtle: #B7B9BE;
+  --ds-border-code: #0B120E24;
+  --ds-border-disabled: #0515240F;
+  --ds-border-dropindicator: #357DE8;
+  --ds-border-dropindicator-warning: #E06C00;
+  --ds-border-focused: #4688EC;
+  --ds-border-input: #8C8F97;
+  --ds-border-input-search: #0B120E24;
+  --ds-border-inverse: #FFFFFF;
+  --ds-border-selected: #1868DB;
+  --ds-border-brand: #1868DB;
+  --ds-border-danger: #E2483D;
+  --ds-border-danger-subtle: #FD9891;
+  --ds-border-warning: #E06C00;
+  --ds-border-warning-subtle: #FBC828;
+  --ds-border-success: #6A9A23;
+  --ds-border-success-subtle: #B3DF72;
+  --ds-border-discovery: #AF59E1;
+  --ds-border-discovery-subtle: #D8A0F7;
+  --ds-border-information: #357DE8;
+  --ds-border-information-subtle: #8FB8F6;
+  --ds-border-bold: #7D818A;
+  --ds-text: #292A2E;
+  --ds-text-accent-lime: #4C6B1F;
+  --ds-text-accent-lime-bolder: #37471F;
+  --ds-text-accent-red: #AE2E24;
+  --ds-text-accent-red-bolder: #5D1F1A;
+  --ds-text-accent-orange: #9E4C00;
+  --ds-text-accent-orange-bolder: #693200;
+  --ds-text-accent-yellow: #7F5F01;
+  --ds-text-accent-yellow-bolder: #533F04;
+  --ds-text-accent-green: #216E4E;
+  --ds-text-accent-green-bolder: #164B35;
+  --ds-text-accent-teal: #206A83;
+  --ds-text-accent-teal-bolder: #164555;
+  --ds-text-accent-blue: #1558BC;
+  --ds-text-accent-blue-bolder: #123263;
+  --ds-text-accent-purple: #803FA5;
+  --ds-text-accent-purple-bolder: #48245D;
+  --ds-text-accent-magenta: #943D73;
+  --ds-text-accent-magenta-bolder: #50253F;
+  --ds-text-accent-gray: #505258;
+  --ds-text-accent-gray-bolder: #1E1F21;
+  --ds-text-code-accent-1: #943D73;
+  --ds-text-code-accent-2: #1558BC;
+  --ds-text-code-comments: #505258;
+  --ds-text-code-default: #505258;
+  --ds-text-code-functions: #216E4E;
+  --ds-text-code-gutter: #6B6E76;
+  --ds-text-code-keywords: #AE2E24;
+  --ds-text-code-numbers: #7F5F01;
+  --ds-text-code-operators: #292A2E;
+  --ds-text-code-strings: #4C6B1F;
+  --ds-text-code-tags: #9E4C00;
+  --ds-text-disabled: #080F214A;
+  --ds-text-inverse: #FFFFFF;
+  --ds-text-selected: #1868DB;
+  --ds-text-brand: #1868DB;
+  --ds-text-danger: #AE2E24;
+  --ds-text-danger-bolder: #5D1F1A;
+  --ds-text-warning: #9E4C00;
+  --ds-text-warning-inverse: #292A2E;
+  --ds-text-warning-bolder: #693200;
+  --ds-text-success: #4C6B1F;
+  --ds-text-success-bolder: #37471F;
+  --ds-text-discovery: #803FA5;
+  --ds-text-discovery-bolder: #48245D;
+  --ds-text-information: #1558BC;
+  --ds-text-information-bolder: #123263;
+  --ds-text-subtlest: #6B6E76;
+  --ds-text-subtle: #505258;
+  --ds-icon: #292A2E;
+  --ds-icon-accent-lime: #6A9A23;
+  --ds-icon-accent-red: #C9372C;
+  --ds-icon-accent-orange: #E06C00;
+  --ds-icon-accent-yellow: #B38600;
+  --ds-icon-accent-green: #22A06B;
+  --ds-icon-accent-teal: #2898BD;
+  --ds-icon-accent-blue: #357DE8;
+  --ds-icon-accent-purple: #AF59E1;
+  --ds-icon-accent-magenta: #CD519D;
+  --ds-icon-accent-gray: #7D818A;
+  --ds-icon-disabled: #080F214A;
+  --ds-icon-inverse: #FFFFFF;
+  --ds-icon-selected: #1868DB;
+  --ds-icon-brand: #1868DB;
+  --ds-icon-danger: #C9372C;
+  --ds-icon-warning: #E06C00;
+  --ds-icon-warning-inverse: #292A2E;
+  --ds-icon-success: #6A9A23;
+  --ds-icon-discovery: #AF59E1;
+  --ds-icon-information: #357DE8;
+  --ds-icon-subtlest: #6B6E76;
+  --ds-icon-subtle: #505258;
+  --ds-link: #1868DB;
+  --ds-link-pressed: #1558BC;
+  --ds-link-visited: #803FA5;
+  --ds-link-visited-pressed: #48245D;
+  --ds-interaction-hovered: #00000029;
+  --ds-interaction-pressed: #00000052;
+  --ds-skeleton: #0515240F;
+  --ds-skeleton-subtle: #17171708;
+  --ds-blanket: #050C1F75;
+  --ds-blanket-selected: #388BFF14;
+  --ds-blanket-danger: #EF5C4814;
+  --ds-chart-categorical-1: #357DE8;
+  --ds-chart-categorical-1-hovered: #1868DB;
+  --ds-chart-categorical-2: #82B536;
+  --ds-chart-categorical-2-hovered: #6A9A23;
+  --ds-chart-categorical-3: #BF63F3;
+  --ds-chart-categorical-3-hovered: #AF59E1;
+  --ds-chart-categorical-4: #F68909;
+  --ds-chart-categorical-4-hovered: #E06C00;
+  --ds-chart-categorical-5: #1558BC;
+  --ds-chart-categorical-5-hovered: #123263;
+  --ds-chart-categorical-6: #964AC0;
+  --ds-chart-categorical-6-hovered: #803FA5;
+  --ds-chart-categorical-7: #42B2D7;
+  --ds-chart-categorical-7-hovered: #2898BD;
+  --ds-chart-categorical-8: #BD5B00;
+  --ds-chart-categorical-8-hovered: #7A3B00;
+  --ds-chart-lime-bold: #6A9A23;
+  --ds-chart-lime-bold-hovered: #5B7F24;
+  --ds-chart-lime-bolder: #5B7F24;
+  --ds-chart-lime-bolder-hovered: #4C6B1F;
+  --ds-chart-lime-boldest: #4C6B1F;
+  --ds-chart-lime-boldest-hovered: #37471F;
+  --ds-chart-neutral: #8C8F97;
+  --ds-chart-neutral-hovered: #7D818A;
+  --ds-chart-red-bold: #F15B50;
+  --ds-chart-red-bold-hovered: #E2483D;
+  --ds-chart-red-bolder: #E2483D;
+  --ds-chart-red-bolder-hovered: #C9372C;
+  --ds-chart-red-boldest: #AE2E24;
+  --ds-chart-red-boldest-hovered: #5D1F1A;
+  --ds-chart-orange-bold: #E06C00;
+  --ds-chart-orange-bold-hovered: #BD5B00;
+  --ds-chart-orange-bolder: #BD5B00;
+  --ds-chart-orange-bolder-hovered: #9E4C00;
+  --ds-chart-orange-boldest: #7A3B00;
+  --ds-chart-orange-boldest-hovered: #693200;
+  --ds-chart-yellow-bold: #B38600;
+  --ds-chart-yellow-bold-hovered: #946F00;
+  --ds-chart-yellow-bolder: #946F00;
+  --ds-chart-yellow-bolder-hovered: #7F5F01;
+  --ds-chart-yellow-boldest: #7F5F01;
+  --ds-chart-yellow-boldest-hovered: #533F04;
+  --ds-chart-green-bold: #22A06B;
+  --ds-chart-green-bold-hovered: #1F845A;
+  --ds-chart-green-bolder: #1F845A;
+  --ds-chart-green-bolder-hovered: #216E4E;
+  --ds-chart-green-boldest: #216E4E;
+  --ds-chart-green-boldest-hovered: #164B35;
+  --ds-chart-teal-bold: #2898BD;
+  --ds-chart-teal-bold-hovered: #227D9B;
+  --ds-chart-teal-bolder: #227D9B;
+  --ds-chart-teal-bolder-hovered: #206A83;
+  --ds-chart-teal-boldest: #206A83;
+  --ds-chart-teal-boldest-hovered: #164555;
+  --ds-chart-blue-bold: #4688EC;
+  --ds-chart-blue-bold-hovered: #357DE8;
+  --ds-chart-blue-bolder: #357DE8;
+  --ds-chart-blue-bolder-hovered: #1868DB;
+  --ds-chart-blue-boldest: #1558BC;
+  --ds-chart-blue-boldest-hovered: #123263;
+  --ds-chart-purple-bold: #BF63F3;
+  --ds-chart-purple-bold-hovered: #AF59E1;
+  --ds-chart-purple-bolder: #AF59E1;
+  --ds-chart-purple-bolder-hovered: #964AC0;
+  --ds-chart-purple-boldest: #803FA5;
+  --ds-chart-purple-boldest-hovered: #48245D;
+  --ds-chart-magenta-bold: #DA62AC;
+  --ds-chart-magenta-bold-hovered: #CD519D;
+  --ds-chart-magenta-bolder: #CD519D;
+  --ds-chart-magenta-bolder-hovered: #AE4787;
+  --ds-chart-magenta-boldest: #943D73;
+  --ds-chart-magenta-boldest-hovered: #50253F;
+  --ds-chart-gray-bold: #8C8F97;
+  --ds-chart-gray-bold-hovered: #7D818A;
+  --ds-chart-gray-bolder: #7D818A;
+  --ds-chart-gray-bolder-hovered: #6B6E76;
+  --ds-chart-gray-boldest: #505258;
+  --ds-chart-gray-boldest-hovered: #3B3D42;
+  --ds-chart-brand: #357DE8;
+  --ds-chart-brand-hovered: #1868DB;
+  --ds-chart-danger: #E2483D;
+  --ds-chart-danger-hovered: #C9372C;
+  --ds-chart-danger-bold: #872821;
+  --ds-chart-danger-bold-hovered: #5D1F1A;
+  --ds-chart-warning: #F68909;
+  --ds-chart-warning-hovered: #E06C00;
+  --ds-chart-warning-bold: #BD5B00;
+  --ds-chart-warning-bold-hovered: #9E4C00;
+  --ds-chart-success: #82B536;
+  --ds-chart-success-hovered: #6A9A23;
+  --ds-chart-success-bold: #5B7F24;
+  --ds-chart-success-bold-hovered: #4C6B1F;
+  --ds-chart-discovery: #BF63F3;
+  --ds-chart-discovery-hovered: #AF59E1;
+  --ds-chart-discovery-bold: #803FA5;
+  --ds-chart-discovery-bold-hovered: #964AC0;
+  --ds-chart-information: #357DE8;
+  --ds-chart-information-hovered: #1868DB;
+  --ds-chart-information-bold: #1558BC;
+  --ds-chart-information-bold-hovered: #123263;
+  --ds-rovo-background-brand-bold: #000000;
+  --ds-rovo-background-brand-bold-hovered: #1E1F21;
+  --ds-rovo-background-brand-bold-pressed: #292A2E;
+  --ds-rovo-border-lime: #6A9A23;
+  --ds-rovo-border-saffron: #FCA700;
+  --ds-rovo-border-blue: #1868DB;
+  --ds-rovo-border-purple: #AF59E1;
+  --ds-rovo-icon-lime: #6A9A23;
+  --ds-rovo-icon-saffron: #FCA700;
+  --ds-rovo-icon-blue: #1868DB;
+  --ds-rovo-icon-purple: #AF59E1;
+  --ds-surface: #FFFFFF;
+  --ds-surface-hovered: #F0F1F2;
+  --ds-surface-pressed: #DDDEE1;
+  --ds-surface-container: #17171708;
+  --ds-surface-container-hovered: #0515240F;
+  --ds-surface-container-pressed: #0B120E24;
+  --ds-surface-overlay: #FFFFFF;
+  --ds-surface-overlay-hovered: #F0F1F2;
+  --ds-surface-overlay-pressed: #DDDEE1;
+  --ds-surface-raised: #FFFFFF;
+  --ds-surface-raised-hovered: #F0F1F2;
+  --ds-surface-raised-pressed: #DDDEE1;
+  --ds-surface-sunken: #F8F8F8;
+  --ds-rovo-surface-overlay: #F8F8F8;
+  --ds-rovo-surface-overlay-hovered: #F0F1F2;
+  --ds-rovo-surface-overlay-pressed: #DDDEE1;
+  --ds-shadow-overflow: 0px 0px 8px #1E1F2129, 0px 0px 1px #1E1F211F;
+  --ds-shadow-overflow-perimeter: #1E1F211f;
+  --ds-shadow-overflow-spread: #1E1F2129;
+  --ds-shadow-overlay: 0px 8px 12px #1E1F2126, 0px 0px 1px #1E1F214F;
+  --ds-shadow-raised: 0px 1px 1px #1E1F2140, 0px 0px 1px #1E1F214F;
+  --ds-opacity-disabled: 0.4;
+  --ds-opacity-loading: 0.2;
+  --ds-UNSAFE-transparent: transparent;
+  --ds-elevation-surface-current: #FFFFFF;
+}
+</style><style data-theme="dark">
+html[data-color-mode="light"][data-theme~="light:dark"], [data-subtree-theme][data-color-mode="light"][data-theme~="light:dark"],
+html[data-color-mode="dark"][data-theme~="dark:dark"], [data-subtree-theme][data-color-mode="dark"][data-theme~="dark:dark"] {
+  color-scheme: dark;
+  --ds-background-accent-lime-subtlest: #28311B;
+  --ds-background-accent-lime-subtlest-hovered: #37471F;
+  --ds-background-accent-lime-subtlest-pressed: #3F5224;
+  --ds-background-accent-lime-subtler: #37471F;
+  --ds-background-accent-lime-subtler-hovered: #3F5224;
+  --ds-background-accent-lime-subtler-pressed: #4C6B1F;
+  --ds-background-accent-lime-subtle: #4C6B1F;
+  --ds-background-accent-lime-subtle-hovered: #3F5224;
+  --ds-background-accent-lime-subtle-pressed: #37471F;
+  --ds-background-accent-lime-bolder: #94C748;
+  --ds-background-accent-lime-bolder-hovered: #B3DF72;
+  --ds-background-accent-lime-bolder-pressed: #BDE97C;
+  --ds-background-accent-red-subtlest: #42221F;
+  --ds-background-accent-red-subtlest-hovered: #5D1F1A;
+  --ds-background-accent-red-subtlest-pressed: #872821;
+  --ds-background-accent-red-subtler: #5D1F1A;
+  --ds-background-accent-red-subtler-hovered: #872821;
+  --ds-background-accent-red-subtler-pressed: #AE2E24;
+  --ds-background-accent-red-subtle: #AE2E24;
+  --ds-background-accent-red-subtle-hovered: #872821;
+  --ds-background-accent-red-subtle-pressed: #5D1F1A;
+  --ds-background-accent-red-bolder: #F87168;
+  --ds-background-accent-red-bolder-hovered: #FD9891;
+  --ds-background-accent-red-bolder-pressed: #FFB8B2;
+  --ds-background-accent-orange-subtlest: #3A2C1F;
+  --ds-background-accent-orange-subtlest-hovered: #693200;
+  --ds-background-accent-orange-subtlest-pressed: #7A3B00;
+  --ds-background-accent-orange-subtler: #693200;
+  --ds-background-accent-orange-subtler-hovered: #7A3B00;
+  --ds-background-accent-orange-subtler-pressed: #9E4C00;
+  --ds-background-accent-orange-subtle: #9E4C00;
+  --ds-background-accent-orange-subtle-hovered: #7A3B00;
+  --ds-background-accent-orange-subtle-pressed: #693200;
+  --ds-background-accent-orange-bolder: #FCA700;
+  --ds-background-accent-orange-bolder-hovered: #FBC828;
+  --ds-background-accent-orange-bolder-pressed: #FBD779;
+  --ds-background-accent-yellow-subtlest: #332E1B;
+  --ds-background-accent-yellow-subtlest-hovered: #533F04;
+  --ds-background-accent-yellow-subtlest-pressed: #614A05;
+  --ds-background-accent-yellow-subtler: #533F04;
+  --ds-background-accent-yellow-subtler-hovered: #614A05;
+  --ds-background-accent-yellow-subtler-pressed: #7F5F01;
+  --ds-background-accent-yellow-subtle: #7F5F01;
+  --ds-background-accent-yellow-subtle-hovered: #614A05;
+  --ds-background-accent-yellow-subtle-pressed: #533F04;
+  --ds-background-accent-yellow-bolder: #DDB30E;
+  --ds-background-accent-yellow-bolder-hovered: #EED12B;
+  --ds-background-accent-yellow-bolder-pressed: #EFDD4E;
+  --ds-background-accent-green-subtlest: #1C3329;
+  --ds-background-accent-green-subtlest-hovered: #164B35;
+  --ds-background-accent-green-subtlest-pressed: #19573D;
+  --ds-background-accent-green-subtler: #164B35;
+  --ds-background-accent-green-subtler-hovered: #19573D;
+  --ds-background-accent-green-subtler-pressed: #216E4E;
+  --ds-background-accent-green-subtle: #216E4E;
+  --ds-background-accent-green-subtle-hovered: #19573D;
+  --ds-background-accent-green-subtle-pressed: #164B35;
+  --ds-background-accent-green-bolder: #4BCE97;
+  --ds-background-accent-green-bolder-hovered: #7EE2B8;
+  --ds-background-accent-green-bolder-pressed: #97EDC9;
+  --ds-background-accent-teal-subtlest: #1E3137;
+  --ds-background-accent-teal-subtlest-hovered: #164555;
+  --ds-background-accent-teal-subtlest-pressed: #1A5265;
+  --ds-background-accent-teal-subtler: #164555;
+  --ds-background-accent-teal-subtler-hovered: #1A5265;
+  --ds-background-accent-teal-subtler-pressed: #206A83;
+  --ds-background-accent-teal-subtle: #206A83;
+  --ds-background-accent-teal-subtle-hovered: #1A5265;
+  --ds-background-accent-teal-subtle-pressed: #164555;
+  --ds-background-accent-teal-bolder: #6CC3E0;
+  --ds-background-accent-teal-bolder-hovered: #9DD9EE;
+  --ds-background-accent-teal-bolder-pressed: #B1E4F7;
+  --ds-background-accent-blue-subtlest: #1C2B42;
+  --ds-background-accent-blue-subtlest-hovered: #123263;
+  --ds-background-accent-blue-subtlest-pressed: #144794;
+  --ds-background-accent-blue-subtler: #123263;
+  --ds-background-accent-blue-subtler-hovered: #144794;
+  --ds-background-accent-blue-subtler-pressed: #1558BC;
+  --ds-background-accent-blue-subtle: #1558BC;
+  --ds-background-accent-blue-subtle-hovered: #144794;
+  --ds-background-accent-blue-subtle-pressed: #123263;
+  --ds-background-accent-blue-bolder: #669DF1;
+  --ds-background-accent-blue-bolder-hovered: #8FB8F6;
+  --ds-background-accent-blue-bolder-pressed: #ADCBFB;
+  --ds-background-accent-purple-subtlest: #35243F;
+  --ds-background-accent-purple-subtlest-hovered: #48245D;
+  --ds-background-accent-purple-subtlest-pressed: #673286;
+  --ds-background-accent-purple-subtler: #48245D;
+  --ds-background-accent-purple-subtler-hovered: #673286;
+  --ds-background-accent-purple-subtler-pressed: #803FA5;
+  --ds-background-accent-purple-subtle: #803FA5;
+  --ds-background-accent-purple-subtle-hovered: #673286;
+  --ds-background-accent-purple-subtle-pressed: #48245D;
+  --ds-background-accent-purple-bolder: #C97CF4;
+  --ds-background-accent-purple-bolder-hovered: #D8A0F7;
+  --ds-background-accent-purple-bolder-pressed: #E3BDFA;
+  --ds-background-accent-magenta-subtlest: #3D2232;
+  --ds-background-accent-magenta-subtlest-hovered: #50253F;
+  --ds-background-accent-magenta-subtlest-pressed: #77325B;
+  --ds-background-accent-magenta-subtler: #50253F;
+  --ds-background-accent-magenta-subtler-hovered: #77325B;
+  --ds-background-accent-magenta-subtler-pressed: #943D73;
+  --ds-background-accent-magenta-subtle: #943D73;
+  --ds-background-accent-magenta-subtle-hovered: #77325B;
+  --ds-background-accent-magenta-subtle-pressed: #50253F;
+  --ds-background-accent-magenta-bolder: #E774BB;
+  --ds-background-accent-magenta-bolder-hovered: #F797D2;
+  --ds-background-accent-magenta-bolder-pressed: #FCB6E1;
+  --ds-background-accent-gray-subtlest: #303134;
+  --ds-background-accent-gray-subtlest-hovered: #3D3F43;
+  --ds-background-accent-gray-subtlest-pressed: #4B4D51;
+  --ds-background-accent-gray-subtler: #4B4D51;
+  --ds-background-accent-gray-subtler-hovered: #63666B;
+  --ds-background-accent-gray-subtler-pressed: #7E8188;
+  --ds-background-accent-gray-subtle: #63666B;
+  --ds-background-accent-gray-subtle-hovered: #4B4D51;
+  --ds-background-accent-gray-subtle-pressed: #3D3F43;
+  --ds-background-accent-gray-bolder: #96999E;
+  --ds-background-accent-gray-bolder-hovered: #A9ABAF;
+  --ds-background-accent-gray-bolder-pressed: #BFC1C4;
+  --ds-background-code-added-highlight: #1C3329;
+  --ds-background-code-added-line: #164B35B2;
+  --ds-background-code-default: #1F1F21;
+  --ds-background-code-gutter: #242528;
+  --ds-background-code-highlight: #242528;
+  --ds-background-code-removed-highlight: #42221F;
+  --ds-background-code-removed-line: #5D1F1AB2;
+  --ds-background-disabled: #E3E4F21F;
+  --ds-background-draghandle: #669DF1;
+  --ds-background-droptarget: #1C2B42;
+  --ds-background-droptarget-hovered: #123263;
+  --ds-background-input: #242528;
+  --ds-background-input-hovered: #2B2C2F;
+  --ds-background-input-pressed: #242528;
+  --ds-background-inverse-subtle: #FFFFFF29;
+  --ds-background-inverse-subtle-hovered: #FFFFFF3D;
+  --ds-background-inverse-subtle-pressed: #FFFFFF52;
+  --ds-background-neutral: #CECED912;
+  --ds-background-neutral-hovered: #E3E4F21F;
+  --ds-background-neutral-pressed: #E5E9F640;
+  --ds-background-neutral-subtle: #00000000;
+  --ds-background-neutral-subtle-hovered: #CECED912;
+  --ds-background-neutral-subtle-pressed: #E3E4F21F;
+  --ds-background-neutral-bold: #CECFD2;
+  --ds-background-neutral-bold-hovered: #BFC1C4;
+  --ds-background-neutral-bold-pressed: #A9ABAF;
+  --ds-background-selected: #1C2B42;
+  --ds-background-selected-hovered: #123263;
+  --ds-background-selected-pressed: #1558BC;
+  --ds-background-selected-bold: #669DF1;
+  --ds-background-selected-bold-hovered: #8FB8F6;
+  --ds-background-selected-bold-pressed: #CFE1FD;
+  --ds-background-brand-subtlest: #1C2B42;
+  --ds-background-brand-subtlest-hovered: #123263;
+  --ds-background-brand-subtlest-pressed: #144794;
+  --ds-background-brand-bold: #669DF1;
+  --ds-background-brand-bold-hovered: #8FB8F6;
+  --ds-background-brand-bold-pressed: #ADCBFB;
+  --ds-background-brand-boldest: #E9F2FE;
+  --ds-background-brand-boldest-hovered: #CFE1FD;
+  --ds-background-brand-boldest-pressed: #ADCBFB;
+  --ds-background-danger: #42221F;
+  --ds-background-danger-hovered: #5D1F1A;
+  --ds-background-danger-pressed: #872821;
+  --ds-background-danger-subtler: #5D1F1A;
+  --ds-background-danger-subtler-hovered: #872821;
+  --ds-background-danger-subtler-pressed: #AE2E24;
+  --ds-background-danger-subtle: #AE2E24;
+  --ds-background-danger-bold: #F87168;
+  --ds-background-danger-bold-hovered: #FD9891;
+  --ds-background-danger-bold-pressed: #FFB8B2;
+  --ds-background-warning: #3A2C1F;
+  --ds-background-warning-hovered: #693200;
+  --ds-background-warning-pressed: #7A3B00;
+  --ds-background-warning-subtler: #693200;
+  --ds-background-warning-subtler-hovered: #7A3B00;
+  --ds-background-warning-subtler-pressed: #9E4C00;
+  --ds-background-warning-subtle: #9E4C00;
+  --ds-background-warning-bold: #FBC828;
+  --ds-background-warning-bold-hovered: #FCA700;
+  --ds-background-warning-bold-pressed: #F68909;
+  --ds-background-success: #28311B;
+  --ds-background-success-hovered: #37471F;
+  --ds-background-success-pressed: #3F5224;
+  --ds-background-success-subtler: #37471F;
+  --ds-background-success-subtler-hovered: #3F5224;
+  --ds-background-success-subtler-pressed: #4C6B1F;
+  --ds-background-success-subtle: #4C6B1F;
+  --ds-background-success-bold: #94C748;
+  --ds-background-success-bold-hovered: #B3DF72;
+  --ds-background-success-bold-pressed: #BDE97C;
+  --ds-background-discovery: #35243F;
+  --ds-background-discovery-hovered: #48245D;
+  --ds-background-discovery-pressed: #673286;
+  --ds-background-discovery-subtler: #48245D;
+  --ds-background-discovery-subtler-hovered: #673286;
+  --ds-background-discovery-subtler-pressed: #803FA5;
+  --ds-background-discovery-subtle: #803FA5;
+  --ds-background-discovery-bold: #C97CF4;
+  --ds-background-discovery-bold-hovered: #D8A0F7;
+  --ds-background-discovery-bold-pressed: #E3BDFA;
+  --ds-background-information: #1C2B42;
+  --ds-background-information-hovered: #123263;
+  --ds-background-information-pressed: #144794;
+  --ds-background-information-subtler: #123263;
+  --ds-background-information-subtler-hovered: #144794;
+  --ds-background-information-subtler-pressed: #1558BC;
+  --ds-background-information-subtle: #1558BC;
+  --ds-background-information-bold: #669DF1;
+  --ds-background-information-bold-hovered: #8FB8F6;
+  --ds-background-information-bold-pressed: #ADCBFB;
+  --ds-border: #E3E4F21F;
+  --ds-border-accent-lime: #82B536;
+  --ds-border-accent-lime-subtle: #4C6B1F;
+  --ds-border-accent-red: #F15B50;
+  --ds-border-accent-red-subtle: #AE2E24;
+  --ds-border-accent-orange: #F68909;
+  --ds-border-accent-orange-subtle: #9E4C00;
+  --ds-border-accent-yellow: #CF9F02;
+  --ds-border-accent-yellow-subtle: #7F5F01;
+  --ds-border-accent-green: #2ABB7F;
+  --ds-border-accent-green-subtle: #216E4E;
+  --ds-border-accent-teal: #42B2D7;
+  --ds-border-accent-teal-subtle: #206A83;
+  --ds-border-accent-blue: #4688EC;
+  --ds-border-accent-blue-subtle: #1558BC;
+  --ds-border-accent-purple: #BF63F3;
+  --ds-border-accent-purple-subtle: #803FA5;
+  --ds-border-accent-magenta: #DA62AC;
+  --ds-border-accent-magenta-subtle: #943D73;
+  --ds-border-accent-gray: #7E8188;
+  --ds-border-accent-gray-subtle: #4B4D51;
+  --ds-border-code: #E3E4F21F;
+  --ds-border-disabled: #CECED912;
+  --ds-border-dropindicator: #4688EC;
+  --ds-border-dropindicator-warning: #F68909;
+  --ds-border-focused: #8FB8F6;
+  --ds-border-input: #7E8188;
+  --ds-border-input-search: #E3E4F21F;
+  --ds-border-inverse: #18191A;
+  --ds-border-selected: #669DF1;
+  --ds-border-brand: #669DF1;
+  --ds-border-danger: #F15B50;
+  --ds-border-danger-subtle: #AE2E24;
+  --ds-border-warning: #F68909;
+  --ds-border-warning-subtle: #9E4C00;
+  --ds-border-success: #82B536;
+  --ds-border-success-subtle: #4C6B1F;
+  --ds-border-discovery: #BF63F3;
+  --ds-border-discovery-subtle: #803FA5;
+  --ds-border-information: #4688EC;
+  --ds-border-information-subtle: #1558BC;
+  --ds-border-bold: #7E8188;
+  --ds-text: #CECFD2;
+  --ds-text-accent-lime: #B3DF72;
+  --ds-text-accent-lime-bolder: #D3F1A7;
+  --ds-text-accent-red: #FD9891;
+  --ds-text-accent-red-bolder: #FFD5D2;
+  --ds-text-accent-orange: #FBC828;
+  --ds-text-accent-orange-bolder: #FCE4A6;
+  --ds-text-accent-yellow: #EED12B;
+  --ds-text-accent-yellow-bolder: #F5E989;
+  --ds-text-accent-green: #7EE2B8;
+  --ds-text-accent-green-bolder: #BAF3DB;
+  --ds-text-accent-teal: #9DD9EE;
+  --ds-text-accent-teal-bolder: #C6EDFB;
+  --ds-text-accent-blue: #8FB8F6;
+  --ds-text-accent-blue-bolder: #CFE1FD;
+  --ds-text-accent-purple: #D8A0F7;
+  --ds-text-accent-purple-bolder: #EED7FC;
+  --ds-text-accent-magenta: #F797D2;
+  --ds-text-accent-magenta-bolder: #FDD0EC;
+  --ds-text-accent-gray: #A9ABAF;
+  --ds-text-accent-gray-bolder: #E2E3E4;
+  --ds-text-code-accent-1: #F797D2;
+  --ds-text-code-accent-2: #8FB8F6;
+  --ds-text-code-comments: #A9ABAF;
+  --ds-text-code-default: #A9ABAF;
+  --ds-text-code-functions: #7EE2B8;
+  --ds-text-code-gutter: #96999E;
+  --ds-text-code-keywords: #FD9891;
+  --ds-text-code-numbers: #EED12B;
+  --ds-text-code-operators: #CECFD2;
+  --ds-text-code-strings: #B3DF72;
+  --ds-text-code-tags: #FCA700;
+  --ds-text-disabled: #E5E9F640;
+  --ds-text-inverse: #1F1F21;
+  --ds-text-selected: #669DF1;
+  --ds-text-brand: #669DF1;
+  --ds-text-danger: #FD9891;
+  --ds-text-danger-bolder: #FFD5D2;
+  --ds-text-warning: #FBC828;
+  --ds-text-warning-inverse: #1F1F21;
+  --ds-text-warning-bolder: #FCE4A6;
+  --ds-text-success: #B3DF72;
+  --ds-text-success-bolder: #D3F1A7;
+  --ds-text-discovery: #D8A0F7;
+  --ds-text-discovery-bolder: #EED7FC;
+  --ds-text-information: #8FB8F6;
+  --ds-text-information-bolder: #CFE1FD;
+  --ds-text-subtlest: #96999E;
+  --ds-text-subtle: #A9ABAF;
+  --ds-icon: #CECFD2;
+  --ds-icon-accent-lime: #82B536;
+  --ds-icon-accent-red: #E2483D;
+  --ds-icon-accent-orange: #F68909;
+  --ds-icon-accent-yellow: #EED12B;
+  --ds-icon-accent-green: #2ABB7F;
+  --ds-icon-accent-teal: #42B2D7;
+  --ds-icon-accent-blue: #4688EC;
+  --ds-icon-accent-purple: #BF63F3;
+  --ds-icon-accent-magenta: #DA62AC;
+  --ds-icon-accent-gray: #7E8188;
+  --ds-icon-disabled: #E5E9F640;
+  --ds-icon-inverse: #1F1F21;
+  --ds-icon-selected: #669DF1;
+  --ds-icon-brand: #669DF1;
+  --ds-icon-danger: #F15B50;
+  --ds-icon-warning: #FBC828;
+  --ds-icon-warning-inverse: #1F1F21;
+  --ds-icon-success: #82B536;
+  --ds-icon-discovery: #BF63F3;
+  --ds-icon-information: #4688EC;
+  --ds-icon-subtlest: #96999E;
+  --ds-icon-subtle: #A9ABAF;
+  --ds-link: #669DF1;
+  --ds-link-pressed: #8FB8F6;
+  --ds-link-visited: #D8A0F7;
+  --ds-link-visited-pressed: #EED7FC;
+  --ds-interaction-hovered: #ffffff33;
+  --ds-interaction-pressed: #ffffff5c;
+  --ds-skeleton: #CECED912;
+  --ds-skeleton-subtle: #BDBDBD0A;
+  --ds-blanket: #10121499;
+  --ds-blanket-selected: #1D7AFC14;
+  --ds-blanket-danger: #E3493514;
+  --ds-chart-categorical-1: #4688EC;
+  --ds-chart-categorical-1-hovered: #669DF1;
+  --ds-chart-categorical-2: #94C748;
+  --ds-chart-categorical-2-hovered: #B3DF72;
+  --ds-chart-categorical-3: #C97CF4;
+  --ds-chart-categorical-3-hovered: #D8A0F7;
+  --ds-chart-categorical-4: #FCA700;
+  --ds-chart-categorical-4-hovered: #FBC828;
+  --ds-chart-categorical-5: #1558BC;
+  --ds-chart-categorical-5-hovered: #1868DB;
+  --ds-chart-categorical-6: #964AC0;
+  --ds-chart-categorical-6-hovered: #AF59E1;
+  --ds-chart-categorical-7: #42B2D7;
+  --ds-chart-categorical-7-hovered: #6CC3E0;
+  --ds-chart-categorical-8: #E06C00;
+  --ds-chart-categorical-8-hovered: #FBD779;
+  --ds-chart-lime-bold: #82B536;
+  --ds-chart-lime-bold-hovered: #94C748;
+  --ds-chart-lime-bolder: #94C748;
+  --ds-chart-lime-bolder-hovered: #B3DF72;
+  --ds-chart-lime-boldest: #B3DF72;
+  --ds-chart-lime-boldest-hovered: #D3F1A7;
+  --ds-chart-neutral: #7E8188;
+  --ds-chart-neutral-hovered: #96999E;
+  --ds-chart-red-bold: #E2483D;
+  --ds-chart-red-bold-hovered: #F15B50;
+  --ds-chart-red-bolder: #F15B50;
+  --ds-chart-red-bolder-hovered: #F87168;
+  --ds-chart-red-boldest: #FD9891;
+  --ds-chart-red-boldest-hovered: #FFD5D2;
+  --ds-chart-orange-bold: #F68909;
+  --ds-chart-orange-bold-hovered: #FCA700;
+  --ds-chart-orange-bolder: #FCA700;
+  --ds-chart-orange-bolder-hovered: #FBC828;
+  --ds-chart-orange-boldest: #FBD779;
+  --ds-chart-orange-boldest-hovered: #FCE4A6;
+  --ds-chart-yellow-bold: #CF9F02;
+  --ds-chart-yellow-bold-hovered: #DDB30E;
+  --ds-chart-yellow-bolder: #DDB30E;
+  --ds-chart-yellow-bolder-hovered: #EED12B;
+  --ds-chart-yellow-boldest: #EED12B;
+  --ds-chart-yellow-boldest-hovered: #F5E989;
+  --ds-chart-green-bold: #2ABB7F;
+  --ds-chart-green-bold-hovered: #4BCE97;
+  --ds-chart-green-bolder: #4BCE97;
+  --ds-chart-green-bolder-hovered: #7EE2B8;
+  --ds-chart-green-boldest: #7EE2B8;
+  --ds-chart-green-boldest-hovered: #BAF3DB;
+  --ds-chart-teal-bold: #42B2D7;
+  --ds-chart-teal-bold-hovered: #6CC3E0;
+  --ds-chart-teal-bolder: #6CC3E0;
+  --ds-chart-teal-bolder-hovered: #9DD9EE;
+  --ds-chart-teal-boldest: #9DD9EE;
+  --ds-chart-teal-boldest-hovered: #C6EDFB;
+  --ds-chart-blue-bold: #357DE8;
+  --ds-chart-blue-bold-hovered: #4688EC;
+  --ds-chart-blue-bolder: #4688EC;
+  --ds-chart-blue-bolder-hovered: #669DF1;
+  --ds-chart-blue-boldest: #8FB8F6;
+  --ds-chart-blue-boldest-hovered: #CFE1FD;
+  --ds-chart-purple-bold: #AF59E1;
+  --ds-chart-purple-bold-hovered: #BF63F3;
+  --ds-chart-purple-bolder: #BF63F3;
+  --ds-chart-purple-bolder-hovered: #C97CF4;
+  --ds-chart-purple-boldest: #D8A0F7;
+  --ds-chart-purple-boldest-hovered: #EED7FC;
+  --ds-chart-magenta-bold: #CD519D;
+  --ds-chart-magenta-bold-hovered: #DA62AC;
+  --ds-chart-magenta-bolder: #DA62AC;
+  --ds-chart-magenta-bolder-hovered: #E774BB;
+  --ds-chart-magenta-boldest: #F797D2;
+  --ds-chart-magenta-boldest-hovered: #FDD0EC;
+  --ds-chart-gray-bold: #7E8188;
+  --ds-chart-gray-bold-hovered: #96999E;
+  --ds-chart-gray-bolder: #96999E;
+  --ds-chart-gray-bolder-hovered: #A9ABAF;
+  --ds-chart-gray-boldest: #A9ABAF;
+  --ds-chart-gray-boldest-hovered: #BFC1C4;
+  --ds-chart-brand: #4688EC;
+  --ds-chart-brand-hovered: #669DF1;
+  --ds-chart-danger: #E2483D;
+  --ds-chart-danger-hovered: #F15B50;
+  --ds-chart-danger-bold: #FFB8B2;
+  --ds-chart-danger-bold-hovered: #FD9891;
+  --ds-chart-warning: #F68909;
+  --ds-chart-warning-hovered: #FCA700;
+  --ds-chart-warning-bold: #FBC828;
+  --ds-chart-warning-bold-hovered: #FCE4A6;
+  --ds-chart-success: #82B536;
+  --ds-chart-success-hovered: #94C748;
+  --ds-chart-success-bold: #B3DF72;
+  --ds-chart-success-bold-hovered: #D3F1A7;
+  --ds-chart-discovery: #BF63F3;
+  --ds-chart-discovery-hovered: #C97CF4;
+  --ds-chart-discovery-bold: #D8A0F7;
+  --ds-chart-discovery-bold-hovered: #EED7FC;
+  --ds-chart-information: #4688EC;
+  --ds-chart-information-hovered: #669DF1;
+  --ds-chart-information-bold: #8FB8F6;
+  --ds-chart-information-bold-hovered: #CFE1FD;
+  --ds-rovo-background-brand-bold: #FFFFFF;
+  --ds-rovo-background-brand-bold-hovered: #E2E3E4;
+  --ds-rovo-background-brand-bold-pressed: #CECFD2;
+  --ds-rovo-border-lime: #82B536;
+  --ds-rovo-border-saffron: #FCA700;
+  --ds-rovo-border-blue: #357DE8;
+  --ds-rovo-border-purple: #BF63F3;
+  --ds-rovo-icon-lime: #82B536;
+  --ds-rovo-icon-saffron: #FCA700;
+  --ds-rovo-icon-blue: #357DE8;
+  --ds-rovo-icon-purple: #BF63F3;
+  --ds-surface: #1F1F21;
+  --ds-surface-hovered: #242528;
+  --ds-surface-pressed: #2B2C2F;
+  --ds-surface-container: #BDBDBD0A;
+  --ds-surface-container-hovered: #CECED912;
+  --ds-surface-container-pressed: #D9DAE71A;
+  --ds-surface-overlay: #2B2C2F;
+  --ds-surface-overlay-hovered: #303134;
+  --ds-surface-overlay-pressed: #3D3F43;
+  --ds-surface-raised: #242528;
+  --ds-surface-raised-hovered: #2B2C2F;
+  --ds-surface-raised-pressed: #303134;
+  --ds-surface-sunken: #18191A;
+  --ds-rovo-surface-overlay: #242528;
+  --ds-rovo-surface-overlay-hovered: #2B2C2F;
+  --ds-rovo-surface-overlay-pressed: #303134;
+  --ds-shadow-overflow: 0px 0px 12px #0104048F, 0px 0px 1px #01040480;
+  --ds-shadow-overflow-perimeter: #01040480;
+  --ds-shadow-overflow-spread: #0104048f;
+  --ds-shadow-overlay: 0px 0px 0px 1px #BDBDBD1F, 0px 8px 12px #0104045C, 0px 0px 1px 1px #01040480;
+  --ds-shadow-raised: 0px 0px 0px 1px #00000000, 0px 1px 1px #01040480, 0px 0px 1px #01040480;
+  --ds-opacity-disabled: 0.4;
+  --ds-opacity-loading: 0.2;
+  --ds-UNSAFE-transparent: transparent;
+  --ds-elevation-surface-current: #1F1F21;
+}
+</style><style data-theme="shape">
+html[data-theme~="shape:shape"], [data-subtree-theme][data-theme~="shape:shape"] {
+  --ds-radius-xsmall: 0.125rem;
+  --ds-radius-small: 0.25rem;
+  --ds-radius-medium: 0.375rem;
+  --ds-radius-large: 0.5rem;
+  --ds-radius-xlarge: 0.75rem;
+  --ds-radius-xxlarge: 1rem;
+  --ds-radius-full: 624.9375rem;
+  --ds-radius-tile: 25%;
+  --ds-border-width: 0.0625rem;
+  --ds-border-width-selected: 0.125rem;
+  --ds-border-width-focused: 0.125rem;
+}
+</style><style data-theme="spacing">
+html[data-theme~="spacing:spacing"], [data-subtree-theme][data-theme~="spacing:spacing"] {
+  --ds-space-0: 0rem;
+  --ds-space-025: 0.125rem;
+  --ds-space-050: 0.25rem;
+  --ds-space-075: 0.375rem;
+  --ds-space-100: 0.5rem;
+  --ds-space-150: 0.75rem;
+  --ds-space-200: 1rem;
+  --ds-space-250: 1.25rem;
+  --ds-space-300: 1.5rem;
+  --ds-space-400: 2rem;
+  --ds-space-500: 2.5rem;
+  --ds-space-600: 3rem;
+  --ds-space-800: 4rem;
+  --ds-space-1000: 5rem;
+  --ds-space-gap-large: 0.75rem;
+  --ds-space-gap-medium: 0.5rem;
+  --ds-space-gap-small: 0.375rem;
+  --ds-space-gap-xlarge: 1rem;
+  --ds-space-gap-xsmall: 0.25rem;
+  --ds-space-gap-xxlarge: 1.5rem;
+  --ds-space-gap-xxsmall: 0.125rem;
+  --ds-space-inset-3xlarge: 1.5rem;
+  --ds-space-inset-4xlarge: 2rem;
+  --ds-space-inset-5xlarge: 3rem;
+  --ds-space-inset-large: 0.75rem;
+  --ds-space-inset-medium: 0.5rem;
+  --ds-space-inset-small: 0.375rem;
+  --ds-space-inset-xlarge: 1rem;
+  --ds-space-inset-xsmall: 0.25rem;
+  --ds-space-inset-xxlarge: 1.25rem;
+  --ds-space-inset-xxsmall: 0.125rem;
+  --ds-space-negative-025: -0.125rem;
+  --ds-space-negative-050: -0.25rem;
+  --ds-space-negative-075: -0.375rem;
+  --ds-space-negative-100: -0.5rem;
+  --ds-space-negative-150: -0.75rem;
+  --ds-space-negative-200: -1rem;
+  --ds-space-negative-250: -1.25rem;
+  --ds-space-negative-300: -1.5rem;
+  --ds-space-negative-400: -2rem;
+}
+</style><style data-theme="typography">
+html[data-theme~="typography:typography"], [data-subtree-theme][data-theme~="typography:typography"] {
+  --ds-font-heading-xxlarge: normal 653 2rem/2.25rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-xlarge: normal 653 1.75rem/2rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-large: normal 653 1.5rem/1.75rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-medium: normal 653 1.25rem/1.5rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-small: normal 653 1rem/1.25rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-xsmall: normal 653 0.875rem/1.25rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-heading-xxsmall: normal 653 0.75rem/1rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-body-large: normal 400 1rem/1.5rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-body: normal 400 0.875rem/1.25rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-body-small: normal 400 0.75rem/1rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-metric-large: normal 653 1.75rem/2rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-metric-medium: normal 653 1.5rem/1.75rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-metric-small: normal 653 1rem/1.25rem "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-code: normal 400 0.875em/1 "Atlassian Mono", ui-monospace, Menlo, "Segoe UI Mono", "Ubuntu Mono", monospace;
+  --ds-font-weight-regular: 400;
+  --ds-font-weight-medium: 500;
+  --ds-font-weight-semibold: 600;
+  --ds-font-weight-bold: 653;
+  --ds-font-family-heading: "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-family-body: "Atlassian Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-family-code: "Atlassian Mono", ui-monospace, Menlo, "Segoe UI Mono", "Ubuntu Mono", monospace;
+  --ds-font-family-brand-heading: "Charlie Display", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+  --ds-font-family-brand-body: "Charlie Text", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif;
+}
+</style><style data-theme="motion">
+@keyframes SlideInTop8px {
+  0% {
+    transform: translateY(8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+@keyframes SlideInBottom8px {
+  0% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+@keyframes SlideInBottom2px {
+  0% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+@keyframes SlideInLeft8px {
+  0% {
+    transform: translateX(8px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+@keyframes SlideInRight8px {
+  0% {
+    transform: translateX(-8px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+@keyframes SlideOutTop4px {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(4px);
+  }
+}
+@keyframes SlideOutBottom4px {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes SlideOutBottom2px {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes SlideOutLeft4px {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(4px);
+  }
+}
+@keyframes SlideOutRight4px {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(-4px);
+  }
+}
+@keyframes SlideOutLeft8px {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(-8px);
+  }
+}
+@keyframes SlideOutRight8px {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(8px);
+  }
+}
+@keyframes ScaleIn80to100 {
+  0% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes ScaleIn95to100 {
+  0% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes ScaleOut100to80 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.8);
+  }
+}
+@keyframes ScaleOut100to95 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.95);
+  }
+}
+@keyframes FadeIn0to100 {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes FadeOut100to0 {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes SlideOut15PercentLeft {
+  0% {
+    transform: translateX(0px);
+    transform-origin: left;
+  }
+  100% {
+    transform: translateX(-15%);
+    transform-origin: left;
+  }
+}
+@keyframes SlideIn50PercentLeft {
+  0% {
+    transform: translateX(-50%);
+    transform-origin: left;
+  }
+  100% {
+    transform: translateX(0px);
+    transform-origin: left;
+  }
+}
+@keyframes SlideOut100PercentLeft {
+  0% {
+    transform: translateX(0px);
+    transform-origin: left;
+  }
+  100% {
+    transform: translateX(-100%);
+    transform-origin: left;
+  }
+}
+@keyframes SlideIn100PercentLeft {
+  0% {
+    transform: translateX(-100%);
+    transform-origin: left;
+  }
+  100% {
+    transform: translateX(0px);
+    transform-origin: left;
+  }
+}
+@keyframes SlideOut100PercentRight {
+  0% {
+    transform: translateX(0px);
+    transform-origin: right;
+  }
+  100% {
+    transform: translateX(100%);
+    transform-origin: right;
+  }
+}
+@keyframes SlideIn100PercentRight {
+  0% {
+    transform: translateX(100%);
+    transform-origin: right;
+  }
+  100% {
+    transform: translateX(0px);
+    transform-origin: right;
+  }
+}
+@keyframes SlideIn100PercentTop {
+  0% {
+    transform: translateY(calc(-100% - var(--ds-motion-slide-overshoot, 0px)));
+    transform-origin: top;
+  }
+  100% {
+    transform: translateY(0px);
+    transform-origin: top;
+  }
+}
+@keyframes SlideOut100PercentTop {
+  0% {
+    transform: translateY(0px);
+    transform-origin: top;
+  }
+  100% {
+    transform: translateY(calc(-100% - var(--ds-motion-slide-overshoot, 0px)));
+    transform-origin: top;
+  }
+}
+@keyframes SlideIn100PercentBottom {
+  0% {
+    transform: translateY(calc(100% + var(--ds-motion-slide-overshoot, 0px)));
+    transform-origin: bottom;
+  }
+  100% {
+    transform: translateY(0px);
+    transform-origin: bottom;
+  }
+}
+@keyframes SlideOut100PercentBottom {
+  0% {
+    transform: translateY(0px);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: translateY(calc(100% + var(--ds-motion-slide-overshoot, 0px)));
+    transform-origin: bottom;
+  }
+}
+@keyframes ScaleXIn80to100 {
+  0% {
+    transform: scaleX(0.8);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes ScaleXOut100to0 {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+@keyframes GridColumnIn80to100 {
+  0% {
+    grid-template-columns: minmax(0, 0.8fr);
+  }
+  100% {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@keyframes GridColumnOut100to0 {
+  0% {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  100% {
+    grid-template-columns: minmax(0, 0fr);
+  }
+}
+html[data-theme~="motion:motion"], [data-subtree-theme][data-theme~="motion:motion"] {
+  --ds-avatar-enter: 150ms cubic-bezier(0.4, 1, 0.6, 1) ScaleIn80to100 backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-avatar-exit: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) ScaleOut100to80 forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-avatar-hovered: transform 250ms linear(0, 0.021, 0.058, 0.107, 0.164, 0.227, 0.292, 0.359, 0.425, 0.49, 0.552, 0.61, 0.664, 0.714, 0.759, 0.8, 0.837, 0.869, 0.898, 0.922, 0.943, 0.961, 0.976, 0.988, 0.998, 1.006, 1.013, 1.017, 1.02, 1.023, 1.024, 1.024, 1.024, 1.024, 1.023, 1.022, 1.02, 1.019, 1.017, 1.015, 1.014, 1.012, 1.011, 1.009, 1.008, 1.007, 1.006, 1.005, 1.004, 1.003, 1.002, 1.002, 1.001, 1.001, 1.001, 1, 1, 1, 1, 1, 0.999, 0.999, 0.999, 0.999, 1);
+  --ds-blanket-enter: 250ms cubic-bezier(0.4, 0, 0, 1) FadeIn0to100 backwards;
+  --ds-blanket-exit: 200ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-button-hovered: background-color 150ms cubic-bezier(0.4, 1, 0.6, 1), border-color 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-button-pressed: background-color 150ms cubic-bezier(0.4, 1, 0.6, 1), border-color 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-duration-instant: 0ms;
+  --ds-duration-long: 250ms;
+  --ds-duration-medium: 200ms;
+  --ds-duration-short: 150ms;
+  --ds-duration-xlong: 400ms;
+  --ds-duration-xshort: 100ms;
+  --ds-duration-xxlong: 600ms;
+  --ds-duration-xxshort: 50ms;
+  --ds-easing-in-practical: cubic-bezier(0.6, 0, 0.8, 0.6);
+  --ds-easing-inout-bold: cubic-bezier(0.4, 0, 0, 1);
+  --ds-easing-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-easing-out-practical: cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-easing-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ds-easing-out-bold: cubic-bezier(0, 0.4, 0, 1);
+  --ds-easing-spring: linear(0, 0.021, 0.058, 0.107, 0.164, 0.227, 0.292, 0.359, 0.425, 0.49, 0.552, 0.61, 0.664, 0.714, 0.759, 0.8, 0.837, 0.869, 0.898, 0.922, 0.943, 0.961, 0.976, 0.988, 0.998, 1.006, 1.013, 1.017, 1.02, 1.023, 1.024, 1.024, 1.024, 1.024, 1.023, 1.022, 1.02, 1.019, 1.017, 1.015, 1.014, 1.012, 1.011, 1.009, 1.008, 1.007, 1.006, 1.005, 1.004, 1.003, 1.002, 1.002, 1.001, 1.001, 1.001, 1, 1, 1, 1, 1, 0.999, 0.999, 0.999, 0.999, 1);
+  --ds-flag-enter: 250ms cubic-bezier(0, 0.4, 0, 1) SlideIn50PercentLeft backwards, 250ms cubic-bezier(0, 0.4, 0, 1) FadeIn0to100 backwards;
+  --ds-flag-exit: 200ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOut15PercentLeft forwards, 200ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-flag-reposition: transform 250ms cubic-bezier(0.4, 0, 0, 1);
+  --ds-form-message-enter: 150ms cubic-bezier(0.4, 1, 0.6, 1) SlideInBottom2px backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-form-message-exit: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutBottom2px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-iconography-enter-cycle-up: 400ms cubic-bezier(0.65, 0, 0.35, 1) SlideIn100PercentBottom backwards;
+  --ds-iconography-enter-fade: 250ms cubic-bezier(0, 0.4, 0, 1) FadeIn0to100 backwards;
+  --ds-iconography-enter-fade-fast: 50ms cubic-bezier(0, 0.4, 0, 1) FadeIn0to100 backwards;
+  --ds-iconography-exit-cycle-up: 400ms cubic-bezier(0.65, 0, 0.35, 1) SlideOut100PercentTop forwards;
+  --ds-iconography-exit-fade: 250ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-iconography-exit-fade-fast: 50ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-input: background-color 150ms cubic-bezier(0.4, 1, 0.6, 1), border-color 150ms cubic-bezier(0.4, 1, 0.6, 1), box-shadow 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-input-selection: background-color 150ms cubic-bezier(0.4, 1, 0.6, 1), border-color 150ms cubic-bezier(0.4, 1, 0.6, 1), color 150ms cubic-bezier(0.4, 1, 0.6, 1), fill 150ms cubic-bezier(0.4, 1, 0.6, 1), stroke 150ms cubic-bezier(0.4, 1, 0.6, 1), opacity 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-input-toggle: background-color 150ms cubic-bezier(0.4, 1, 0.6, 1), color 150ms cubic-bezier(0.4, 1, 0.6, 1), transform 150ms cubic-bezier(0.4, 1, 0.6, 1), opacity 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-keyframe-fade-in: FadeIn0to100;
+  --ds-keyframe-fade-out: FadeOut100to0;
+  --ds-keyframe-grid-column-in: GridColumnIn80to100;
+  --ds-keyframe-grid-column-out: GridColumnOut100to0;
+  --ds-keyframe-scale-in-medium: ScaleIn80to100;
+  --ds-keyframe-scale-in-small: ScaleIn95to100;
+  --ds-keyframe-scale-out-medium: ScaleOut100to80;
+  --ds-keyframe-scale-out-small: ScaleOut100to95;
+  --ds-keyframe-slide-in-bottom-short: SlideInBottom8px;
+  --ds-keyframe-slide-in-left-half: SlideIn50PercentLeft;
+  --ds-keyframe-slide-in-left-short: SlideInLeft8px;
+  --ds-keyframe-slide-in-right-short: SlideInRight8px;
+  --ds-keyframe-slide-in-top-short: SlideInTop8px;
+  --ds-keyframe-slide-out-bottom-short: SlideOutBottom4px;
+  --ds-keyframe-slide-out-left-half: SlideOut15PercentLeft;
+  --ds-keyframe-slide-out-left-short: SlideOutLeft4px;
+  --ds-keyframe-slide-out-right-short: SlideOutRight4px;
+  --ds-keyframe-slide-out-top-short: SlideOutTop4px;
+  --ds-label-enter: 150ms cubic-bezier(0.4, 1, 0.6, 1) GridColumnIn80to100 backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-label-exit: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) GridColumnOut100to0 forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-listitem-hovered: background-color 50ms cubic-bezier(0.4, 1, 0.6, 1), border-color 50ms cubic-bezier(0.4, 1, 0.6, 1), color 50ms cubic-bezier(0.4, 1, 0.6, 1), text-decoration-color 50ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-listitem-pressed: background-color 100ms cubic-bezier(0.4, 1, 0.6, 1), border-color 100ms cubic-bezier(0.4, 1, 0.6, 1), color 100ms cubic-bezier(0.4, 1, 0.6, 1), text-decoration-color 100ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-listitem-selected: background-color 100ms cubic-bezier(0.4, 1, 0.6, 1), border-color 100ms cubic-bezier(0.4, 1, 0.6, 1), color 100ms cubic-bezier(0.4, 1, 0.6, 1), text-decoration-color 100ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-modal-enter: 250ms cubic-bezier(0.4, 0, 0, 1) ScaleIn95to100 backwards;
+  --ds-modal-exit: 200ms cubic-bezier(0.6, 0, 0.8, 0.6) ScaleOut100to95 forwards;
+  --ds-panel-content-enter: 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-panel-content-exit: 50ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-panel-content-open: 150ms cubic-bezier(0.16, 1, 0.3, 1) FadeIn0to100 100ms backwards;
+  --ds-panel-enter: 200ms cubic-bezier(0.16, 1, 0.3, 1) SlideIn100PercentRight backwards;
+  --ds-panel-enter-left: 200ms cubic-bezier(0.16, 1, 0.3, 1) SlideIn100PercentLeft backwards;
+  --ds-panel-enter-right: 200ms cubic-bezier(0.16, 1, 0.3, 1) SlideIn100PercentRight backwards;
+  --ds-panel-exit: 200ms cubic-bezier(0.25, 1, 0.5, 1) SlideOut100PercentRight forwards;
+  --ds-panel-exit-left: 200ms cubic-bezier(0.25, 1, 0.5, 1) SlideOut100PercentLeft forwards;
+  --ds-panel-exit-right: 200ms cubic-bezier(0.25, 1, 0.5, 1) SlideOut100PercentRight forwards;
+  --ds-popup-enter-bottom: 150ms cubic-bezier(0.4, 1, 0.6, 1) SlideInBottom8px backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-popup-enter-left: 150ms cubic-bezier(0.4, 1, 0.6, 1) SlideInLeft8px backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-popup-enter-right: 150ms cubic-bezier(0.4, 1, 0.6, 1) SlideInRight8px backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-popup-enter-top: 150ms cubic-bezier(0.4, 1, 0.6, 1) SlideInTop8px backwards, 150ms cubic-bezier(0.4, 1, 0.6, 1) FadeIn0to100 backwards;
+  --ds-popup-exit-bottom: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutBottom4px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-popup-exit-left: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutLeft4px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-popup-exit-right: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutRight4px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-popup-exit-top: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutTop4px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-sidenav-enter-left: 200ms cubic-bezier(0.16, 1, 0.3, 1) SlideIn100PercentLeft backwards;
+  --ds-sidenav-enter-right: 200ms cubic-bezier(0.16, 1, 0.3, 1) SlideIn100PercentRight backwards;
+  --ds-sidenav-exit-left: 200ms cubic-bezier(0.25, 1, 0.5, 1) SlideOut100PercentLeft forwards;
+  --ds-sidenav-exit-right: 200ms cubic-bezier(0.25, 1, 0.5, 1) SlideOut100PercentRight forwards;
+  --ds-spotlight-enter: 250ms cubic-bezier(0.4, 0, 0, 1) ScaleIn95to100 backwards, 250ms cubic-bezier(0.4, 0, 0, 1) FadeIn0to100 backwards;
+  --ds-spotlight-exit: 200ms cubic-bezier(0.6, 0, 0.8, 0.6) ScaleOut100to95 forwards, 200ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-tab: color 150ms cubic-bezier(0.4, 1, 0.6, 1), opacity 150ms cubic-bezier(0.4, 1, 0.6, 1);
+  --ds-tab-indicator-enter-left: 150ms cubic-bezier(0, 0.4, 0, 1) SlideInRight8px backwards, 150ms cubic-bezier(0, 0.4, 0, 1) FadeIn0to100 backwards;
+  --ds-tab-indicator-enter-right: 150ms cubic-bezier(0, 0.4, 0, 1) SlideInLeft8px backwards, 150ms cubic-bezier(0, 0.4, 0, 1) FadeIn0to100 backwards;
+  --ds-tab-indicator-exit-left: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutLeft8px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+  --ds-tab-indicator-exit-right: 100ms cubic-bezier(0.6, 0, 0.8, 0.6) SlideOutRight8px forwards, 100ms cubic-bezier(0.6, 0, 0.8, 0.6) FadeOut100to0 forwards;
+}
+</style><link rel="stylesheet" href="https://ds-cdn.prod-east.frontend.public.atl-paas.net/assets/font-rules/v6/atlassian-fonts.css"/><link rel="stylesheet" href="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/global-ui-inline.s06539.css"/><script nonce="01d4cea5d61f40f19cf4a3f95a8070e3">(() => {
+  try {
+    const darkModeMql = window.matchMedia('(prefers-color-scheme: dark)');
+    const colorMode = darkModeMql.matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-color-mode', colorMode);
+  } catch (e) {}})()</script><script nonce="01d4cea5d61f40f19cf4a3f95a8070e3">(()=>{try{var m=localStorage.getItem("global-app-theme");if(m==='light'||m==='dark'){document.documentElement.setAttribute('data-color-mode',m);}}catch(e){}})()</script></head><body><div id="pillar-root"><div class="_19itglyw _vchhusvi _r06hglyw _kqsw1n9t _152tze3t _1e02ze3t _1bsbauwl _4t3i1kxc _bfhkvuon _1pbybfng" data-testid="global-app-logo-loader"><div class="_19itglyw _vchhusvi _r06hglyw _kqswstnw _154i1ssb _1ltv1ssb _t9ec1ooe _1bsbvbgk _4t3ivbgk _j7hq15s3 _5sagymdr _1pgl1ytf _tip812c5 _bl8aglyw"></div></div></div><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/bifrost-template-inline.089ac2bf.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/bifrost-template-inline.runtime.c8b68ad6.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/InnerApp.b93be952.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/InnerApp.runtime.21bb2df0.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/InnerApp.df066835.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><script src="https://forge-apps.prod-east.frontend.public.atl-paas.net/assets/global-ui-inline.ce6c6bfc.js" nonce="01d4cea5d61f40f19cf4a3f95a8070e3" defer=""></script><!--$?--><template id="B:0"></template><!--/$--></body></html><div hidden id="S:0"><link rel="preconnect" href="https://q67wq7-1gb1o78emo-2d9bv28p8j--1gkayer-2gsiln9ctm-2oo3czlolr.cdn.prod.atlassian-dev.net"/><script id="faus-global-ui-props" type="application/json" nonce="01d4cea5d61f40f19cf4a3f95a8070e3">{"pathname":"/artifacts/03db9bc8-1d65-49d6-a79a-cdcceb86674a","prefetched":{"tenantInfo":{"cloudId":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3"},"orgInfo":{"orgId":"dafad7ab-8727-4c31-8bf8-39a06b42a657"},"extension":{"extension":{"installationId":"5e540f6f-8635-45b8-9310-dac1b18e3fc3","installationContext":"ari:cloud:platform::unit/cc31b945-1a4d-4f4c-9883-a918f6c8400f","secondaryInstallationContexts":["ari:cloud:jira:0e0d1681-c880-4afe-bcf2-7db7e53c48a3:workspace/879089fa-a9f0-4f36-9937-a3aefd96efcf"],"allowsConfigurableEgress":false,"appId":"bd71b0b3-e3d2-4c19-b42a-f808514352cf","appOwner":"60dc15a08a72bd006c6bf5f4","appVersion":"114.0.0","versionId":"1","egress":[{"addresses":["*"],"category":null,"inScopeEUD":null,"type":"FONTS"},{"addresses":["*"],"category":null,"inScopeEUD":null,"type":"IMAGES"},{"addresses":["*"],"category":null,"inScopeEUD":null,"type":"STYLES"},{"addresses":["*"],"category":null,"inScopeEUD":null,"type":"SCRIPTS"},{"addresses":["as.atlassian.com"],"category":null,"inScopeEUD":null,"type":"FETCH_BACKEND_SIDE"}],"environmentId":"8afb2585-1f58-42d4-9688-c667a5d659bf","environmentType":"PRODUCTION","environmentKey":"production","installationConfig":null,"installationTarget":"unit","key":"artifacts-global-ui","licenseIds":{},"license":null,"consentUrl":"https://id.atlassian.com/outboundAuth/start?containerId=bd71b0b3-e3d2-4c19-b42a-f808514352cf_8afb2585-1f58-42d4-9688-c667a5d659bf&serviceKey=atlassian-token-service-key&isAccountBased=true&scopes=delete%3Aobject%3Ajira+read%3Ajira-user+read%3Aobject%3Ajira+send%3Aapp-notification%3Ajira+write%3Aobject%3Ajira+offline_access","name":"Artifacts","oauthClientId":"uTdBBv1uLzQsfKJsezf4WuWgQfH5LvU7","principal":{"avatarUrl":"https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:a26c5396-45b0-4205-9217-4908f6a6211e/7472a6e3-a7a8-4a21-969a-6ab6fb0b1648/128","mentionName":"Artifacts"},"properties":{"emitsReadyEvent":true,"icon":"https://icon.cdn.prod.atlassian-dev.net/bd71b0b3-e3d2-4c19-b42a-f808514352cf/8afb2585-1f58-42d4-9688-c667a5d659bf/61a44767-20a5-4e31-aff1-3a40b7020abb/icons/shapes.svg","key":"artifacts-global-ui","render":"native","resolver":{"function":"resolver"},"resource":"global-ui","resourceUploadId":"61a44767-20a5-4e31-aff1-3a40b7020abb","title":"Artifacts","type":"global:ui"},"scopes":["delete:object:jira","read:jira-user","read:object:jira","send:app-notification:jira","storage:app","write:object:jira"],"type":"global:ui","id":"ari:cloud:ecosystem::extension/bd71b0b3-e3d2-4c19-b42a-f808514352cf/8afb2585-1f58-42d4-9688-c667a5d659bf/static/artifacts-global-ui"},"contextIds":["ari:cloud:platform::unit/cc31b945-1a4d-4f4c-9883-a918f6c8400f"],"moduleType":"global:ui","oauthClientId":"uTdBBv1uLzQsfKJsezf4WuWgQfH5LvU7"},"featureGates":{"clientSdkKey":"client-Vb6H6fDkOFuxqLBHEIUMTgzAew9jwxxNp5RK3b71zbu","experimentValues":{"feature_gates":{"168439957":{"name":"168439957","value":true,"rule_id":"LIWnRaulp1W5Zz64r00f8:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"179080406":{"name":"179080406","value":false,"rule_id":"74To1YSbKEkWwCofgysvec","secondary_exposures":[],"id_type":"atlassianAccountId"},"209099173":{"name":"209099173","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"241508882":{"name":"241508882","value":true,"rule_id":"2Z9wp4LUJKUh170k2hLXXw:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"324720779":{"name":"324720779","value":false,"rule_id":"GLc17rcqaboDz3GSwMHk3:50.00:2","secondary_exposures":[],"id_type":"tenantId"},"350159846":{"name":"350159846","value":false,"rule_id":"47P7tVkIfiwSw0ZarTfFCQ","secondary_exposures":[],"id_type":"atlassianAccountId"},"378186389":{"name":"378186389","value":false,"rule_id":"7jzqwnsBGKkVwTPSpxScIY","secondary_exposures":[],"id_type":"atlassianAccountId"},"412531690":{"name":"412531690","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"518802099":{"name":"518802099","value":false,"rule_id":"5UqXPNxxmrTBZI1B69mkUv","secondary_exposures":[],"id_type":"atlassianAccountId"},"588396005":{"name":"588396005","value":false,"rule_id":"3l4nAvjevOMYUC6BmPTRe5:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"609132767":{"name":"609132767","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"616674109":{"name":"616674109","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"723577284":{"name":"723577284","value":true,"rule_id":"T8VbI0Q5nRboc2EQXHxk1:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"727116131":{"name":"727116131","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"760217761":{"name":"760217761","value":true,"rule_id":"6Dbw9r4YqUbJP0hIP5bYyk:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"780793580":{"name":"780793580","value":true,"rule_id":"5v4PSpfiIttt194bkyfYMU:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"809601945":{"name":"809601945","value":false,"rule_id":"2seJ2og0h4GpsmyMhhdXHA:50.00:2","secondary_exposures":[],"id_type":"activationId"},"937656595":{"name":"937656595","value":false,"rule_id":"79K23bTjpOHXYmgG5ppLkc:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"979162927":{"name":"979162927","value":false,"rule_id":"4hPGx4WvFMXEgF7n6y4wTc","secondary_exposures":[],"id_type":"tenantId"},"979404472":{"name":"979404472","value":false,"rule_id":"2ws60vl8Ba4HawCvhUglzP","secondary_exposures":[],"id_type":"atlassianAccountId"},"1014825654":{"name":"1014825654","value":false,"rule_id":"2jC6mbSydGpmyIRqmWorML:5.00:4","secondary_exposures":[],"id_type":"tenantId"},"1016485319":{"name":"1016485319","value":true,"rule_id":"VuNsXHhi6WSG7eUWZGKHR:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"1035570062":{"name":"1035570062","value":false,"rule_id":"3VeiK6Sxio01TjFHriXlIW","secondary_exposures":[],"id_type":"atlassianAccountId"},"1037740725":{"name":"1037740725","value":true,"rule_id":"6ASAfjfxOcTDH75VMsih2t:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"1100768712":{"name":"1100768712","value":true,"rule_id":"3A9OKZJ315POQV6KoWhbjz:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"1193882279":{"name":"1193882279","value":true,"rule_id":"39ulTrBZc4eF39s6Z5IGNd:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"1224375459":{"name":"1224375459","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"1234153434":{"name":"1234153434","value":false,"rule_id":"5PADlkoLhS9vs4PJr8WO3j","secondary_exposures":[],"id_type":"atlassianAccountId"},"1264991134":{"name":"1264991134","value":false,"rule_id":"1XUdYvqLvzA0uYuyb5aK79:10.00:1","secondary_exposures":[],"id_type":"tenantId"},"1290013638":{"name":"1290013638","value":false,"rule_id":"4HeSkMYWA5DK4tnRQCRvHh:50.00:2","secondary_exposures":[],"id_type":"atlassianAccountId"},"1382006942":{"name":"1382006942","value":false,"rule_id":"1auSgOw5sVtnEuTGLKXDos","secondary_exposures":[],"id_type":"atlassianAccountId"},"1388606914":{"name":"1388606914","value":true,"rule_id":"30UW8GQdGFLpt62zXCYSrm:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"1465072182":{"name":"1465072182","value":true,"rule_id":"4C0mYREPx5ujLtTrPRQ6Xz:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"1483042239":{"name":"1483042239","value":true,"rule_id":"6Dq4utDb073lN8bxZlvS5R:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"1667603558":{"name":"1667603558","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"1716116147":{"name":"1716116147","value":false,"rule_id":"1KADLjDQ8iI0fRwDEzwoqh","secondary_exposures":[],"id_type":"atlassianAccountId"},"1761174318":{"name":"1761174318","value":true,"rule_id":"1aOWVEKonwu2n3coWTKcfx","secondary_exposures":[{"gate":"1671130398","gateValue":"false","ruleID":"7aXlGKAsrUcjiJuDQtVml8"}],"id_type":"tenantId"},"1837532202":{"name":"1837532202","value":false,"rule_id":"6p7fD3h8wvkVJE3EwBgAPX","secondary_exposures":[],"id_type":"atlassianAccountId"},"1845046792":{"name":"1845046792","value":false,"rule_id":"2uszfuoqXl5O6iZTdKwIXN","secondary_exposures":[],"id_type":"atlassianAccountId"},"1903053153":{"name":"1903053153","value":true,"rule_id":"141YPrltmLlBMPFGwX84eI:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"1906292360":{"name":"1906292360","value":true,"rule_id":"4S9RBEyZwIPui2pQxXBoyz:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"1920179690":{"name":"1920179690","value":false,"rule_id":"3fW7q4NtAOBNnMth1iUsm5:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"2004529862":{"name":"2004529862","value":false,"rule_id":"4bVKOgjy39TCS6trXZOt6","secondary_exposures":[],"id_type":"tenantId"},"2038890117":{"name":"2038890117","value":true,"rule_id":"7LjNmnlFztCWTRUjnahgqL","secondary_exposures":[],"id_type":"tenantId"},"2068003557":{"name":"2068003557","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"2139153819":{"name":"2139153819","value":true,"rule_id":"2ad8WiiOabS2MFgvho4yKL:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"2141339231":{"name":"2141339231","value":true,"rule_id":"1uv31INK7j72WdjKzuNRhq:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"2171014414":{"name":"2171014414","value":true,"rule_id":"NOK9dTB2v110jvNAIGM3E:50.00:2","secondary_exposures":[],"id_type":"atlassianAccountId"},"2251873125":{"name":"2251873125","value":false,"rule_id":"1rTbWpM3pDDcvIZlKZ9UDH","secondary_exposures":[],"id_type":"atlassianAccountId"},"2276296081":{"name":"2276296081","value":false,"rule_id":"2dElwkylr0hQk6XjSTT5QH","secondary_exposures":[],"id_type":"atlassianAccountId"},"2307902867":{"name":"2307902867","value":true,"rule_id":"iARyyn4DycLTLzOidPeRs:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"2374123862":{"name":"2374123862","value":false,"rule_id":"3B9bNtbuFXBFpaH7uAjsS0","secondary_exposures":[],"id_type":"atlassianAccountId"},"2402477162":{"name":"2402477162","value":true,"rule_id":"39M7XGtQrg6MC44NyXLwji:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"2414540121":{"name":"2414540121","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"2480575622":{"name":"2480575622","value":false,"rule_id":"1kS9Ano1qC5JoejA4mJK5g","secondary_exposures":[],"id_type":"atlassianAccountId"},"2583896908":{"name":"2583896908","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"2607415361":{"name":"2607415361","value":false,"rule_id":"6gMJVBYLT1LHU2XVhRaNkb","secondary_exposures":[],"id_type":"atlassianAccountId"},"2642932498":{"name":"2642932498","value":true,"rule_id":"kSvUvab9zkRm8lv3zbYUY:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"2717320984":{"name":"2717320984","value":true,"rule_id":"RCvxn73LnWV1mkinjfwyZ","secondary_exposures":[],"id_type":"tenantId"},"2851318780":{"name":"2851318780","value":false,"rule_id":"HpERyqrLt8ztyW9Guqe1u","secondary_exposures":[],"id_type":"tenantId"},"2867064342":{"name":"2867064342","value":true,"rule_id":"1Rj0eRT2JxRd5ePNBwrfsw:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"2882946180":{"name":"2882946180","value":false,"rule_id":"4keWdXIv80DFqtUQ7c9vvh:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"3027333707":{"name":"3027333707","value":true,"rule_id":"6IPgqlu1hRNcCGKM8VF9Ky:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"3039901491":{"name":"3039901491","value":true,"rule_id":"X5Pj7KxghQMclREGO7NeG:100.00:4","secondary_exposures":[],"id_type":"tenantId"},"3044244781":{"name":"3044244781","value":false,"rule_id":"3d4riJwT82cutNXTi1Rob2:10.00:1","secondary_exposures":[],"id_type":"atlassianAccountId"},"3170844965":{"name":"3170844965","value":false,"rule_id":"1QJB0mUcQTPkQaKHN1vYLl","secondary_exposures":[],"id_type":"atlassianAccountId"},"3178648833":{"name":"3178648833","value":true,"rule_id":"1JD28vTxBsR2QjBpu88NAq:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3268212833":{"name":"3268212833","value":true,"rule_id":"7AuOEoD9nOnOOihImxud1Z:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"3335839703":{"name":"3335839703","value":false,"rule_id":"4rEH8bGbY1s7ZMeFGWNPQl","secondary_exposures":[],"id_type":"atlassianAccountId"},"3340178131":{"name":"3340178131","value":true,"rule_id":"1j3zcoyftmR0xavBG829Vw:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3365211187":{"name":"3365211187","value":false,"rule_id":"3nfYcHFc9Tg8v8Ql4ujSou","secondary_exposures":[],"id_type":"atlassianAccountId"},"3370150868":{"name":"3370150868","value":true,"rule_id":"JLNH7MEjoreeJSBEq5iQ4:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"3399925114":{"name":"3399925114","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"3401597657":{"name":"3401597657","value":true,"rule_id":"5wORggONzBR87VmuxmEQPz:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3429722844":{"name":"3429722844","value":true,"rule_id":"7IBUjyppXLBpLYLFGqOWqf:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3481003627":{"name":"3481003627","value":true,"rule_id":"7tx6ZRN1WMCZW9MVds06Sv","secondary_exposures":[{"gate":"1527823130","gateValue":"true","ruleID":"4dOK4juA2D2o0mIy0fAoN7:100.00:3"}],"id_type":"tenantId"},"3490477746":{"name":"3490477746","value":true,"rule_id":"12LbHicKbsov0OowMoBInT:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3525311240":{"name":"3525311240","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"3570882887":{"name":"3570882887","value":false,"rule_id":"1MpBIVWpuLU2vziiHwBhfN","secondary_exposures":[],"id_type":"atlassianAccountId"},"3600484499":{"name":"3600484499","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"atlassianAccountId"},"3647249010":{"name":"3647249010","value":true,"rule_id":"7qovVgvCi3nI4lOp94jTbG:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3650687570":{"name":"3650687570","value":false,"rule_id":"42bcW7gholx5V0dEqSDeHm","secondary_exposures":[],"id_type":"tenantId"},"3659512877":{"name":"3659512877","value":false,"rule_id":"7bCosndVVSTItztlwQGi2b","secondary_exposures":[],"id_type":"tenantId"},"3683826766":{"name":"3683826766","value":true,"rule_id":"loKAeWvFW8YoGgztH5ZQM:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3794440949":{"name":"3794440949","value":false,"rule_id":"4iqFxSheuuMETtrmG1nG1w","secondary_exposures":[],"id_type":"atlassianAccountId"},"3820759296":{"name":"3820759296","value":true,"rule_id":"67lff0BAz2eCilOe6eidG1:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3837896134":{"name":"3837896134","value":false,"rule_id":"46j5omF9eTyjU58bC79pXu","secondary_exposures":[],"id_type":"tenantId"},"3839076095":{"name":"3839076095","value":false,"rule_id":"7GcbRmPCa35FHJfOTr8huR","secondary_exposures":[],"id_type":"tenantId"},"3872297511":{"name":"3872297511","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"3873470259":{"name":"3873470259","value":false,"rule_id":"2meFxcUZEdpbnNHgNMeozs","secondary_exposures":[],"id_type":"atlassianAccountId"},"3904408807":{"name":"3904408807","value":true,"rule_id":"6i45SLLCJJLzE5IHH1uNvP:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"3907656587":{"name":"3907656587","value":false,"rule_id":"2fi94hwwfZhR2hNYFGM2qi","secondary_exposures":[],"id_type":"atlassianAccountId"},"3912003376":{"name":"3912003376","value":true,"rule_id":"7gzI218nPQjkqtcTxoNeMi:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3915243937":{"name":"3915243937","value":false,"rule_id":"4y2I3ZqdbK0BYPpvu4ZAai","secondary_exposures":[],"id_type":"atlassianAccountId"},"3924092678":{"name":"3924092678","value":true,"rule_id":"RwPQRy77XOunEfgNxnJAo:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3930161077":{"name":"3930161077","value":true,"rule_id":"6BYRstUYoXG9UdX4t2dE0z:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"3973224214":{"name":"3973224214","value":false,"rule_id":"ZhbFP0ACwM6nfxwh5RLHz","secondary_exposures":[],"id_type":"atlassianAccountId"},"4003102327":{"name":"4003102327","value":true,"rule_id":"6CHXi5Uju2e2UopklO92Hp:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"4021922887":{"name":"4021922887","value":false,"rule_id":"68PJq518mBpvt7L5GXxiyH","secondary_exposures":[],"id_type":"randomizationId"},"4053260579":{"name":"4053260579","value":true,"rule_id":"7FrTrxojgA4HP2GKHA9KD8:100.00:3","secondary_exposures":[],"id_type":"tenantId"},"4071076286":{"name":"4071076286","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"4098208204":{"name":"4098208204","value":false,"rule_id":"6vuOahumHk4DQftRX3SyYy","secondary_exposures":[],"id_type":"tenantId"},"4163855640":{"name":"4163855640","value":true,"rule_id":"1SHw3RvGwibPnbQlo4cCHz:100.00:3","secondary_exposures":[],"id_type":"atlassianAccountId"},"4210088380":{"name":"4210088380","value":false,"rule_id":"default","secondary_exposures":[],"id_type":"tenantId"},"4217322002":{"name":"4217322002","value":true,"rule_id":"2OU2cOon9w0dwEBbOs7lcY:100.00:8","secondary_exposures":[],"id_type":"tenantId"},"4226509387":{"name":"4226509387","value":true,"rule_id":"2eOaRUqufiQiACVynTfMSf:100.00:3","secondary_exposures":[],"id_type":"tenantId"}},"dynamic_configs":{"175524720":{"name":"175524720","value":{"isEnabled":true},"rule_id":"launchedGroup","secondary_exposures":[],"group":"launchedGroup","is_user_in_experiment":false,"is_experiment_active":false,"is_device_based":false,"group_name":"Test","id_type":"atlassianAccountId"},"312060304":{"name":"312060304","value":{},"rule_id":"!code_defaults:override","secondary_exposures":[],"group":"!code_defaults:override","is_user_in_experiment":false,"is_experiment_active":false,"is_device_based":false,"id_type":"atlassianAccountId"},"838290867":{"name":"838290867","value":{"value":["7fe7cdd8-4731-48b8-93b4-3094c150964d","3feb7ced-1450-4676-aded-099c99bf534b","628ce3d4-ed20-4ac9-91aa-6c6ab21a770a","260c13d1-ce94-4922-b572-77c4164625aa","0e437ef0-ac17-4be5-9579-e1d2b6374f56","8bfe7098-e6ed-4a65-bcb8-d26f7b42fad6","70588bd0-57fb-47b6-841c-14b74a2d7e7d","47f47c02-2c12-4df4-a23e-812d430568a9","a1f30598-ac04-46aa-8e9c-ebe93d1fd93f"]},"rule_id":"default","secondary_exposures":[],"group":"default","is_device_based":false,"id_type":"tenantId","passed":false},"1541710441":{"name":"1541710441","value":{},"rule_id":"!code_defaults:override","secondary_exposures":[],"group":"!code_defaults:override","is_user_in_experiment":false,"is_experiment_active":true,"is_device_based":false,"id_type":"atlassianAccountId"},"2426226688":{"name":"2426226688","value":{"isEnabled":false,"cohort":"control"},"rule_id":"launchedGroup","secondary_exposures":[],"group":"launchedGroup","is_user_in_experiment":false,"is_experiment_active":false,"is_device_based":false,"group_name":"Control","id_type":"atlassianAccountId"},"3030638357":{"name":"3030638357","value":{},"rule_id":"!code_defaults:override","secondary_exposures":[],"group":"!code_defaults:override","is_user_in_experiment":false,"is_experiment_active":true,"is_device_based":false,"id_type":"atlassianAccountId"},"3632693359":{"name":"3632693359","value":{"isEnabled":true,"cohort":"test"},"rule_id":"launchedGroup","secondary_exposures":[],"group":"launchedGroup","is_user_in_experiment":false,"is_experiment_active":false,"is_device_based":false,"group_name":"Test","id_type":"atlassianAccountId"}},"layer_configs":{},"sdkParams":{},"has_updates":true,"time":1795462493972,"evaluated_keys":{"customIDs":{"randomizationId":"bd71b0b3-e3d2-4c19-b42a-f808514352cf","tenantId":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3"}},"hash_used":"djb2","user":{"userID":null,"userAgent":null,"appVersion":null,"country":null,"custom":{"tinymce_deprecation_cohort":"SMALL","is_jsm_hr_tenant":false,"has_jira_enterprise_edition":true,"navboost_active_tenants":1,"jira-software_entitlement_level":"COMMERCIAL","twc-project-pages-exposed-dual-app":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3","firstActivationDate":"2022-12-13T23:56:10.665Z","confluence_migration_status":false,"region":"prod-west2","has_confluence_enterprise_edition":true,"jira-software.ondemand.activationDate":"2022-12-13T23:56:11.955172Z","jira_tenants_viewing_agent_session_ai_results":true,"jira_software.older_than_30_days":true,"confluence_modernize":"exp-test","is_ai_enabled_for_tenant":true,"confluence_edition":"Enterprise Instance","segment_ipm_channel_level_holdout_latest_siteid":true,"xflow-twc-project-pages-flow":"2026-03-24T16:13:39.995334305Z","confluence_cloud_site_has_over_10_enabled_users":true,"jira_tenants_using_improve_description_ai_features":true,"navboost_triggered_tenants":1,"jca_opt_out_batch_1":true,"org_has_enterprise_product":true,"jira_unit_count":600,"confluence_rbac_beta_optin":"admin-opt-in","jira-product-discovery.activationDate":"2023-09-06T18:36:07.107504352Z","is_rovo_enabled_for_tenant":true,"swm_has_jira_enterprise_edition":true,"jira-software_edition_premium_first":"2023-07-12T16:14:35.113Z","confluence.older_than_14_days":true,"jira-servicedesk_edition":"Premium","jira_edition":"Enterprise Instance","jira_tenants_using_improve_description_ai_features_from_improve_work_item_menu":true,"confluence.ondemand.activationDate":"2023-03-07T01:26:44.205295Z","jira-software_edition":"premium"},"customIDs":{"randomizationId":"bd71b0b3-e3d2-4c19-b42a-f808514352cf","tenantId":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3"},"email":null,"ip":null,"locale":null,"statsigEnvironment":{"tier":"production"}},"sdkInfo":{"sdkType":"java-server","sdkVersion":"3.2.0"}},"customAttributes":{"jira-product-discovery.activationDate":"2023-09-06T18:36:07.107504352Z","xflow-twc-project-pages-flow":"2026-03-24T16:13:39.995334305Z","tinymce_deprecation_cohort":"SMALL","segment_ipm_channel_level_holdout_latest_siteid":true,"jira_tenants_using_improve_description_ai_features_from_improve_work_item_menu":true,"navboost_triggered_tenants":1,"is_rovo_enabled_for_tenant":true,"is_jsm_hr_tenant":false,"confluence_modernize":"exp-test","confluence.ondemand.activationDate":"2023-03-07T01:26:44.205295Z","jira-software.ondemand.activationDate":"2022-12-13T23:56:11.955172Z","has_jira_enterprise_edition":true,"jira-software_entitlement_level":"COMMERCIAL","twc-project-pages-exposed-dual-app":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3","jira_software.older_than_30_days":true,"confluence_edition":"Enterprise Instance","jira-software_edition_premium_first":"2023-07-12T16:14:35.113Z","org_has_enterprise_product":true,"navboost_active_tenants":1,"confluence.older_than_14_days":true,"jira_tenants_viewing_agent_session_ai_results":true,"jira-software_edition":"premium","firstActivationDate":"2022-12-13T23:56:10.665Z","has_confluence_enterprise_edition":true,"jira_edition":"Enterprise Instance","jira_tenants_using_improve_description_ai_features":true,"confluence_cloud_site_has_over_10_enabled_users":true,"jira_unit_count":600,"jca_opt_out_batch_1":true,"confluence_rbac_beta_optin":"admin-opt-in","confluence_migration_status":false,"is_ai_enabled_for_tenant":true,"swm_has_jira_enterprise_edition":true,"jira-servicedesk_edition":"Premium"},"identifiers":{"randomizationId":"bd71b0b3-e3d2-4c19-b42a-f808514352cf","tenantId":"0e0d1681-c880-4afe-bcf2-7db7e53c48a3"}},"errors":{}}}</script></div><script>function $RC(a,b){a=document.getElementById(a);b=document.getElementById(b);b.parentNode.removeChild(b);if(a){a=a.previousSibling;var f=a.parentNode,c=a.nextSibling,e=0;do{if(c&&8===c.nodeType){var d=c.data;if("/$"===d)if(0===e)break;else e--;else"$"!==d&&"$?"!==d&&"$!"!==d||e++}d=c.nextSibling;f.removeChild(c);c=d}while(c);for(;b.firstChild;)f.insertBefore(b.firstChild,c);a.data="$";a._reactRetry&&a._reactRetry()}};$RC("B:0","S:0")</script>
